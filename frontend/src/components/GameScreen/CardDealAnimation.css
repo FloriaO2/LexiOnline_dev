@@ -1,0 +1,222 @@
+.card-deal-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.center-deck {
+  position: relative;
+}
+
+.deck-card {
+  width: 60px;
+  height: 80px;
+  background: #000;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dealing-card {
+  width: 3.5vw;
+  height: 5vw;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1vw;
+  color: white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  background: transparent;
+  will-change: transform;
+  z-index: 1000;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.card-back {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+  border: 2px solid #fff;
+  border-radius: 6px;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.card-front {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+  backface-visibility: hidden;
+  transform: rotateY(0deg);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 4px;
+  object-fit: contain;
+}
+
+.card-value {
+  font-size: 1.1vw;
+  font-weight: bold;
+  color: white;
+}
+
+/* 카드 색상별 스타일 (실제 게임 카드와 동일) */
+.card-front.gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+}
+
+.card-front.gold .card-value {
+  color: #333;
+}
+
+.card-front.silver {
+  background: linear-gradient(135deg, #c0c0c0 0%, #a9a9a9 100%);
+}
+
+.card-front.silver .card-value {
+  color: #333;
+}
+
+.card-front.bronze {
+  background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+}
+
+.card-front.bronze .card-value {
+  color: #fff;
+}
+
+.card-front.black {
+  background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+}
+
+.card-front.black .card-value {
+  color: #fff;
+}
+
+.card-front.sun {
+  background: transparent;
+}
+
+.card-front.sun .card-value {
+  color: #ff0000;
+}
+
+.card-front.moon {
+  background: transparent;
+}
+
+.card-front.moon .card-value {
+  color: #00ff00;
+}
+
+.card-front.star {
+  background: transparent;
+}
+
+.card-front.star .card-value {
+  color: #ffd700;
+}
+
+.card-front.cloud {
+  background: transparent;
+}
+
+.card-front.cloud .card-value {
+  color: #40e0d0;
+}
+
+.my-card {
+  /* 내 카드는 특별한 스타일 */
+}
+
+.other-card {
+  /* 다른 플레이어 카드는 뒷면만 보임 */
+}
+
+/* 카드 뒤집기 애니메이션 */
+.card-flip-enter {
+  transform: rotateY(0deg);
+}
+
+.card-flip-enter-active {
+  transform: rotateY(180deg);
+  transition: transform 0.3s ease-in-out;
+}
+
+.card-flip-exit {
+  transform: rotateY(180deg);
+}
+
+.card-flip-exit-active {
+  transform: rotateY(0deg);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* 카드 이동 애니메이션 */
+.card-move {
+  transition: all 0.5s ease-out;
+}
+
+/* 중앙 카드더미 페이드 아웃 */
+.deck-fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .dealing-card {
+    width: 4.2vw;
+    height: 6vw;
+    font-size: 1.4vw;
+  }
+  
+  .deck-card {
+    width: 50px;
+    height: 70px;
+  }
+  
+  .card-value {
+    font-size: 1.4vw;
+  }
+} 

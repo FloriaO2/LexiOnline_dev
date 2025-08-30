@@ -1,0 +1,177 @@
+.game-guide-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  backdrop-filter: blur(5px);
+}
+
+.game-guide-modal {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 3px solid #495057;
+  border-radius: 20px;
+  padding: 25px;
+  max-width: 80vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #495057;
+}
+
+.guide-header h2 {
+  color: #495057;
+  font-size: 2.2vw;
+  font-weight: bold;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.close-btn {
+  background: #495057;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.9vw;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: #343a40;
+  transform: scale(1.1);
+}
+
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.guide-section {
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.guide-section h3 {
+  color: #495057;
+  font-size: 1.6vw;
+  font-weight: bold;
+  margin: 0 0 15px 0;
+  border-bottom: 2px solid #dee2e6;
+  padding-bottom: 8px;
+}
+
+.guide-section h4 {
+  color: #6c757d;
+  font-size: 1.3vw;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+.guide-section p {
+  color: #495057;
+  font-size: 1.3vw;
+  line-height: 1.6;
+  margin: 0 0 10px 0;
+}
+
+.guide-section ul, .guide-section ol {
+  color: #495057;
+  font-size: 1.3vw;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.guide-section li {
+  margin-bottom: 8px;
+}
+
+.guide-section strong {
+  color: #343a40;
+  font-weight: bold;
+}
+
+.mode-explanation {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mode-item {
+  flex: 1;
+  min-width: 250px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.mode-item h4 {
+  color: #495057;
+  font-size: 1.3vw;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  text-align: center;
+}
+
+.mode-item p {
+  color: #6c757d;
+  font-size: 1.1vw;
+  line-height: 1.5;
+  margin: 0;
+  text-align: center;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .game-guide-modal {
+    padding: 20px;
+    max-width: 95vw;
+    max-height: 90vh;
+  }
+  
+  .guide-header h2 {
+    font-size: 2.5vw;
+  }
+  
+  .guide-section h3 {
+    font-size: 1.8vw;
+  }
+  
+  .guide-section p, .guide-section ul, .guide-section ol {
+    font-size: 1.4vw;
+  }
+  
+  .mode-explanation {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .mode-item {
+    min-width: auto;
+  }
+} 

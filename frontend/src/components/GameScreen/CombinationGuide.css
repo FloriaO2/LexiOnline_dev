@@ -1,0 +1,310 @@
+.combination-guide-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.combination-guide-modal {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border: 3px solid #8b4513;
+  border-radius: 20px;
+  padding: 20px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  position: relative;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.combination-guide-modal::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #8b4513;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.guide-header h2 {
+  color: #8b4513;
+  font-size: 2.2vw;
+  font-weight: bold;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.close-btn {
+  background: #8b4513;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.9vw;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: #654321;
+  transform: scale(1.1);
+}
+
+.game-guide-btn {
+  background: #8b4513;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.6vw;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.game-guide-btn:hover {
+  background: #654321;
+  transform: scale(1.1);
+}
+
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.combination-section {
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid #8b4513;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.combination-section h3 {
+  color: #8b4513;
+  font-size: 1.4vw;
+  font-weight: bold;
+  margin: 0 0 15px 0;
+  text-align: center;
+}
+
+.combination-example {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.guide-card {
+  width: 50px;
+  height: 70px;
+  border: 2px solid #ffffff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #000;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 초보모드 색상 스타일 */
+.guide-card.gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+}
+
+.guide-card.gold .guide-card-value {
+  color: #333;
+}
+
+.guide-card.silver {
+  background: linear-gradient(135deg, #c0c0c0 0%, #a9a9a9 100%);
+}
+
+.guide-card.silver .guide-card-value {
+  color: #333;
+}
+
+.guide-card.bronze {
+  background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+}
+
+.guide-card.bronze .guide-card-value {
+  color: #fff;
+}
+
+.guide-card.black {
+  background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+}
+
+.guide-card.black .guide-card-value {
+  color: #fff;
+}
+
+/* 일반모드 색상 스타일 (my-hand와 동일하게) */
+.guide-card.sun {
+  background: transparent;
+}
+
+.guide-card.sun .guide-card-value {
+  color: #ff0000;
+}
+
+.guide-card.moon {
+  background: transparent;
+}
+
+.guide-card.moon .guide-card-value {
+  color: #00ff00;
+}
+
+.guide-card.star {
+  background: transparent;
+}
+
+.guide-card.star .guide-card-value {
+  color: #ffd700;
+}
+
+.guide-card.cloud {
+  background: transparent;
+}
+
+.guide-card.cloud .guide-card-value {
+  color: #40e0d0;
+}
+
+.guide-card-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.guide-card-value {
+  position: absolute;
+  top: 10%;
+  left: 30%;
+  transform: translateX(-50%);
+  z-index: 2;
+  color: white;
+  font-weight: bold;
+  font-size: 1.1vw;
+}
+
+.comparison-arrow {
+  color: #8b4513;
+  font-size: 1.9vw;
+  font-weight: bold;
+  margin: 0 5px;
+}
+
+.arrow-down {
+  color: #8b4513;
+  font-size: 1.6vw;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.pair-group, .triple-group, .four-part {
+  display: flex;
+  gap: 2px;
+}
+
+.straight-group, .flush-group, .straightflush-group {
+  display: flex;
+  gap: 2px;
+}
+
+.fullhouse-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.triple-part, .pair-part {
+  display: flex;
+  gap: 2px;
+}
+
+.fourcard-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.kicker-part {
+  display: flex;
+  gap: 2px;
+}
+
+.straight-label, .straightflush-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+}
+
+.straight-label span, .straightflush-label span {
+  color: #8b4513;
+  font-weight: bold;
+  font-size: 1.1vw;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .combination-guide-modal {
+    padding: 15px;
+    max-width: 95vw;
+  }
+  
+  .guide-card {
+    width: 40px;
+    height: 56px;
+  }
+  
+  .guide-card-value {
+    font-size: 1.2vw;
+  }
+  
+  .combination-example {
+    gap: 5px;
+  }
+  
+  .comparison-arrow {
+    font-size: 2vw;
+  }
+} 

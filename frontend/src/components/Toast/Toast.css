@@ -1,0 +1,135 @@
+.toast {
+  position: fixed;
+  bottom: 3vh;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.95);
+  border: 0.1vw solid rgba(255, 255, 255, 0.1);
+  border-radius: 1vw;
+  padding: 1.5vw 2vw;
+  box-shadow: 0 1vw 3vw rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(1vw);
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  min-width: 25vw;
+  max-width: 35vw;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  flex: 1;
+}
+
+.toast-icon {
+  font-size: 1.2vw;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  color: #ffffff;
+  font-size: 1vw;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: #cccccc;
+  font-size: 1.5vw;
+  cursor: pointer;
+  padding: 0.2vw;
+  border-radius: 0.3vw;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 토스트 타입별 스타일 */
+.toast-success {
+  border-left: 0.3vw solid #28a745;
+}
+
+.toast-error {
+  border-left: 0.3vw solid #dc3545;
+}
+
+.toast-info {
+  border-left: 0.3vw solid #17a2b8;
+}
+
+/* 테두리 숨기기 */
+.toast.no-border {
+  border-left: none;
+}
+
+/* 복사 알림용 밝은 배경 */
+.toast.copy-notification {
+  background: rgba(255, 255, 255, 0.95);
+  border: 0.1vw solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1vw 3vw rgba(0, 0, 0, 0.2);
+}
+
+.toast.copy-notification .toast-message {
+  color: #333333;
+}
+
+.toast.copy-notification .toast-icon {
+  color: #28a745;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .toast {
+    bottom: 6vh;
+    left: 50%;
+    min-width: auto;
+    max-width: none;
+    padding: 1.2vw 1.5vw;
+  }
+  
+  .toast-icon {
+    font-size: 1.5vw;
+  }
+  
+  .toast-message {
+    font-size: 1.2vw;
+  }
+  
+  .toast-close {
+    font-size: 2vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .toast {
+    padding: 1vw 1.2vw;
+  }
+  
+  .toast-icon {
+    font-size: 1.8vw;
+  }
+  
+  .toast-message {
+    font-size: 1.4vw;
+  }
+  
+  .toast-close {
+    font-size: 2.5vw;
+  }
+} 

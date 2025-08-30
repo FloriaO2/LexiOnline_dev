@@ -1,0 +1,163 @@
+.final-result-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #0f1419 0%, #1e2a3a 25%, #2d3a4a 50%, #1e2a3a 75%, #0f1419 100%);
+  font-family: 'Arial', sans-serif;
+}
+
+.final-result-container {
+  background: rgba(26, 26, 26, 0.95);
+  padding: 3vw;
+  border-radius: 1.5vw;
+  box-shadow: 0 1.5vw 3vw rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(0.8vw);
+  border: 0.08vw solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+  width: 90%;
+  max-width: 55vw;
+  min-width: 45vw;
+}
+
+.final-title {
+  font-size: clamp(1.5vw, 4vw, 2.5vw);
+  color: #ffffff;
+  margin-bottom: 2.5vw;
+  font-weight: bold;
+}
+
+.final-player-list {
+  margin-bottom: 2.5vw;
+}
+
+.final-player-item {
+  display: flex;
+  align-items: center;
+  padding: 1.2vw;
+  margin-bottom: 0.8vw;
+  border-radius: 0.6vw;
+  background: rgba(255, 255, 255, 0.1);
+  border: 0.08vw solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.final-player-item:hover {
+  transform: translateY(-0.2vw);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0.3vw 1vw rgba(0, 0, 0, 0.3);
+}
+
+.final-rank {
+  font-size: clamp(1.2vw, 3vw, 1.8vw);
+  font-weight: bold;
+  width: 3vw;
+  margin-right: 1.5vw;
+  text-align: center;
+}
+
+.final-nickname {
+  font-size: clamp(1vw, 2.5vw, 1.5vw);
+  flex-grow: 1;
+  text-align: left;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.final-score-details {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8vw;
+}
+
+.final-score {
+  font-size: clamp(1vw, 2.5vw, 1.5vw);
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.rating-change {
+  font-size: clamp(0.8vw, 2vw, 1.2vw);
+  margin-left: 0.8vw;
+  font-weight: 700;
+}
+
+.rating-change.positive {
+  color: #4CAF50;
+}
+
+.rating-change.negative {
+  color: #f44336;
+}
+
+.final-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1.5vw;
+  margin-top: 2vw;
+}
+
+/* Rank-specific styling */
+.final-player-item.rank-1 {
+  background: rgba(255, 193, 7, 0.4);
+  border: 0.08vw solid rgba(255, 193, 7, 0.4);
+  box-shadow: 0 0 1vw rgba(255, 193, 7, 0.3);
+}
+.final-player-item.rank-2 {
+  background: rgba(192, 192, 192, 0.4);
+  border: 0.08vw solid rgba(192, 192, 192, 0.4);
+  box-shadow: 0 0 0.8vw rgba(192, 192, 192, 0.3);
+}
+.final-player-item.rank-3 {
+  background: rgba(205, 127, 50, 0.4);
+  border: 0.08vw solid rgba(205, 127, 50, 0.4);
+  box-shadow: 0 0 0.6vw rgba(205, 127, 50, 0.3);
+}
+.final-player-item.rank-4 {
+  background: rgba(255, 255, 255, 0.15);
+  border: 0.08vw solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0.4vw rgba(255, 255, 255, 0.2);
+}
+.final-player-item.rank-5 {
+  background: rgba(255, 255, 255, 0.1);
+  border: 0.08vw solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0.3vw rgba(255, 255, 255, 0.1);
+}
+
+.final-rank.gold { 
+  color: #FFD700; 
+  text-shadow: 0 0 0.5vw rgba(255, 215, 0, 0.5);
+}
+.final-rank.silver { 
+  color: #C0C0C0; 
+  text-shadow: 0 0 0.5vw rgba(192, 192, 192, 0.5);
+}
+.final-rank.bronze { 
+  color: #CD7F32; 
+  text-shadow: 0 0 0.5vw rgba(205, 127, 50, 0.5);
+}
+.final-rank.black { 
+  color: #ffffff; 
+  text-shadow: 0 0 0.3vw rgba(255, 255, 255, 0.3);
+}
+.final-rank.gray { 
+  color: #cccccc; 
+  text-shadow: 0 0 0.3vw rgba(204, 204, 204, 0.3);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .final-result-container {
+    min-width: 90vw;
+    max-width: 95vw;
+    padding: 4vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .final-result-container {
+    min-width: 95vw;
+    max-width: 98vw;
+    padding: 5vw;
+  }
+}

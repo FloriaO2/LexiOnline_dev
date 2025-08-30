@@ -1,0 +1,128 @@
+.combination-wheel-container {
+  width: 100%;
+  height: 4.5vh;
+  overflow: hidden;
+  position: relative;
+  border-radius: 0.8vw;
+}
+
+.combination-swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.combination-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 1.8vh;
+  transition: all 0.3s ease;
+}
+
+.combination-item {
+  font-size: 1.2vh;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  white-space: nowrap;
+  user-select: none;
+  transform: scale(0.8);
+  opacity: 0.6;
+}
+
+.combination-item.active {
+  font-size: 2.5vh;
+  font-weight: 700;
+  color: #ffffff;
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Swiper 커스텀 스타일 */
+.combination-swiper .swiper-wrapper {
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.combination-swiper .swiper-slide {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 애니메이션 효과 */
+.combination-swiper .swiper-slide-active .combination-item {
+  font-size: 2.5vh;
+  font-weight: 700;
+  color: #ffffff;
+  transform: scale(1);
+  opacity: 1;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.combination-swiper .swiper-slide-prev .combination-item,
+.combination-swiper .swiper-slide-next .combination-item {
+  font-size: 1.2vh;
+  font-weight: 400;
+  transform: scale(0.7);
+  opacity: 0.8;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.combination-swiper .swiper-slide-prev .combination-item {
+  transform: scale(0.7) translateY(0.8vh);
+}
+
+.combination-swiper .swiper-slide-next .combination-item {
+  transform: scale(0.7) translateY(-0.8vh);
+}
+
+/* 더 멀리 있는 슬라이드들 */
+.combination-swiper .swiper-slide:not(.swiper-slide-active):not(.swiper-slide-prev):not(.swiper-slide-next) .combination-item {
+  font-size: 1vh;
+  transform: scale(0.6);
+  opacity: 0.4;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 반응형 디자인 */
+/*
+@media (max-width: 768px) {
+
+  
+  .combination-item {
+    font-size: clamp(1.2vh, 3vh, 2vh);
+  }
+  
+  .combination-item.active {
+    font-size: clamp(1.8vh, 4vh, 2.8vh);
+  }
+  
+  .combination-swiper .swiper-slide-active .combination-item {
+    font-size: clamp(1.8vh, 4vh, 2.8vh);
+  }
+  
+  .combination-swiper .swiper-slide-prev .combination-item,
+  .combination-swiper .swiper-slide-next .combination-item {
+    font-size: clamp(1vh, 2.5vh, 1.5vh);
+  }
+}
+
+@media (max-width: 480px) {
+
+  
+  .combination-item {
+    font-size: clamp(1.5vh, 3.5vh, 2.2vh);
+  }
+  
+  .combination-item.active {
+    font-size: clamp(2.2vh, 5vh, 3.2vh);
+  }
+  
+  .combination-swiper .swiper-slide-active .combination-item {
+    font-size: clamp(2.2vh, 5vh, 3.2vh);
+  }
+  
+  .combination-swiper .swiper-slide-prev .combination-item,
+  .combination-swiper .swiper-slide-next .combination-item {
+    font-size: clamp(1.2vh, 3vh, 1.8vh);
+  }
+} 
+  */
