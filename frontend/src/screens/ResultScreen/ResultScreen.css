@@ -523,19 +523,19 @@
 .transfer-info span {
   display: flex;
   align-items: center;
-  gap: 0.8vw;
+  gap: 0.2vw;
 }
 
 .guide-tag {
   background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 0.4vh 1.2vw;
+  padding: 0.4vh 1vw;
   border-radius: 2vh;
   font-size: 1.4vh;
   font-weight: bold;
   box-shadow: 0 0.2vh 0.8vh rgba(102, 126, 234, 0.3);
   border: 0.1vh solid rgba(255, 255, 255, 0.2);
-  margin-right: 0vw; /* 우측 마진 줄임 (0.8vw → 0.2vw) */
+  margin: 0;
   text-shadow: 0 0.1vh 0.2vh rgba(0, 0, 0, 0.3);
 }
 

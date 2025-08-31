@@ -435,9 +435,9 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
           rankMessage = `${receiverRank}등과 ${giverRank}등의 남은 패 개수 차이만큼 코인을 전달 중입니다`;
         }
         
-                 // 등수만 배경색 적용하는 함수
+          // 등수만 배경색 적용하는 함수
          const formatRankMessage = (message: string) => {
-           // 등수 패턴 찾기 (1등, 2등, 3등, 4등, 5등)
+           // 등수 패턴 찾기 (1등, 2등, 3등, 4등, 5등) - 앞뒤 공백 제거
            return message.replace(/(\d+등)/g, '<span class="guide-tag">$1</span>');
          };
          
