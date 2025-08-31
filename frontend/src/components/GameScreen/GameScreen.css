@@ -751,12 +751,16 @@
   will-change: transform;
 }
 
-/* 정렬 중이 아닐 때는 transition 없음 */
-.hand-tile:not(.sorting) {
-  transition: none !important;
+/* 드래그 중 실시간 애니메이션을 위한 클래스 */
+.hand-tile.dragging-preview {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  position: relative;
+  z-index: 5;
+  will-change: transform;
 }
 
-.hand-tile.sorting.dragging {
+/* 드래그 중인 카드는 애니메이션 비활성화 */
+.hand-tile.dragging {
   transition: none !important;
 }
 

@@ -105,6 +105,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   const [isSorting, setIsSorting] = useState(false);
   const [cardOffsets, setCardOffsets] = useState<{ [key: number]: number }>({});
   const handRef = useRef<HTMLDivElement>(null);
+  const lastDropPositionRef = useRef<number>(-1);
+  const dragOverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // 대기 중인 패 저장 (공간 부족으로 제출하지 못한 패)
   const [pendingCards, setPendingCards] = useState<Array<{
@@ -1371,8 +1373,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
   // 드래그 시작 핸들러
   const handleDragStart = (e: React.DragEvent, cardId: number) => {
+    // 정렬 애니메이션 중이면 드래그 차단
+    if (isSorting) {
+      e.preventDefault();
+      return;
+    }
+    
     setDraggedCard(cardId);
     setIsDragging(true);
+    lastDropPositionRef.current = -1; // 드래그 시작시 초기화
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', cardId.toString());
     
@@ -1392,60 +1401,74 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     }, 0);
   };
 
-  // 마우스 위치를 기준으로 가장 가까운 삽입 위치를 계산하는 함수
+  // 마우스 위치를 기준으로 가장 가까운 삽입 위치를 계산하는 함수 (절대 위치 기준)
   const calculateDropPosition = (e: React.DragEvent): number => {
     if (!handRef.current) return 0;
     
     const rect = handRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
-    const cards = handRef.current.children;
     
-    if (cards.length === 0) return 0;
+    // console.log('[DEBUG] 📐 calculateDropPosition 호출:', {
+    //  mouseX: mouseX.toFixed(2),
+    //  clientX: e.clientX,
+    //  rectLeft: rect.left
+    // });
     
-    // 각 카드의 중앙점을 기준으로 경계선들을 계산
+    if (sortedHand.length === 0) return 0;
+    
+    // my-hand 컨테이너의 패딩과 gap 정보
+    const containerPadding = 4; // CSS의 padding
+    const cardGap = 4; // CSS의 gap
+    
+    // 첫 번째 카드 요소의 크기를 기준으로 계산 (모든 카드가 동일한 크기)
+    const firstCard = handRef.current.children[0] as HTMLElement;
+    if (!firstCard) return 0;
+    
+    const cardWidth = firstCard.offsetWidth;
+    const cardSpacing = cardWidth + cardGap;
+    
+    // 각 카드의 절대 위치 계산 (이동 애니메이션과 무관한 기본 위치)
     const boundaries: number[] = [];
     
-    for (let i = 0; i < cards.length; i++) {
-      const cardRect = cards[i].getBoundingClientRect();
-      const cardX = cardRect.left - rect.left;
-      const cardCenter = cardX + cardRect.width / 2;
+    for (let i = 0; i < sortedHand.length; i++) {
+      // 카드의 기본 절대 위치 계산
+      const cardStartX = containerPadding + (i * cardSpacing);
+      const cardCenterX = cardStartX + (cardWidth / 2);
       
       if (i === 0) {
-        // 첫 번째 카드 앞쪽 경계 (카드 시작점)
-        boundaries.push(cardX);
+        // 첫 번째 카드 앞쪽 경계
+        boundaries.push(cardStartX);
       }
       
       // 각 카드의 중앙점을 경계로 추가
-      boundaries.push(cardCenter);
+      boundaries.push(cardCenterX);
     }
     
-    // 마지막 카드 뒤쪽 경계 (카드 끝점)
-    if (cards.length > 0) {
-      const lastCardRect = cards[cards.length - 1].getBoundingClientRect();
-      const lastCardX = lastCardRect.left - rect.left;
-      boundaries.push(lastCardX + lastCardRect.width);
+    // 마지막 카드 뒤쪽 경계
+    if (sortedHand.length > 0) {
+      const lastCardStartX = containerPadding + ((sortedHand.length - 1) * cardSpacing);
+      boundaries.push(lastCardStartX + cardWidth);
     }
     
-         // 마우스 위치가 어느 구간에 속하는지 판단
-     // boundaries 배열: [카드0앞, 카드0중앙, 카드1중앙, 카드2중앙, ..., 마지막카드뒤]
-     
-     for (let i = 0; i < boundaries.length - 1; i++) {
-       const leftBoundary = boundaries[i];
-       const rightBoundary = boundaries[i + 1];
-       
-       // 마우스가 현재 구간 안에 있는지 확인
-       if (mouseX >= leftBoundary && mouseX <= rightBoundary) {
-         // i번째 구간에 속함
-         if (i === 0) {
-           return 0; // 카드0 앞 - 카드0 중앙 구간 → 맨 앞으로 삽입
-         } else {
-           return i; // 카드(i-1) 중앙 - 카드i 중앙 구간 → 카드(i-1)와 카드i 사이에 삽입
-         }
-       }
-     }
-     
-     // 마지막 구간을 벗어난 경우 (마지막 카드 뒤)
-     return cards.length;
+    // 마우스 위치가 어느 구간에 속하는지 판단
+    // boundaries 배열: [카드0앞, 카드0중앙, 카드1중앙, 카드2중앙, ..., 마지막카드뒤]
+    
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      const leftBoundary = boundaries[i];
+      const rightBoundary = boundaries[i + 1];
+      
+      // 마우스가 현재 구간 안에 있는지 확인
+      if (mouseX >= leftBoundary && mouseX <= rightBoundary) {
+        // i번째 구간에 속함
+        const resultPosition = i === 0 ? 0 : i;
+        // console.log(`[DEBUG] 🎯 구간 ${i} 매치: ${leftBoundary.toFixed(2)} <= ${mouseX.toFixed(2)} <= ${rightBoundary.toFixed(2)} -> dropPosition: ${resultPosition}`);
+        return resultPosition;
+      }
+    }
+    
+    // 마지막 구간을 벗어난 경우 (마지막 카드 뒤)
+    // console.log(`[DEBUG] 🎯 마지막 구간 벗어남 -> dropPosition: ${sortedHand.length}`);
+    return sortedHand.length;
   };
 
   // 드래그 오버 핸들러
@@ -1453,14 +1476,108 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     
+    if (draggedCard === null) {
+      // console.log('[DEBUG] ❌ draggedCard가 null - 함수 종료');
+      return;
+    }
+    
     const dropPosition = calculateDropPosition(e);
-    setDragOverIndex(dropPosition);
+    
+    // console.log('[DEBUG] 🎯 드래그 오버 호출:', {
+    //  dropPosition,
+    //  lastPosition: lastDropPositionRef.current,
+    //  draggedCard,
+    //  현재시간: Date.now()
+    //});
+    
+    // 같은 위치라면 불필요한 계산 스킵 (강력한 차단)
+    if (lastDropPositionRef.current === dropPosition) {
+      // console.log('[DEBUG] 💥 같은 위치이므로 완전 차단! dropPosition:', dropPosition);
+      return;
+    }
+    
+    // console.log('[DEBUG] 🔄 위치 변경 감지 - 새로운 처리 시작:', {
+    //  from: lastDropPositionRef.current,
+    //  to: dropPosition
+    // });
+    
+    // ⚡ 핵심 수정: lastDropPositionRef를 즉시 업데이트하여 중복 호출 방지
+    lastDropPositionRef.current = dropPosition;
+    
+    // 이전 타이머가 있다면 클리어
+    if (dragOverTimeoutRef.current) {
+      // console.log('[DEBUG] 🗑️ 이전 타이머 클리어');
+      clearTimeout(dragOverTimeoutRef.current);
+    }
+    
+    // 짧은 지연을 두어 너무 빈번한 호출 방지
+    dragOverTimeoutRef.current = setTimeout(() => {
+      // console.log('[DEBUG] ⚡ 타이머 실행 시작 - dropPosition:', dropPosition);
+      
+      setDragOverIndex(dropPosition);
+      
+      // 드래그 중에 다른 카드들의 위치를 미리 계산하여 보여주기
+      const draggedIndex = sortedHand.findIndex(card => card.id === draggedCard);
+      if (draggedIndex === -1) {
+        // console.log('[DEBUG] ❌ draggedIndex 찾기 실패');
+        return;
+      }
+      
+      // console.log('[DEBUG] 📍 드래그 정보:', {
+      //  draggedIndex,
+      //  dropPosition,
+      //  같은위치체크: draggedIndex === dropPosition,
+      //  인접위치체크: draggedIndex === dropPosition - 1
+      // });
+      
+      // 같은 위치에 있으면 오프셋 초기화
+      if (draggedIndex === dropPosition || draggedIndex === dropPosition - 1) {
+        // console.log('[DEBUG] 🔄 같은/인접 위치 - 오프셋 초기화 실행');
+        setCardOffsets({});
+        return;
+      }
+      
+      // 각 카드의 이동 거리 계산 (드래그된 카드 제외)
+      const offsets: { [key: number]: number } = {};
+      const cardWidth = handRef.current ? handRef.current.children[0]?.clientWidth || 0 : 0;
+      const gap = 4; // CSS의 gap과 동일
+      const cardSpacing = cardWidth + gap;
+      
+      // console.log('[DEBUG] 📏 스페이싱 정보:', { cardWidth, gap, cardSpacing });
+      
+      // 드래그된 카드보다 뒤에 있는 카드들이 앞으로 이동하는 경우 (뒤→앞 드래그)
+      if (dropPosition < draggedIndex) {
+        // console.log('[DEBUG] 🎯 뒤→앞 드래그 감지');
+        for (let i = dropPosition; i < draggedIndex; i++) {
+          const card = sortedHand[i];
+          if (card && card.id !== draggedCard) {
+            offsets[card.id] = cardSpacing; // 한 칸씩 뒤로 이동
+            // console.log(`[DEBUG] 📦 카드 ${card.id} 뒤로 이동: +${cardSpacing}px`);
+          }
+        }
+      }
+      // 드래그된 카드보다 앞에 있는 카드들이 뒤로 이동하는 경우 (앞→뒤 드래그)
+      else if (dropPosition > draggedIndex) {
+        // console.log('[DEBUG] 🎯 앞→뒤 드래그 감지');
+        for (let i = draggedIndex + 1; i < dropPosition; i++) {
+          const card = sortedHand[i];
+          if (card && card.id !== draggedCard) {
+            offsets[card.id] = -cardSpacing; // 한 칸씩 앞으로 이동
+            // console.log(`[DEBUG] 📦 카드 ${card.id} 앞으로 이동: -${cardSpacing}px`);
+          }
+        }
+      }
+      
+      // console.log('[DEBUG] 🎨 최종 오프셋 적용:', Object.keys(offsets).length > 0 ? offsets : '빈 오프셋');
+      setCardOffsets(offsets);
+    }, 10); // 10ms 지연
   };
 
-  // 드래그 리브 핸들러
+  // 드래그 리브 핸들러 - 비활성화 (드래그 중 카드 이동으로 인한 오작동 방지)
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOverIndex(null);
+    // console.log('[DEBUG] 🚪 드래그 리브 호출됨 - 하지만 무시함 (오작동 방지)');
+    // 아무것도 하지 않음 - 드래그 중 카드 이동으로 인한 영역 벗어남은 무시
   };
 
   // 드롭 핸들러
@@ -1479,6 +1596,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       setDraggedCard(null);
       setDragOverIndex(null);
       setIsDragging(false);
+      setCardOffsets({}); // 오프셋 초기화
+      lastDropPositionRef.current = -1; // 위치 참조 초기화
+      
+      // 타이머 정리
+      if (dragOverTimeoutRef.current) {
+        clearTimeout(dragOverTimeoutRef.current);
+        dragOverTimeoutRef.current = null;
+      }
       return;
     }
     
@@ -1498,17 +1623,39 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       sessionStorage.setItem(sortOrderKey, JSON.stringify(cardNumbers));
     }
     
+    // 다른 카드들은 이미 드래그 중에 이동했으므로, 즉시 새로운 배열로 업데이트
+    // 드래그된 카드만 현재 위치에 "뿅" 나타나게 됨
     setSortedHand(newHand);
+    setCardOffsets({});
     setDraggedCard(null);
     setDragOverIndex(null);
     setIsDragging(false);
+    lastDropPositionRef.current = -1; // 위치 참조 초기화
+    
+    // 타이머 정리
+    if (dragOverTimeoutRef.current) {
+      clearTimeout(dragOverTimeoutRef.current);
+      dragOverTimeoutRef.current = null;
+    }
   };
 
   // 드래그 엔드 핸들러
   const handleDragEnd = () => {
+    // console.log('[DEBUG] 🏁 드래그 엔드 - 모든 상태 정리');
+    // 드래그가 끝나면 상태 초기화 (드롭이 되지 않은 경우)
     setDraggedCard(null);
     setDragOverIndex(null);
     setIsDragging(false);
+    // console.log('[DEBUG] 🧹 드래그 엔드에서 완전 정리: 오프셋 초기화');
+    setCardOffsets({}); // 카드 오프셋도 초기화
+    lastDropPositionRef.current = -1; // 위치 참조도 초기화
+    
+    // 타이머 정리
+    if (dragOverTimeoutRef.current) {
+      // console.log('[DEBUG] 🗑️ 드래그 엔드에서 타이머 정리');
+      clearTimeout(dragOverTimeoutRef.current);
+      dragOverTimeoutRef.current = null;
+    }
   };
 
   const handlePass = () => {
@@ -2033,8 +2180,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
               {(showCardDealAnimation ? visibleHand : sortedHand).map((tile, index) => (
                 <div 
                   key={tile.id} 
-                  className={`hand-tile ${getDisplayColor(tile.color, gameMode)} ${selectedCards.includes(tile.id) ? 'selected' : ''} ${draggedCard === tile.id ? 'dragging' : ''} ${isSorting ? 'sorting' : ''} ${showCardDealAnimation ? 'dealing' : ''} ${dealtCards.has(index) ? 'dealt' : ''}`}
-                  style={isSorting && cardOffsets[tile.id] !== undefined ? {
+                  className={`hand-tile ${getDisplayColor(tile.color, gameMode)} ${selectedCards.includes(tile.id) ? 'selected' : ''} ${draggedCard === tile.id ? 'dragging' : ''} ${isSorting ? 'sorting' : ''} ${isDragging && draggedCard !== tile.id && cardOffsets[tile.id] !== undefined ? 'dragging-preview' : ''} ${showCardDealAnimation ? 'dealing' : ''} ${dealtCards.has(index) ? 'dealt' : ''}`}
+                  style={(isSorting || (isDragging && cardOffsets[tile.id] !== undefined)) ? {
                     transform: `translateX(${cardOffsets[tile.id]}px)`
                   } : showCardDealAnimation ? {
                     animationDelay: `${index * 0.12}s`
