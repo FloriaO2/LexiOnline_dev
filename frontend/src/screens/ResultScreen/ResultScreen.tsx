@@ -56,11 +56,11 @@ const AnimatedNumber: React.FC<{
       const startValue = displayValue;
       const endValue = value;
       const startTime = Date.now();
-      const duration = 1500; // 화살표 애니메이션과 동일한 지속시간
+      const duration = 1500; // 애니메이션 속도 높임 (2.5초 → 1.5초)
       
       // 중간 값들을 생성 (빠르게 휘리릭 지나가는 효과)
       const intermediateValues: number[] = [];
-      const steps = 25; // 더 부드러운 애니메이션을 위해 단계 증가
+      const steps = 30; // 더 부드러운 애니메이션을 위해 단계 증가
       for (let i = 0; i <= steps; i++) {
         const progress = i / steps;
         const easeProgress = 1 - Math.pow(1 - progress, 2); // easeOutQuad
@@ -112,7 +112,7 @@ const AnimatedArrow: React.FC<{
     if (visible) {
       setProgress(0);
       const startTime = Date.now();
-      const duration = 1500;
+      const duration = 1500; // 애니메이션 속도 높임 (2.5초 → 1.5초)
       
       const animate = () => {
         const elapsed = Date.now() - startTime;
@@ -145,7 +145,7 @@ const AnimatedArrow: React.FC<{
   const arrowHeadY = currentEndY + (ARROW_HEAD_SIZE * 0.4) * Math.sin(angle);
 
   // 코인 숫자의 위치 계산 (화살표를 따라 이동)
-  const coinProgress = Math.min(progress * 1.2, 1); // 화살표보다 조금 빠르게 이동
+  const coinProgress = Math.min(progress * 0.5, 0.5); // 화살표의 절반 정도 위치까지만 이동
   const coinX = startX + (endX - startX) * coinProgress;
   const coinY = startY + (endY - startY) * coinProgress;
 
@@ -167,7 +167,7 @@ const AnimatedArrow: React.FC<{
             top: coinY,
             zIndex: 25,
             transform: 'translate(-50%, -50%)',
-            animation: progress >= 0.8 ? 'coinArrive 0.5s ease-out' : 'coinFloat 1.5s ease-in-out infinite',
+            animation: progress >= 0.8 ? 'coinArrive 1.2s ease-out' : 'coinFloat 2.5s ease-in-out infinite', // 코인 애니메이션 속도 조정
             opacity: progress >= 0.8 ? 0.8 : 1
           }}
         >
@@ -201,6 +201,9 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
   // 애니메이션 상태 관리
   const [scoreAnimations, setScoreAnimations] = useState<{ [playerId: string]: { isAnimating: boolean; direction: 'up' | 'down' } }>({});
 
+  // 2카드 안내 토스트 상태
+  const [showTwosToast, setShowTwosToast] = useState(false);
+
   const playerRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
   const layoutRef = useRef<HTMLDivElement | null>(null);
   const [centers, setCenters] = useState<{ [key: string]: { x: number; y: number } | null }>({});
@@ -222,16 +225,24 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
 
     if (comprehensiveResult && finalHands && maxNumber && rankedPlayers) {
       const components: { [key: string]: number } = {};
+      let hasTwos = false; // 2카드 보유자 확인
+      
       rankedPlayers.forEach(p => {
         const hand = finalHands[p.playerId];
         if (hand) {
           const twosCount = getTwosCount(hand, maxNumber);
           components[p.playerId] = p.remainingTiles * (2 ** twosCount);
+          if (twosCount > 0) {
+            hasTwos = true; // 2카드 보유자가 있음
+          }
         } else {
           components[p.playerId] = 0;
         }
       });
       setPlayerComponents(components);
+      
+      // 2카드 보유자가 있으면 토스트 표시
+      setShowTwosToast(hasTwos);
     }
   }, [comprehensiveResult]);
 
@@ -318,10 +329,11 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
     let animationTimeout: NodeJS.Timeout;
 
     const runAnimationStep = (step: number) => {
-      if (step >= totalSteps) {
-        // Animation finished
-        setTransferMessage('결과 집계 완료!');
-        setShowArrow(false);
+             if (step >= totalSteps) {
+         // Animation finished
+         setTransferMessage('결과 집계 완료!');
+         setShowArrow(false);
+         setShowTwosToast(false); // 2카드 안내 토스트 숨김
 
         // --- VERIFICATION LOGIC ---
         console.log("--- VERIFICATION ---");
@@ -378,8 +390,58 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
       const giver = playerMap.get(transfer.giverId);
       const receiver = playerMap.get(transfer.receiverId);
 
-      if (giver && receiver) {
-        setTransferMessage(`<span class="guide-tag">${giver.nickname}</span> 님이 <span class="guide-tag">${receiver.nickname}</span> 님에게 코인 전달`);
+             if (giver && receiver) {
+         // 공동 순위 계산 함수
+         const calculateRank = (playerId: string) => {
+           const player = rankedPlayers.find(p => p.playerId === playerId);
+           if (!player) return 0;
+           
+           let rank = 1;
+           for (const p of rankedPlayers) {
+             if (p.score < player.score) {
+               rank++;
+             }
+           }
+           return rank;
+         };
+         
+         const giverRank = calculateRank(giver.playerId);
+         const receiverRank = calculateRank(receiver.playerId);
+        
+        // 순위 기반 메시지 생성
+        let rankMessage = '';
+        if (giverRank === 1 && receiverRank === 2) {
+          rankMessage = '1등과 2등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 1 && receiverRank === 3) {
+          rankMessage = '1등과 3등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 1 && receiverRank === 4) {
+          rankMessage = '1등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 1 && receiverRank === 5) {
+          rankMessage = '1등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 2 && receiverRank === 3) {
+          rankMessage = '2등과 3등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 2 && receiverRank === 4) {
+          rankMessage = '2등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 2 && receiverRank === 5) {
+          rankMessage = '2등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 3 && receiverRank === 4) {
+          rankMessage = '3등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 3 && receiverRank === 5) {
+          rankMessage = '3등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else if (giverRank === 4 && receiverRank === 5) {
+          rankMessage = '4등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+        } else {
+          // 기본 메시지 (예상치 못한 경우)
+          rankMessage = `${receiverRank}등과 ${giverRank}등의 남은 패 개수 차이만큼 코인을 전달 중입니다`;
+        }
+        
+                 // 등수만 배경색 적용하는 함수
+         const formatRankMessage = (message: string) => {
+           // 등수 패턴 찾기 (1등, 2등, 3등, 4등, 5등)
+           return message.replace(/(\d+등)/g, '<span class="guide-tag">$1</span>');
+         };
+         
+         setTransferMessage(formatRankMessage(rankMessage));
         
         // 애니메이션 상태 설정
         setScoreAnimations(prev => ({
@@ -403,13 +465,13 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
             [giver.playerId]: { isAnimating: false, direction: 'down' },
             [receiver.playerId]: { isAnimating: false, direction: 'up' }
           }));
-        }, 1500);
+                 }, 1500); // 애니메이션 완료 후 상태 초기화 타이밍 조정 (2.5초 → 1.5초)
       } else {
         setShowArrow(false);
       }
 
       // Schedule next step
-      animationTimeout = setTimeout(() => runAnimationStep(step + 1), 2500);
+             animationTimeout = setTimeout(() => runAnimationStep(step + 1), 2500); // 애니메이션 간격 조정 (3.5초 → 2.5초)
     };
 
     // Start the animation
@@ -467,10 +529,18 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
       <div className="result-container">
         <div className="opponent-section">
           <div className={`circular-layout players-${actualPlayerCount}`} ref={layoutRef}>
-            {rankedPlayers.map((player, index) => {
-              const rank = index + 1;
-              const rankColors = ['gold', 'silver', 'bronze', 'black', 'gray'];
-              const rankColor = rankColors[index] || 'gray';
+                         {rankedPlayers.map((player, index) => {
+               // 공동 순위 계산
+               let rank = 1;
+               for (const p of rankedPlayers) {
+                 if (p.score < player.score) {
+                   rank++;
+                 }
+               }
+               
+               // 순위에 따른 색상 결정
+               const rankColors = ['gold', 'silver', 'bronze', 'black', 'gray'];
+               const rankColor = rankColors[rank - 1] || 'gray';
               
               return (
                 <div key={player.playerId} className="player-box" ref={el => { playerRefs.current[`player${index}`] = el; }}>
@@ -492,11 +562,21 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
           </div>
         </div>
 
-        {!showButtons && (
-          <div className={`transfer-info ${transferMessage === '결과 집계 완료!' ? 'complete-message' : ''}`}>
-            <span dangerouslySetInnerHTML={{ __html: transferMessage }}></span>
-          </div>
-        )}
+                 {!showButtons && (
+           <div className={`transfer-info ${transferMessage === '결과 집계 완료!' ? 'complete-message' : ''}`}>
+             <span dangerouslySetInnerHTML={{ __html: transferMessage }}></span>
+           </div>
+         )}
+
+         {/* 2카드 안내 토스트 */}
+         {showTwosToast && (
+           <div className="twos-toast">
+             <div className="twos-toast-content">
+               <span className="twos-icon">🃏</span>
+               <span className="twos-message">2 카드는 남은 카드 수를 2배 처리합니다.</span>
+             </div>
+           </div>
+         )}
 
         {showButtons && (
           <div className="controls">

@@ -146,17 +146,19 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
 
   const handleLogin = () => {
     const state = Math.random().toString(36).substring(2);
+    const nonce = Math.random().toString(36).substring(2);
     sessionStorage.setItem('oauth_state', state);
+    sessionStorage.setItem('oauth_nonce', nonce);
 
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID!;
     const redirectUri = process.env.REACT_APP_GOOGLE_REDIRECT_URI!;
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${encodeURIComponent(clientId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=code` +
+      `&response_type=id_token` +
       `&scope=${encodeURIComponent('profile email')}` +
       `&state=${encodeURIComponent(state)}` +
-      `&access_type=offline` +
+      `&nonce=${encodeURIComponent(nonce)}` +
       `&prompt=select_account`;
 
     window.location.href = authUrl;

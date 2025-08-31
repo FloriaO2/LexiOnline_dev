@@ -93,6 +93,46 @@
   color: #28a745;
 }
 
+/* 게임화면 전용 토스트 스타일 */
+.toast.game-toast {
+  top: 3vh;
+  bottom: auto;
+  transform: translateX(-50%) translateY(-100%);
+  background: rgba(255, 255, 255, 0.95);
+  border: 0.15vw solid rgba(0, 0, 0, 0.6);
+  box-shadow: 0 1vw 3vw rgba(0, 0, 0, 0.2);
+}
+
+/* 게임화면 토스트의 세로선 스타일 */
+.toast.game-toast.toast-success {
+  border-left: 0.3vw solid #28a745;
+}
+
+.toast.game-toast.toast-error {
+  border-left: 0.3vw solid #dc3545;
+}
+
+.toast.game-toast.toast-info {
+  border-left: 0.3vw solid #17a2b8;
+}
+
+.toast.game-toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.game-toast .toast-message {
+  color: #333333;
+}
+
+.toast.game-toast .toast-close {
+  color: #666666;
+}
+
+.toast.game-toast .toast-close:hover {
+  color: #333333;
+  background: rgba(0, 0, 0, 0.1);
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .toast {
@@ -101,6 +141,11 @@
     min-width: auto;
     max-width: none;
     padding: 1.2vw 1.5vw;
+  }
+  
+  .toast.game-toast {
+    top: 6vh;
+    bottom: auto;
   }
   
   .toast-icon {

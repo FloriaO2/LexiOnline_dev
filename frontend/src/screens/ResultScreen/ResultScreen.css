@@ -535,7 +535,7 @@
   font-weight: bold;
   box-shadow: 0 0.2vh 0.8vh rgba(102, 126, 234, 0.3);
   border: 0.1vh solid rgba(255, 255, 255, 0.2);
-  margin-right: 0.8vw;
+  margin-right: 0vw; /* 우측 마진 줄임 (0.8vw → 0.2vw) */
   text-shadow: 0 0.1vh 0.2vh rgba(0, 0, 0, 0.3);
 }
 
@@ -614,8 +614,8 @@
   color: #333;
   font-weight: bold;
   font-size: 2.2vh;
-  padding: 1vh 1.5vw;
-  border-radius: 2.5vh;
+  padding: 0.5vh 0.8vw;
+  border-radius: 2vh;
   border: 0.3vh solid #ffb700;
   box-shadow: 
     0 0.6vh 1.8vh rgba(255, 215, 0, 0.5),
@@ -623,7 +623,7 @@
     0 0 0 0.2vh rgba(0, 0, 0, 0.1) inset;
   backdrop-filter: blur(0.5vh);
   text-shadow: 0 0.1vh 0.2vh rgba(0, 0, 0, 0.3);
-  min-width: 3.5vw;
+  min-width: 2.5vw;
   text-align: center;
   white-space: nowrap;
 }
@@ -655,4 +655,52 @@
   font-weight: bold;
   font-size: 2vh;
   position: relative;
+}
+
+/* 2카드 안내 토스트 스타일 */
+.twos-toast {
+  position: absolute;
+  bottom: 15vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  animation: toastSlideIn 0.5s ease-out;
+}
+
+.twos-toast-content {
+  background: linear-gradient(145deg, rgba(45, 58, 74, 0.95) 0%, rgba(30, 42, 58, 0.95) 100%);
+  color: #e0e6ed;
+  padding: 1.5vh 2.5vw;
+  border-radius: 2vh;
+  font-size: 1.6vh;
+  font-weight: bold;
+  box-shadow: 
+    0 0.8vh 2.5vh rgba(0, 0, 0, 0.4),
+    0 0 0 0.1vh rgba(255, 255, 255, 0.1) inset;
+  border: 0.2vh solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(0.5vh);
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  white-space: nowrap;
+}
+
+.twos-icon {
+  font-size: 2vh;
+  filter: drop-shadow(0 0.1vh 0.2vh rgba(0, 0, 0, 0.3));
+}
+
+.twos-message {
+  text-shadow: 0 0.1vh 0.2vh rgba(0, 0, 0, 0.3);
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-2vh);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }

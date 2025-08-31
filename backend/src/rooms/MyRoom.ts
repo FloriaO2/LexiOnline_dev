@@ -436,6 +436,15 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     this.state.lastPlayerIndex = -1;
     this.state.currentTurnId = 0; // 턴 ID 초기화
 
+    // 6-1) 보드 상태 초기화 (새 라운드마다 15X4로 리셋)
+    this.state.boardCards.clear();
+    this.state.boardRows.clear();
+    this.state.boardCols.clear();
+    this.state.boardTurnIds.clear();
+    this.state.currentBoardRows = 4;  // 초기값 15X4로 리셋
+    this.state.currentBoardCols = 15; // 초기값 15X4로 리셋
+    console.log(`[DEBUG] 새 라운드 시작 - 보드 크기 리셋: ${this.state.currentBoardRows}x${this.state.currentBoardCols}`);
+
     // 7) 카드 분배 후 각 플레이어마다 자신의 상태 보내기
     console.log(`[DEBUG] roundStart 메시지 전송 시작 - 플레이어 수: ${this.state.playerOrder.length}`);
     for (const sessionId of this.state.playerOrder) {

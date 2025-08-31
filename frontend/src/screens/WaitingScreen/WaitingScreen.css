@@ -10,7 +10,7 @@
 
 .waiting-container {
   background: rgba(26, 26, 26, 0.95);
-  padding: 3vw;
+  padding: 0vh 3vw;
   border-radius: 1.5vw;
   box-shadow: 0 1.5vw 3vw rgba(0, 0, 0, 0.5);
   min-width: 45vw;
@@ -476,11 +476,7 @@
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
-  .waiting-container {
-    min-width: 90vw;
-    max-width: 95vw;
-    padding: 4vw;
-  }
+
   
   .header h1 {
     font-size: clamp(2vw, 5vw, 3vw);
@@ -509,11 +505,7 @@
 }
 
 @media (max-width: 480px) {
-  .waiting-container {
-    min-width: 95vw;
-    max-width: 98vw;
-    padding: 5vw;
-  }
+
   
   .header h1 {
     font-size: clamp(2.5vw, 6vw, 3.5vw);

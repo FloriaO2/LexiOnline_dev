@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './WaitingScreen.css';
+import '../../components/Toast/Toast.css';
 import ColyseusService from '../../services/ColyseusService';
 import Toast from '../../components/Toast/Toast';
 
@@ -89,8 +90,27 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
   const [isReady, setIsReady] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'info',
+    isVisible: false,
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'error') => {
+    setToast({
+      message,
+      type,
+      isVisible: true,
+    });
+  };
+
+  const closeToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
 
   useEffect(() => {
     // URL을 /waiting으로 설정
@@ -277,7 +297,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
 
     room.onMessage('changeRejected', (message: any) => {
       console.error('라운드 수 변경 거부:', message.reason);
-      alert('라운드 수 변경이 거부되었습니다: ' + message.reason);
+      showToast('라운드 수 변경이 거부되었습니다: ' + message.reason, 'error');
     });
 
     room.onMessage('playerJoined', (message: any) => {
@@ -373,8 +393,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
 
   const copyRoomCode = () => {
     navigator.clipboard.writeText(roomCode);
-    setToastMessage('방 코드가 복사되었습니다!');
-    setShowToast(true);
+    showToast('방 코드가 복사되었습니다!', 'success');
   };
 
   const allPlayersReady = players.length > 0 && players.every(player => player.isReady);
@@ -394,10 +413,10 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
   return (
     <div className="waiting-screen">
       <Toast 
-        message={toastMessage} 
-        type="success"
-        isVisible={showToast} 
-        onClose={() => setShowToast(false)} 
+        message={toast.message} 
+        type={toast.type}
+        isVisible={toast.isVisible} 
+        onClose={closeToast} 
         showCloseButton={false}
         hideBorder={true}
         isCopyNotification={true}
