@@ -1392,11 +1392,69 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     }, 0);
   };
 
+  // 마우스 위치를 기준으로 가장 가까운 삽입 위치를 계산하는 함수
+  const calculateDropPosition = (e: React.DragEvent): number => {
+    if (!handRef.current) return 0;
+    
+    const rect = handRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const cards = handRef.current.children;
+    
+    if (cards.length === 0) return 0;
+    
+    // 각 카드의 중앙점을 기준으로 경계선들을 계산
+    const boundaries: number[] = [];
+    
+    for (let i = 0; i < cards.length; i++) {
+      const cardRect = cards[i].getBoundingClientRect();
+      const cardX = cardRect.left - rect.left;
+      const cardCenter = cardX + cardRect.width / 2;
+      
+      if (i === 0) {
+        // 첫 번째 카드 앞쪽 경계 (카드 시작점)
+        boundaries.push(cardX);
+      }
+      
+      // 각 카드의 중앙점을 경계로 추가
+      boundaries.push(cardCenter);
+    }
+    
+    // 마지막 카드 뒤쪽 경계 (카드 끝점)
+    if (cards.length > 0) {
+      const lastCardRect = cards[cards.length - 1].getBoundingClientRect();
+      const lastCardX = lastCardRect.left - rect.left;
+      boundaries.push(lastCardX + lastCardRect.width);
+    }
+    
+         // 마우스 위치가 어느 구간에 속하는지 판단
+     // boundaries 배열: [카드0앞, 카드0중앙, 카드1중앙, 카드2중앙, ..., 마지막카드뒤]
+     
+     for (let i = 0; i < boundaries.length - 1; i++) {
+       const leftBoundary = boundaries[i];
+       const rightBoundary = boundaries[i + 1];
+       
+       // 마우스가 현재 구간 안에 있는지 확인
+       if (mouseX >= leftBoundary && mouseX <= rightBoundary) {
+         // i번째 구간에 속함
+         if (i === 0) {
+           return 0; // 카드0 앞 - 카드0 중앙 구간 → 맨 앞으로 삽입
+         } else {
+           return i; // 카드(i-1) 중앙 - 카드i 중앙 구간 → 카드(i-1)와 카드i 사이에 삽입
+         }
+       }
+     }
+     
+     // 마지막 구간을 벗어난 경우 (마지막 카드 뒤)
+     return cards.length;
+  };
+
   // 드래그 오버 핸들러
-  const handleDragOver = (e: React.DragEvent, index: number) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    setDragOverIndex(index);
+    
+    const dropPosition = calculateDropPosition(e);
+    setDragOverIndex(dropPosition);
   };
 
   // 드래그 리브 핸들러
@@ -1406,7 +1464,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   };
 
   // 드롭 핸들러
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     
     if (draggedCard === null) return;
@@ -1414,8 +1472,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     const draggedIndex = sortedHand.findIndex(card => card.id === draggedCard);
     if (draggedIndex === -1) return;
     
+    const dropPosition = calculateDropPosition(e);
+    
     // 같은 위치에 드롭한 경우 무시
-    if (draggedIndex === dropIndex) {
+    if (draggedIndex === dropPosition || draggedIndex === dropPosition - 1) {
       setDraggedCard(null);
       setDragOverIndex(null);
       setIsDragging(false);
@@ -1425,7 +1485,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     // 카드 순서 변경
     const newHand = [...sortedHand];
     const [draggedItem] = newHand.splice(draggedIndex, 1);
-    newHand.splice(dropIndex, 0, draggedItem);
+    
+    // 삽입 위치 조정 (드래그된 카드가 제거되었으므로)
+    const adjustedDropPosition = dropPosition > draggedIndex ? dropPosition - 1 : dropPosition;
+    newHand.splice(adjustedDropPosition, 0, draggedItem);
     
     // sessionStorage에 정렬 순서 저장
     const room = ColyseusService.getRoom();
@@ -1960,7 +2023,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
           {/* 하단 하단 - 내 손패 및 정렬 버튼 */}
           <div className="bottom-bottom">
             {/* 내 손패 */}
-            <div className={`my-hand ${showCardDealAnimation ? 'dealing' : ''}`} ref={handRef}>
+            <div 
+              className={`my-hand ${showCardDealAnimation ? 'dealing' : ''}`} 
+              ref={handRef}
+              onDragOver={showCardDealAnimation ? undefined : handleDragOver}
+              onDragLeave={showCardDealAnimation ? undefined : handleDragLeave}
+              onDrop={showCardDealAnimation ? undefined : handleDrop}
+            >
               {(showCardDealAnimation ? visibleHand : sortedHand).map((tile, index) => (
                 <div 
                   key={tile.id} 
@@ -1973,9 +2042,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                   onClick={showCardDealAnimation ? undefined : () => handleCardSelect(tile.id)}
                   draggable={!isSorting && !showCardDealAnimation}
                   onDragStart={showCardDealAnimation ? undefined : (e: React.DragEvent) => handleDragStart(e, tile.id)}
-                  onDragOver={showCardDealAnimation ? undefined : (e: React.DragEvent) => handleDragOver(e, index)}
-                  onDragLeave={showCardDealAnimation ? undefined : handleDragLeave}
-                  onDrop={showCardDealAnimation ? undefined : (e: React.DragEvent) => handleDrop(e, index)}
                   onDragEnd={showCardDealAnimation ? undefined : handleDragEnd}
                 >
                   {/* 카드 분배 애니메이션 중에는 뒷면만 표시 */}
