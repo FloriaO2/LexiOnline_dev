@@ -15,7 +15,7 @@ export class PlayerState extends Schema {
 
   @type([ "int8" ]) sortedHand = new ArraySchema<number>();
 
-  @type("number") score = 0;
+  @type("number") score = 100;
 
   @type("string") nickname = "";
 

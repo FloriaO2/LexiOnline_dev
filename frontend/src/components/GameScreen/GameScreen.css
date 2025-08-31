@@ -154,6 +154,7 @@
 .player-coins {
   font-size: 1vw;
   color: #6c757d;
+  font-weight: bold;
   margin-bottom: 0.1vh;
   display: flex;
   align-items: center;
