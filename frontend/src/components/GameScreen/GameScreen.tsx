@@ -1614,7 +1614,22 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     
     setIsSorting(true);
     
-    const sorted = [...sortedHand].sort((a, b) => a.value - b.value);
+    const colorOrder = gameMode === 'easyMode'
+      ? ['black', 'bronze', 'silver', 'gold']
+      : ['cloud', 'star', 'moon', 'sun'];
+    
+    const sorted = [...sortedHand].sort((a, b) => {
+      // 먼저 숫자로 정렬
+      if (a.value !== b.value) {
+        return a.value - b.value;
+      }
+      // 숫자가 같으면 색상으로 정렬
+      const aDisplayColor = getDisplayColor(a.color, gameMode);
+      const bDisplayColor = getDisplayColor(b.color, gameMode);
+      const aIndex = colorOrder.indexOf(aDisplayColor);
+      const bIndex = colorOrder.indexOf(bDisplayColor);
+      return aIndex - bIndex;
+    });
     
     // sessionStorage에 정렬 순서 저장
     const room = ColyseusService.getRoom();
