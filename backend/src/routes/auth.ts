@@ -12,29 +12,51 @@ const JWT_SECRET = process.env.JWT_SECRET; // 실제 환경변수로 설정하�
 // POST /api/auth/google
 router.post("/auth/google", async (req: Request, res: Response) => {
   console.log("✅ [POST] /api/auth/google 진입");
-  const { token } = req.body; // 프론트에서 넘긴 구글 id_token
+  const { code } = req.body; // 프론트에서 넘긴 구글 authorization code
 
-  if (!token) {
-    return res.status(400).json({ error: "Token is required" });
+  if (!code) {
+    return res.status(400).json({ error: "Authorization code is required" });
   }
 
   try {
-    // 1) 구글 id_token 검증
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+    // 1) authorization code를 access token으로 교환
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
+      }),
     });
 
-    const payload = ticket.getPayload();
-
-    if (!payload || !payload.sub) {
-      return res.status(401).json({ error: "Invalid Google token" });
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to exchange authorization code');
     }
 
-    const googleId = payload.sub;
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    // 2) access token으로 사용자 정보 가져오기
+    const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!userResponse.ok) {
+      throw new Error('Failed to fetch user info');
+    }
+
+    const userData = await userResponse.json();
+    const googleId = userData.id;
     const now = new Date();
 
-    // 2) DB 내 기존 사용자 조회
+    // 3) DB 내 기존 사용자 조회
     let user = await prisma.user.findUnique({ where: { googleId } });
 
     if (!user) {
@@ -42,8 +64,8 @@ router.post("/auth/google", async (req: Request, res: Response) => {
       user = await prisma.user.create({
         data: {
           googleId,
-          nickname: payload.name || "Anonymous",
-          profileImageUrl: payload.picture,
+          nickname: userData.name || "Anonymous",
+          profileImageUrl: userData.picture,
           createdAt: now,
           updatedAt: now,
           lastLoginAt: now,

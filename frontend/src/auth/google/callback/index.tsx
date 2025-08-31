@@ -16,29 +16,31 @@ export default function GoogleOAuthCallback(): JSX.Element {
 
     console.log('[OAuthCallback] 컴포넌트 실행');
 
-    if (!window.location.hash) {
-      console.log('[OAuthCallback] URL 해시가 없음, 인증 실패');
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (!urlParams.has('code')) {
+      console.log('[OAuthCallback] Authorization code가 없음, 인증 실패');
       navigate('/login');
       return;
     }
 
-    const params = new URLSearchParams(window.location.hash.substring(1));
+    console.log('[OAuthCallback] URL 쿼리 파라미터 파싱 완료:', window.location.search);
 
-    console.log('[OAuthCallback] URL 해시 파싱 완료:', window.location.hash);
-
-    const returnedState = params.get('state');
+    const returnedState = urlParams.get('state');
     const savedState = sessionStorage.getItem('oauth_state');
+    const authCode = urlParams.get('code');
 
     console.log('[OAuthCallback] returnedState:', returnedState);
     console.log('[OAuthCallback] savedState(sessionStorage):', savedState);
+    console.log('[OAuthCallback] authCode:', authCode);
 
     if (returnedState !== savedState) {
       console.warn('[OAuthCallback] state 불일치, 잘못된 접근');
       alert('잘못된 접근입니다');
 
-      // 해시는 여기서도 제거해줍니다.
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-      console.log('[OAuthCallback] URL 해시 제거 완료');
+      // URL을 정리합니다.
+      window.history.replaceState({}, document.title, window.location.pathname);
+      console.log('[OAuthCallback] URL 정리 완료');
 
       navigate('/login');
       return;
@@ -47,14 +49,11 @@ export default function GoogleOAuthCallback(): JSX.Element {
     sessionStorage.removeItem('oauth_state');
     console.log('[OAuthCallback] 세션 저장소의 oauth_state 제거');
 
-    const idToken = params.get('id_token');
-    console.log('[OAuthCallback] id_token:', idToken);
-
-    if (idToken) {
+    if (authCode) {
       fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: idToken }),
+        body: JSON.stringify({ code: authCode }),
       })
         .then(async (res) => {
           if (!res.ok) {
@@ -66,25 +65,25 @@ export default function GoogleOAuthCallback(): JSX.Element {
         .then((data) => {
           // 로그인 성공 처리
           sessionStorage.setItem('access_token', data.token);
-          // 해시 제거는 로그인 성공 후 여기서 단 한 번만
-          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-          console.log('[OAuthCallback] URL 해시 제거 완료');
+          // URL 정리는 로그인 성공 후 여기서 단 한 번만
+          window.history.replaceState({}, document.title, window.location.pathname);
+          console.log('[OAuthCallback] URL 정리 완료');
           navigate('/');
         })
         .catch((err) => {
           console.error('서버 로그인 실패:', err);
           alert('로그인에 실패했습니다.');
-          // 해시 제거는 오류 시에도 단 한 번만
-          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-          console.log('[OAuthCallback] URL 해시 제거 완료');
+          // URL 정리는 오류 시에도 단 한 번만
+          window.history.replaceState({}, document.title, window.location.pathname);
+          console.log('[OAuthCallback] URL 정리 완료');
           navigate('/login');
         });
     } else {
-      console.error('[OAuthCallback] id_token이 없음');
+      console.error('[OAuthCallback] authorization code가 없음');
       alert('로그인에 실패했습니다.');
-      // 해시 제거도 단 한 번만
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-      console.log('[OAuthCallback] URL 해시 제거 완료');
+      // URL 정리도 단 한 번만
+      window.history.replaceState({}, document.title, window.location.pathname);
+      console.log('[OAuthCallback] URL 정리 완료');
       navigate('/login');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
