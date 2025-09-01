@@ -7,7 +7,8 @@ class ColyseusService {
   private roomInfo: { roomId: string; sessionId: string; nickname: string } | null = null;
 
   constructor() {
-    this.client = new Client("ws://localhost:2567");
+    const serverUrl = process.env.REACT_APP_SERVER_URL || "ws://localhost:2567";
+    this.client = new Client(serverUrl);
   }
 
   async connectToRoom(roomName?: string): Promise<Room> {
