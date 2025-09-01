@@ -31,28 +31,24 @@
   border: 0.1vw solid rgba(255, 255, 255, 0.15);
 }
 
-/* 라운드 정보 */
-.round-info {
-  position: fixed;
-  top: 0.5vh;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
+/* 인라인 라운드 정보 */
+.round-info-inline {
   display: flex;
-  justify-content: center;
   align-items: center;
+  flex-shrink: 0;
 }
 
-.round-text {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #333;
-  padding: 0.8vh 2vw;
-  border-radius: 2vw;
-  font-size: 1.2vw;
+.round-text-inline {
+  background: linear-gradient(135deg, #f7b500 0%, #fdd835 50%, #f39c12 100%);
+  color: #2c3e50;
+  padding: 0.5vh 1.2vw;
+  border-radius: 0.4vw;
+  font-size: 1.1vw;
   font-weight: bold;
-  box-shadow: 0 0.4vh 1vh rgba(255, 215, 0, 0.3);
-  border: 0.1vw solid rgba(255, 215, 0, 0.5);
-  backdrop-filter: blur(0.5vh);
+  box-shadow: 0 0.3vh 0.8vh rgba(0, 0, 0, 0.3), inset 0 0.1vh 0.2vh rgba(255, 255, 255, 0.4);
+  border: 0.15vw solid #f39c12;
+  white-space: nowrap;
+  text-shadow: 0 0.1vh 0.2vh rgba(255, 255, 255, 0.5);
 }
 
 /* 상단 좌측 - 다른 플레이어 정보 */
@@ -489,16 +485,16 @@
   gap: 0.4vw;
 }
 
-/* 중앙 - 현재 조합 및 버튼들 */
+/* 중앙 - 라운드, 현재 조합 및 버튼들 */
 .center-controls {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.8vw;
+  gap: 1vw;
   flex: 1;
   border: 0.15vw solid rgba(255, 255, 255, 0.2);
   border-radius: 0.6vw;
-  padding: 1vh 2vw;
+  padding: 1vh 1.5vw;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(5px);
 }

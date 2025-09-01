@@ -1977,12 +1977,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       )}
       
       <div className="game-container">
-        {/* 상단 - 라운드 정보 */}
-        <div className="round-info">
-          <span className="round-text">
-            라운드 {gameState.round} / {ColyseusService.getRoom()?.state?.totalRounds || gameState.totalRounds}
-          </span>
-        </div>
+
         
         {/* 상단 좌측 - 다른 플레이어 정보 */}
         <div className="top-left-section">
@@ -2107,8 +2102,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
               </div>
             </div>
 
-            {/* 중앙 - 현재 조합 및 버튼들 */}
+            {/* 중앙 - 라운드, 현재 조합 및 버튼들 */}
             <div className="center-controls">
+              <div className="round-info-inline">
+                <span className="round-text-inline">
+                  라운드 {gameState.round} / {ColyseusService.getRoom()?.state?.totalRounds || gameState.totalRounds}
+                </span>
+              </div>
               <div className="current-combination">
                 <CombinationWheel 
                   currentCombination={getCurrentCombinationText()}
