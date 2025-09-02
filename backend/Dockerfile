@@ -45,4 +45,4 @@ COPY --from=build /app /app
 ENTRYPOINT ["/app/docker-entrypoint"]
 
 # Start the server by default, this can be overwritten at runtime
-CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "start:prod" ]
