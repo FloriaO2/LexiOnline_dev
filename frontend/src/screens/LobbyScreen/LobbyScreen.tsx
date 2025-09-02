@@ -152,6 +152,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
 
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID!;
     const redirectUri = process.env.REACT_APP_GOOGLE_REDIRECT_URI!;
+    
+    // 디버깅을 위한 로그 추가
+    console.log('Google OAuth Debug Info:');
+    console.log('Client ID:', clientId);
+    console.log('Redirect URI:', redirectUri);
+    console.log('Full Auth URL:', `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=id_token&scope=${encodeURIComponent('profile email')}&state=${encodeURIComponent(state)}&nonce=${encodeURIComponent(nonce)}&prompt=select_account`);
+    
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${encodeURIComponent(clientId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
