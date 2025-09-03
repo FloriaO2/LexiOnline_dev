@@ -1,5 +1,5 @@
 # Adjust NODE_VERSION as desired
-ARG NODE_VERSION=20.17.1
+ARG NODE_VERSION=20.16.0
 FROM node:${NODE_VERSION}-slim
 
 LABEL fly_launch_runtime="NodeJS/Prisma"
@@ -23,7 +23,7 @@ RUN npm ci --verbose
 
 # Copy Prisma schema and generate client
 COPY prisma ./prisma/
-RUN npx prisma generate --verbose
+RUN npx prisma generate
 
 # Copy application code
 COPY . .
