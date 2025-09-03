@@ -31,9 +31,23 @@ export default config({
     // API 라우터 등록
     app.use('/api', authRouter);
 
+    // 루트 경로 라우트
+    app.get("/", (req, res) => {
+      res.json({
+        message: "LexiOnline Backend API",
+        status: "running",
+        timestamp: new Date().toISOString(),
+        endpoints: {
+          auth: "/api/auth",
+          hello: "/hello_world",
+          monitor: "/monitor"
+        }
+      });
+    });
+
     // 테스트용 라우트
     app.get("/hello_world", (req, res) => {
-      res.send("It's time to kick ass and chew bubblegum!");
+      res.send("TEST");
     });
 
     // Playground 및 Monitor (비프로덕션)

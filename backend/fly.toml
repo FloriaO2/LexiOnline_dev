@@ -8,7 +8,6 @@ primary_region = 'nrt'
 
 [build]
   dockerfile = "Dockerfile"
-  build-target = "production"
 
 [env]
   PORT = '8080'
