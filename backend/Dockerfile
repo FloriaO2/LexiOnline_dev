@@ -19,11 +19,11 @@ RUN apt-get update -qq && \
 COPY package.json package-lock.json ./
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci
+RUN npm ci --verbose
 
-# Generate Prisma Client
+# Copy Prisma schema and generate client
 COPY prisma ./prisma/
-RUN npx prisma generate
+RUN npx prisma generate --verbose
 
 # Copy application code
 COPY . .
