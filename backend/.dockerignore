@@ -1,24 +1,23 @@
-# flyctl launch added from .gitignore
-**\node_modules
-**\build
-**\.colyseus-cloud.json
-**\.devmode.json
-**\.env.local
-**\.env
-src\generated\prisma
-**\.env.development
-**\.env.production
-fly.toml
-
-
 node_modules
-.git
-Dockerfile
-.dockerignore
-.env
-*.log
 npm-debug.log
-# 필요 시 예외
-!prisma/**
-# (로컬 빌드 산출물을 넣어야 한다면)
-!dist/**
+.git
+.gitignore
+README.md
+.env
+.env.local
+.env.production
+.env.test
+.nyc_output
+coverage
+.nyc_output
+.coverage
+.cache
+.DS_Store
+*.log
+build
+dist
+.vscode
+.idea
+*.swp
+*.swo
+*~

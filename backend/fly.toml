@@ -8,10 +8,12 @@ primary_region = 'nrt'
 
 [build]
   dockerfile = "Dockerfile"
+  build-target = "production"
 
 [env]
   PORT = '8080'
   NODE_ENV = 'production'
+  # DATABASE_URL = 'your-database-url-here'
 
 [http_service]
   internal_port = 8080

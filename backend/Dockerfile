@@ -1,5 +1,5 @@
 # Adjust NODE_VERSION as desired
-ARG NODE_VERSION=22.17.1
+ARG NODE_VERSION=20.17.1
 FROM node:${NODE_VERSION}-slim
 
 LABEL fly_launch_runtime="NodeJS/Prisma"
@@ -27,6 +27,9 @@ RUN npx prisma generate
 
 # Copy application code
 COPY . .
+
+# Make docker-entrypoint executable
+RUN chmod +x docker-entrypoint
 
 # Build the application
 RUN npm run build
