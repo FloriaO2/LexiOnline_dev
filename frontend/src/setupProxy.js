@@ -6,7 +6,7 @@ module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://localhost:2567/api',
+      target: process.env.REACT_APP_API_URL || 'http://localhost:2567',
       changeOrigin: true,
       pathRewrite: {
         '^/api': '',

@@ -37,7 +37,8 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       return;
     }
 
-    fetch('/api/userinfo', {
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:2567';
+    fetch(`${apiUrl}/api/userinfo`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async res => {

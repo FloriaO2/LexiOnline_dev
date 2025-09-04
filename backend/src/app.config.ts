@@ -30,7 +30,6 @@ export default config({
 
     // API 라우터 등록
     app.use('/api', authRouter);
-
     // 루트 경로 라우트
     app.get("/", (req, res) => {
       res.json({
