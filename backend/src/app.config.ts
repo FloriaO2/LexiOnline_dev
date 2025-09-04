@@ -19,9 +19,12 @@ export default config({
       next();
     });
 
-    // CORS 설정: 프론트엔드 주소에 맞게 origin 변경하세요
+    // CORS 설정: 개발/프로덕션 환경 모두 지원
     app.use(cors({
-      origin: "http://localhost:3000",  // 프론트엔드 주소(포트 포함)
+      origin: [
+        "http://localhost:3000",           // 개발 환경
+        "https://lexionline-dev.vercel.app" // 프로덕션 환경
+      ],
       credentials: true,                 // 쿠키나 인증 헤더 사용 시 true
     }));
 
