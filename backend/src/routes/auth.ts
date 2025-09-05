@@ -9,6 +9,14 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const JWT_SECRET = process.env.JWT_SECRET; // 실제 환경변수로 설정하세요
 
+// GET /api/auth/config - OAuth 설정 정보 제공
+router.get("/auth/config", (req: Request, res: Response) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleRedirectUri: process.env.GOOGLE_REDIRECT_URI,
+  });
+});
+
 // POST /api/auth/google
 router.post("/auth/google", async (req: Request, res: Response) => {
   console.log("✅ [POST] /api/auth/google 진입");

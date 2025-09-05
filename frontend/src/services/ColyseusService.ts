@@ -7,7 +7,11 @@ class ColyseusService {
   private roomInfo: { roomId: string; sessionId: string; nickname: string } | null = null;
 
   constructor() {
-    const serverUrl = process.env.REACT_APP_SERVER_URL || "ws://localhost:2567";
+    // 배포 환경 감지 및 URL 설정
+    const isProduction = process.env.NODE_ENV === 'production';
+    const apiUrl = process.env.REACT_APP_API_URL || 
+      (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+    const serverUrl = apiUrl.replace(/^http/, 'ws');
     this.client = new Client(serverUrl);
   }
 

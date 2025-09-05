@@ -37,7 +37,9 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       return;
     }
 
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:2567';
+    const isProduction = process.env.NODE_ENV === 'production';
+    const apiUrl = process.env.REACT_APP_API_URL || 
+      (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
     fetch(`${apiUrl}/api/userinfo`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -145,31 +147,44 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     }
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const state = Math.random().toString(36).substring(2);
     const nonce = Math.random().toString(36).substring(2);
     sessionStorage.setItem('oauth_state', state);
     sessionStorage.setItem('oauth_nonce', nonce);
 
-    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID!;
-    const redirectUri = process.env.REACT_APP_GOOGLE_REDIRECT_URI!;
-    
-    // 디버깅을 위한 로그 추가
-    console.log('Google OAuth Debug Info:');
-    console.log('Client ID:', clientId);
-    console.log('Redirect URI:', redirectUri);
-    console.log('Full Auth URL:', `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=id_token&scope=${encodeURIComponent('profile email')}&state=${encodeURIComponent(state)}&nonce=${encodeURIComponent(nonce)}&prompt=select_account`);
-    
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${encodeURIComponent(clientId)}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=id_token` +
-      `&scope=${encodeURIComponent('profile email')}` +
-      `&state=${encodeURIComponent(state)}` +
-      `&nonce=${encodeURIComponent(nonce)}` +
-      `&prompt=select_account`;
+    try {
+      // 백엔드에서 OAuth 설정 정보 가져오기
+      const isProduction = process.env.NODE_ENV === 'production';
+      const apiUrl = process.env.REACT_APP_API_URL || 
+        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      
+      const configResponse = await fetch(`${apiUrl}/api/auth/config`);
+      const config = await configResponse.json();
+      
+      const clientId = config.googleClientId;
+      const redirectUri = config.googleRedirectUri;
+      
+      // 디버깅을 위한 로그 추가
+      console.log('Google OAuth Debug Info:');
+      console.log('Client ID:', clientId);
+      console.log('Redirect URI:', redirectUri);
+      console.log('Full Auth URL:', `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=id_token&scope=${encodeURIComponent('profile email')}&state=${encodeURIComponent(state)}&nonce=${encodeURIComponent(nonce)}&prompt=select_account`);
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&response_type=id_token` +
+        `&scope=${encodeURIComponent('profile email')}` +
+        `&state=${encodeURIComponent(state)}` +
+        `&nonce=${encodeURIComponent(nonce)}` +
+        `&prompt=select_account`;
 
-    window.location.href = authUrl;
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error('OAuth 설정을 가져오는데 실패했습니다:', error);
+      showToast('로그인 설정을 불러오는데 실패했습니다.', 'error');
+    }
   };
 
   const handleLogout = () => {
