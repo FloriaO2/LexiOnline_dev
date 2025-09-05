@@ -413,11 +413,13 @@
   gap: 1.5vw;
 }
 
+/*
 .sort-buttons {
   display: flex;
   flex-direction: column;
   gap: 0.8vh;
 }
+*/
 
 /*
 .sort-btn {

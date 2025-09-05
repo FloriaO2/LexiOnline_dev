@@ -1303,6 +1303,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     );
   };
 
+  // 선택된 모든 카드 해제
+  const handleResetSelection = () => {
+    setSelectedCards([]);
+  };
+
   // 드래그 시작 핸들러
   const handleDragStart = (e: React.DragEvent, cardId: number) => {
     // 정렬 애니메이션 중이면 드래그 차단
@@ -2119,18 +2124,28 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
             </div>
             {/* 정렬 버튼들 */}
             <div className="sort-buttons">
-              <button 
-                className="sort-btn" 
-                onClick={handleSortByNumber}
-              >
-                숫자정렬
-              </button>
-              <button 
-                className="sort-btn" 
-                onClick={handleSortByColor}
-              >
-                색상정렬
-              </button>
+              {selectedCards.length > 0 && (
+                <button 
+                  className="sort-btn reset-btn" 
+                  onClick={handleResetSelection}
+                >
+                  Reset
+                </button>
+              )}
+              <div className="sort-buttons-group">
+                <button 
+                  className="sort-btn" 
+                  onClick={handleSortByNumber}
+                >
+                  숫자정렬
+                </button>
+                <button 
+                  className="sort-btn" 
+                  onClick={handleSortByColor}
+                >
+                  색상정렬
+                </button>
+              </div>
             </div>
           </div>
         </div>
