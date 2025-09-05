@@ -291,21 +291,47 @@ export function handlePass(room: IMyRoom, client: Client) {
   const totalPlayersCount = room.state.players.size;
   
   if (passedPlayersCount >= totalPlayersCount - 1) {
-    // 모든 플레이어의 pass 상태 리셋
-    for (const player of room.state.players.values()) {
-      player.hasPassed = false;
+    // 블라인드모드일 때는 애니메이션 완료 후 턴을 넘기도록 처리
+    if (room.state.blindMode) {
+      // 게임보드의 모든 패들을 뒤집기 (카드 번호는 유지하되, 뒤집힌 상태로 표시)
+      room.broadcast("cardsFlipped", {
+        message: "블라인드 모드: 모든 패가 뒤집혔습니다."
+      });
+      
+      // 애니메이션 완료 후 턴을 넘기도록 지연 처리
+      setTimeout(() => {
+        // 모든 플레이어의 pass 상태 리셋
+        for (const player of room.state.players.values()) {
+          player.hasPassed = false;
+        }
+        
+        // pass 상태 리셋을 모든 클라이언트에게 브로드캐스트
+        room.broadcast("passReset", {
+          message: "모든 플레이어가 pass하여 새로운 라운드가 시작됩니다."
+        });
+        
+        // 턴 넘기기
+        room.nextPlayer();
+      }, 800); // 애니메이션 시간과 동일 (0.8초)
+    } else {
+      // 일반 모드일 때는 기존대로 즉시 처리
+      // 모든 플레이어의 pass 상태 리셋
+      for (const player of room.state.players.values()) {
+        player.hasPassed = false;
+      }
+      
+      // pass 상태 리셋을 모든 클라이언트에게 브로드캐스트
+      room.broadcast("passReset", {
+        message: "모든 플레이어가 pass하여 새로운 라운드가 시작됩니다."
+      });
+      
+      // 턴 넘기기
+      room.nextPlayer();
     }
-    
-    // pass 상태 리셋을 모든 클라이언트에게 브로드캐스트
-    room.broadcast("passReset", {
-      message: "모든 플레이어가 pass하여 새로운 라운드가 시작됩니다."
-    });
-    
-    // 게임보드의 패들은 그대로 유지하고 pass 상태만 리셋
-    // lastType, lastMadeType, lastHighestValue, lastCards는 그대로 유지
+  } else {
+    // pass 조건이 만족되지 않았을 때는 즉시 턴 넘기기
+    room.nextPlayer();
   }
-  
-  room.nextPlayer();
 }
 
 // ready 상태 변경 처리

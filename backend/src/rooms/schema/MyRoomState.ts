@@ -26,6 +26,8 @@ export class MyRoomState extends Schema {
 
   @type("boolean") easyMode = false;
 
+  @type("boolean") blindMode = false; // false: 공개모드, true: 블라인드모드
+
   @type("int8") nowPlayerIndex = 0;
 
   @type("int8") maxNumber = 0;

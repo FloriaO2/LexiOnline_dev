@@ -589,9 +589,6 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
                 다음 라운드
               </button>
             )}
-            <button className="btn btn-secondary" onClick={handleBackToLobby}>
-              로비로 돌아가기
-            </button>
           </div>
         )}
       </div>

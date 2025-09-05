@@ -340,11 +340,78 @@
   color: #40e0d0;
 }
 
+/* 뒤집힌 패 스타일 (블라인드모드) */
+.board-card.flipped-card {
+  background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+  color: #333;
+  border: 0.2vw solid #666;
+}
+
+.flipped-card-back {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+  border-radius: 0.2vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.flipped-card-back::before {
+  content: '';
+}
+
+/* 패 뒤집기 애니메이션 */
+@keyframes flipCard {
+  0% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: rotateY(45deg) scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: rotateY(90deg) scale(0.9);
+    opacity: 0.5;
+  }
+  75% {
+    transform: rotateY(135deg) scale(0.95);
+    opacity: 0.3;
+  }
+  100% {
+    transform: rotateY(180deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.board-card.flipping-card {
+  animation: flipCard 0.8s ease-in-out !important;
+  animation-fill-mode: forwards !important;
+  transform-style: preserve-3d !important;
+  z-index: 10 !important;
+  position: relative !important;
+  background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%) !important;
+  border: 0.2vw solid #666 !important;
+  box-shadow: none !important;
+}
+
+/* 애니메이션 중일 때 다른 스타일 무시 */
+.board-card.flipping-card * {
+  display: none !important;
+}
+
 
 
 .board-card.new-card {
   box-shadow: 0 0 1.5vh rgba(255, 165, 0, 0.8), 0 0 2.5vh rgba(255, 255, 0, 0.6);
   animation: glow 2s ease-in-out infinite alternate;
+}
+
+.board-card.flipped-card.new-card {
+  box-shadow: none;
+  animation: none;
 }
 
 @keyframes glow {

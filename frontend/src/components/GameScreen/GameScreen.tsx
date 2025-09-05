@@ -53,6 +53,7 @@ interface GameState {
   round: number;
   totalRounds: number;
   easyMode: boolean;
+  blindMode: boolean;
   maxNumber: number;
 }
 
@@ -76,7 +77,9 @@ const AnimatedRemainingTiles: React.FC<{ count: number }> = ({ count }) => {
 
 const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) => {
   const [currentCombination, setCurrentCombination] = useState<string>('');
-  const [gameMode, setGameMode] = useState<'easyMode' | 'normal'>('easyMode');
+  const [gameMode, setGameMode] = useState<'easyMode' | 'normal'>('normal');
+  const [blindMode, setBlindMode] = useState(false);
+  const [isFlipping, setIsFlipping] = useState(false);
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [boardCards, setBoardCards] = useState<Array<{
     id: number;
@@ -88,6 +91,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     playerId?: string;
     turnId?: number; // 같은 턴에 등록된 패인지 구분
     submitTime?: number; // 제출 시간 (최근 패 표시용)
+    isFlipped?: boolean; // 블라인드모드에서 뒤집힌 상태
+    isAnimating?: boolean; // 뒤집기 애니메이션 중인지
   }>>([]);
   const [sortedHand, setSortedHand] = useState<Array<{
     id: number;
@@ -256,10 +261,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     room.onStateChange((state) => {
       console.log('게임 상태 변경:', state);
 
-      // 개인의 easyMode 설정에 따라 gameMode를 설정
-      const myPlayer = state.players.get(room.sessionId);
-      if (myPlayer) {
-        setGameMode(myPlayer.easyMode ? 'easyMode' : 'normal');
+      // 개인의 easyMode 설정은 초기 로드 시에만 적용 (자동 동기화 방지)
+      // const myPlayer = state.players.get(room.sessionId);
+      // if (myPlayer) {
+      //   setGameMode(myPlayer.easyMode ? 'easyMode' : 'normal');
+      // }
+      
+      // 블라인드 모드 설정
+      if (state.blindMode !== undefined) {
+        setBlindMode(state.blindMode);
       }
       
       // 플레이어 정보 업데이트
@@ -334,6 +344,16 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       }));
       
       setPlayers(playerList);
+      
+      // 블라인드 모드 설정
+      if (message.blindMode !== undefined) {
+        setBlindMode(message.blindMode);
+      }
+      
+      // 초기 게임 모드 설정 (서버에서 저장된 개인 설정 반영)
+      if (message.myEasyMode !== undefined) {
+        setGameMode(message.myEasyMode ? 'easyMode' : 'normal');
+      }
       
       // 게임이 이미 시작되었고 손패가 있다면 손패만 업데이트 (애니메이션 없이)
       if (message.isGameStarted && message.myHand && message.myHand.length > 0) {
@@ -466,7 +486,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
             col: message.position.col + index,
             isNew: true,
             turnId: message.turnId || gameState.currentTurnId,
-            submitTime: Date.now()
+            submitTime: Date.now(),
+            isFlipped: false // 새로운 카드는 뒤집히지 않은 상태
           };
         });
         
@@ -534,6 +555,63 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       setPlayers(prevPlayers => 
         prevPlayers.map(player => ({ ...player, hasPassed: false }))
       );
+    });
+
+    room.onMessage('cardsFlipped', (message) => {
+      console.log('패 뒤집기:', message);
+      
+      // 이미 뒤집기 애니메이션이 진행 중이면 무시
+      if (isFlipping) {
+        console.log('[DEBUG] 이미 뒤집기 애니메이션 진행 중, 무시');
+        return;
+      }
+      
+      setIsFlipping(true);
+      
+      // 토스트 알림 먼저 표시
+      // showToast(message.message, 'info');
+      
+      // 토스트가 표시된 후 애니메이션 시작
+      setTimeout(() => {
+        // 애니메이션 시작 - 이미 뒤집힌 패들은 제외하고 현재 앞면인 패들만 애니메이션
+        setBoardCards(prev => {
+          const updated = prev.map(card => {
+            if (card.isFlipped) {
+              // 이미 뒤집힌 패들은 아무것도 변경하지 않음
+              console.log(`[DEBUG] 이미 뒤집힌 패 유지: ${card.id}, isFlipped: ${card.isFlipped}`);
+              return card;
+            } else {
+              // 아직 앞면인 패들만 애니메이션 시작
+              console.log(`[DEBUG] 앞면 패 애니메이션 시작: ${card.id}, isFlipped: ${card.isFlipped}`);
+              return { ...card, isAnimating: true };
+            }
+          });
+          console.log(`[DEBUG] 애니메이션 시작 후 패 상태:`, updated.map(c => ({ id: c.id, isFlipped: c.isFlipped, isAnimating: c.isAnimating })));
+          return updated;
+        });
+        
+        // 애니메이션 완료 후 검정 배경으로 변경
+        setTimeout(() => {
+          setBoardCards(prev => {
+            const updated = prev.map(card => {
+              if (card.isAnimating) {
+                // 애니메이션 중이던 패들만 뒤집힌 상태로 변경
+                console.log(`[DEBUG] 애니메이션 완료 - 패 뒤집기: ${card.id}`);
+                return { ...card, isFlipped: true, isAnimating: false };
+              } else {
+                // 이미 뒤집힌 패들은 그대로 유지
+                console.log(`[DEBUG] 애니메이션 완료 - 패 유지: ${card.id}, isFlipped: ${card.isFlipped}`);
+                return card;
+              }
+            });
+            console.log(`[DEBUG] 애니메이션 완료 후 패 상태:`, updated.map(c => ({ id: c.id, isFlipped: c.isFlipped, isAnimating: c.isAnimating })));
+            return updated;
+          });
+          
+          // 뒤집기 완료
+          setIsFlipping(false);
+        }, 800); // 애니메이션 시간과 동일
+      }, 100); // 토스트 표시 후 약간의 지연
     });
 
     room.onMessage('cycleEnded', (message) => {
@@ -606,11 +684,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     room.onMessage('gameStarted', (message) => {
       console.log('게임 시작:', message);
       setIsGameStarted(true);
-      const myPlayer = room.state.players.get(room.sessionId);
-      if (myPlayer) {
-        setGameMode(myPlayer.easyMode ? 'easyMode' : 'normal');
-      }
-      
+      // 게임 시작 시에도 모드는 자동으로 변경하지 않음 (사용자가 직접 변경해야 함)
+      // const myPlayer = room.state.players.get(room.sessionId);
+      // if (myPlayer) {
+      //   setGameMode(myPlayer.easyMode ? 'easyMode' : 'normal');
+      // }
     });
 
     return () => {
@@ -2008,15 +2086,22 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                   return (
                     <div key={colIndex} className="board-slot">
                       {card && (
-                        <div className={`board-card ${getDisplayColor(card.color, gameMode)} ${isMostRecent ? 'new-card' : ''}`}>
-                          {gameMode === 'normal' && imagesLoaded && getCardImage(getDisplayColor(card.color, gameMode)) && (
-                            <img 
-                              src={getCardImage(getDisplayColor(card.color, gameMode))!} 
-                              alt={getDisplayColor(card.color, gameMode)} 
-                              className="card-image"
-                            />
+                        <div className={`board-card ${blindMode && card.isFlipped && !card.isAnimating ? 'flipped-card' : getDisplayColor(card.color, gameMode)} ${isMostRecent ? 'new-card' : ''} ${card.isAnimating ? 'flipping-card' : ''}`}>
+                          {blindMode && card.isFlipped && !card.isAnimating ? (
+                            // 블라인드모드에서 패가 뒤집혔을 때는 검정 바탕만 표시
+                            <div className="flipped-card-back"></div>
+                          ) : (
+                            <>
+                              {gameMode === 'normal' && imagesLoaded && getCardImage(getDisplayColor(card.color, gameMode)) && (
+                                <img 
+                                  src={getCardImage(getDisplayColor(card.color, gameMode))!} 
+                                  alt={getDisplayColor(card.color, gameMode)} 
+                                  className="card-image"
+                                />
+                              )}
+                              <span className="card-value">{card.value || '?'}</span>
+                            </>
                           )}
-                          <span className="card-value">{card.value || '?'}</span>
                         </div>
                       )}
                     </div>

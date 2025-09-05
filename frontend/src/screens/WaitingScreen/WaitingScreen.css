@@ -122,6 +122,14 @@
   transition: font-size 0.3s ease;
 }
 
+.settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+  align-items: center;
+  justify-content: center;
+}
+
 .rounds-setting {
   display: flex;
   justify-content: center;
@@ -199,7 +207,7 @@
 .rounds-info {
   display: flex;
   align-items: center;
-  padding: 0.8vw 1.2vw;
+  padding: 0.6vw 1.2vw;
   border: 0.12vw solid #dee2e6;
   border-radius: 0.8vw;
   min-width: 8vw;
@@ -212,6 +220,41 @@
   color: #495057;
   text-align: center;
   width: 100%;
+}
+
+/* 모드 안내 텍스트 스타일 */
+.mode-info {
+  display: flex;
+  align-items: center;
+  padding: 0.6vw 1.2vw;
+  border: 0.12vw solid #dee2e6;
+  border-radius: 0.8vw;
+  min-width: 8vw;
+  box-shadow: 0 0.2vw 0.8vw rgba(0, 0, 0, 0.1);
+}
+
+.mode-text {
+  font-size: 1.1vw;
+  font-weight: 600;
+  color: #495057;
+  text-align: center;
+  width: 100%;
+}
+
+/* 블라인드 모드 설정 스타일 */
+.blindmode-setting {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2vw;
+  position: relative;
+}
+
+.blindmode-setting label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1vw;
+  letter-spacing: 0.05vw;
 }
 
 /* 라디오 버튼 스타일 */
@@ -494,6 +537,10 @@
     font-size: clamp(1.2vw, 3vw, 1.6vw);
   }
   
+  .blindmode-setting label {
+    font-size: clamp(1.2vw, 3vw, 1.6vw);
+  }
+  
   .custom-dropdown {
     min-width: 12vw;
   }
@@ -520,6 +567,10 @@
   }
   
   .rounds-setting label {
+    font-size: clamp(1.4vw, 3.5vw, 1.8vw);
+  }
+  
+  .blindmode-setting label {
     font-size: clamp(1.4vw, 3.5vw, 1.8vw);
   }
   

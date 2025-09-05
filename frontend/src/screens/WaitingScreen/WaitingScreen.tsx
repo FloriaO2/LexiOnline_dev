@@ -87,6 +87,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
   const [roomCode, setRoomCode] = useState('');
   const [rounds, setRounds] = useState(3);
   const [easyMode, setEasyMode] = useState(false);
+  const [blindMode, setBlindMode] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -183,6 +184,12 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
         setRounds(state.totalRounds);
         console.log('초기 라운드 수 설정:', state.totalRounds);
       }
+      
+      // 블라인드 모드 설정
+      if (state.blindMode !== undefined) {
+        setBlindMode(state.blindMode);
+        console.log('초기 블라인드 모드 설정:', state.blindMode);
+      }
     };
 
     // 초기 상태 로드
@@ -220,6 +227,12 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
         if (state.totalRounds !== undefined) {
           setRounds(state.totalRounds);
           console.log('라운드 수 업데이트:', state.totalRounds);
+        }
+        
+        // 블라인드 모드 업데이트
+        if (state.blindMode !== undefined) {
+          setBlindMode(state.blindMode);
+          console.log('블라인드 모드 업데이트:', state.blindMode);
         }
         
         // 본인이 그룹에 포함되어 있는지 확인
@@ -293,6 +306,11 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
           p.id === message.playerId ? { ...p, easyMode: message.easyMode } : p
         )
       );
+    });
+
+    room.onMessage('blindModeChanged', (message: any) => {
+      console.log('블라인드 모드 변경:', message);
+      setBlindMode(message.blindMode);
     });
 
     room.onMessage('changeRejected', (message: any) => {
@@ -438,9 +456,6 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
             {players.length > 0 ? (
               players.map((player) => (
                 <div key={player.id} className="player-item">
-                  <span className={`status ${player.easyMode ? 'ready' : 'waiting'}`}>
-                    {player.easyMode ? '초보 모드' : '일반 모드'}
-                  </span>
                   <span className="nickname">{player.nickname}</span>
                   <span className={`status ${player.isReady ? 'ready' : 'waiting'}`}>
                     {player.isReady ? '준비완료' : '대기중'}
@@ -458,7 +473,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
         <div className="game-settings">
           <h2>게임 설정</h2>
           <div className="settings-row">
-                         <div className="rounds-setting">
+            <div className="rounds-setting">
                <label htmlFor="rounds">라운드 수:</label>
                {isHost ? (
                  <CustomDropdown
@@ -484,44 +499,50 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
                  </div>
                )}
              </div>
-              <div className="easymode-setting">
+              <div className="blindmode-setting">
               <label>게임 모드:</label>
-              <div className="radio-group">
-                <label className="radio-option">
-                  <input
-                    type="radio"
-                    name="gameMode"
-                    value="normal"
-                    checked={!easyMode}
-                    onChange={() => {
-                      const room = ColyseusService.getRoom();
-                      if (room) {
-                        setEasyMode(false);
-                        room.send('easyMode', { easyMode: false });
-                      }
-                    }}
-                  />
-                  <span className="radio-custom"></span>
-                  <span className="radio-label">일반 모드</span>
-                </label>
-                <label className="radio-option">
-                  <input
-                    type="radio"
-                    name="gameMode"
-                    value="easy"
-                    checked={easyMode}
-                    onChange={() => {
-                      const room = ColyseusService.getRoom();
-                      if (room) {
-                        setEasyMode(true);
-                        room.send('easyMode', { easyMode: true });
-                      }
-                    }}
-                  />
-                  <span className="radio-custom"></span>
-                  <span className="radio-label">초보 모드</span>
-                </label>
-              </div>
+              {isHost ? (
+                <div className="radio-group">
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="blindMode"
+                      value="public"
+                      checked={!blindMode}
+                      onChange={() => {
+                        const room = ColyseusService.getRoom();
+                        if (room) {
+                          setBlindMode(false);
+                          room.send('changeBlindMode', { blindMode: false });
+                        }
+                      }}
+                    />
+                    <span className="radio-custom"></span>
+                    <span className="radio-label">공개 모드</span>
+                  </label>
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="blindMode"
+                      value="blind"
+                      checked={blindMode}
+                      onChange={() => {
+                        const room = ColyseusService.getRoom();
+                        if (room) {
+                          setBlindMode(true);
+                          room.send('changeBlindMode', { blindMode: true });
+                        }
+                      }}
+                    />
+                    <span className="radio-custom"></span>
+                    <span className="radio-label">블라인드 모드</span>
+                  </label>
+                </div>
+              ) : (
+                <div className="mode-info">
+                  <span className="mode-text">{blindMode ? '블라인드 모드' : '공개 모드'}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

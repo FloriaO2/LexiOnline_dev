@@ -49,6 +49,21 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       }
     });
 
+    this.onMessage("changeBlindMode", (client, data) => {
+      if (client.sessionId !== this.state.host) {
+        client.send("changeRejected", { reason: "Only the host can change game mode." });
+        return;
+      }
+      const newBlindMode = data.blindMode;
+      if (typeof newBlindMode === "boolean") {
+        this.state.blindMode = newBlindMode;
+        // 모든 클라이언트에게 블라인드 모드 변경 알림
+        this.broadcast("blindModeChanged", { blindMode: newBlindMode });
+      } else {
+        client.send("changeRejected", { reason: "Invalid blind mode value." });
+      }
+    });
+
     // 메시지 핸들러 분리한 함수 사용
     this.onMessage("submit", (client, data) => handleSubmit(this, client, data));
     this.onMessage("pass", (client) => handlePass(this, client));
@@ -141,7 +156,9 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
         myHand: sortedHand, // 정렬된 순서로 전송
         maxNumber: this.state.maxNumber,
         round: this.state.round,
-        totalRounds: this.state.totalRounds
+        totalRounds: this.state.totalRounds,
+        blindMode: this.state.blindMode,
+        myEasyMode: myPlayer?.easyMode || false // 개인 easyMode 설정 전송
       });
     });
 
