@@ -543,9 +543,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         
         const currentPlayer = updatedPlayers.find(p => p.isCurrentPlayer);
         const isMyTurn = currentPlayer && currentPlayer.sessionId === room.sessionId;
-        if (isMyTurn) {
-          setSelectedCards([]);
-        }
       }
     });
 
