@@ -9,7 +9,6 @@ import starImage from '../../star.png';
 import cloudImage from '../../cloud.png';
 import CombinationGuide from './CombinationGuide';
 import GameGuide from './GameGuide';
-import CardDealAnimation from './CardDealAnimation';
 import CombinationWheel from './CombinationWheel';
 import ColyseusService from '../../services/ColyseusService';
 import Toast from '../Toast/Toast';
@@ -87,16 +86,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   const [showCombinationGuide, setShowCombinationGuide] = useState(false);
   const [showGameGuide, setShowGameGuide] = useState(false);
   
-  // 카드 분배 애니메이션 관련 상태
-  const [showCardDealAnimation, setShowCardDealAnimation] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [dealtCards, setDealtCards] = useState<Set<number>>(new Set());
-  const [visibleHand, setVisibleHand] = useState<Array<{
-    id: number;
-    value: number;
-    color: string;
-    originalNumber: number;
-  }>>([]);
   
   // 드래그 앤 드롭 관련 상태
   const [draggedCard, setDraggedCard] = useState<number | null>(null);
@@ -202,7 +192,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     const sorted = applySavedSortOrder(handCards);
     setMyHand(sorted);
     setSortedHand(sorted);
-    setVisibleHand(sorted);
     console.log("set and sort hand");
   };
 
@@ -276,7 +265,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         
         // 게임이 이미 시작되었고 손패가 있다면 손패만 업데이트 (애니메이션 없이)
         const myPlayer = state.players.get(room.sessionId);
-        if (myPlayer && myPlayer.hand && myPlayer.hand.length > 0 && !showCardDealAnimation) {
+        if (myPlayer && myPlayer.hand && myPlayer.hand.length > 0) {
           const maxNumber = state.maxNumber || 13;
           const handCards = myPlayer.hand.map((cardNumber: number, index: number) => {
             const color = getCardColorFromNumber(cardNumber, maxNumber);
@@ -379,6 +368,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
     room.onMessage('roundStart', (message) => {
       console.log('라운드 시작:', message);
+      console.log('현재 라운드:', room.state.round);
+      console.log('message.hand 존재 여부:', !!message.hand);
+      console.log('message.hand 길이:', message.hand?.length);
       
       // 새 라운드 시작 시 보드 상태 초기화 (15X4로 리셋)
       setBoardCards([]);
@@ -400,10 +392,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         });
         
         setAndSortHand(handCards);
-        
-        setShowCardDealAnimation(true);
-        setDealtCards(new Set());
-        setVisibleHand([]);
       }
 
       if (message.allPlayers) {
@@ -590,6 +578,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       if (myPlayer) {
         setGameMode(myPlayer.easyMode ? 'easyMode' : 'normal');
       }
+      
     });
 
     return () => {
@@ -1002,63 +991,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
   // 정렬된 손패 초기화
   useEffect(() => {
-    if (!showCardDealAnimation) {
-      setSortedHand([...myHand]);
-    }
-  }, [myHand, showCardDealAnimation]);
-
-
-
-  const handleCardDealComplete = () => {
-    setShowCardDealAnimation(false);
-    setDealtCards(new Set());
-    setVisibleHand([...myHand]); // 모든 카드를 visibleHand에 설정
-    
-    // 손패를 정렬된 상태로 설정
     setSortedHand([...myHand]);
-  };
+  }, [myHand]);
 
-  const handleMyCardDealt = (cardIndex: number) => {
-    setDealtCards(prev => new Set(Array.from(prev).concat([cardIndex])));
-    // 카드가 분배될 때마다 실시간으로 visibleHand에 추가
-    setVisibleHand(prev => {
-      const card = sortedHand[cardIndex];
-      if (card && !prev.find(c => c.id === card.id)) {
-        return [...prev, card];
-      }
-      return prev;
-    });
-  };
 
-  // 카드 분배 애니메이션 완료 후 dealt 상태로 변경
-  useEffect(() => {
-    if (showCardDealAnimation) {
-      const timers: NodeJS.Timeout[] = [];
-      
-      sortedHand.forEach((_, index) => {
-        const timer = setTimeout(() => {
-          handleMyCardDealt(index);
-        }, (index + 1) * 120 + 600); // 애니메이션 delay + duration
-        
-        timers.push(timer);
-      });
-      
-      return () => {
-        timers.forEach(timer => clearTimeout(timer));
-      };
-    }
-  }, [showCardDealAnimation, sortedHand.length]);
 
-  // 모든 카드가 dealt 상태가 되면 애니메이션 완료
-  useEffect(() => {
-    if (showCardDealAnimation && dealtCards.size === sortedHand.length && sortedHand.length > 0) {
-      const timer = setTimeout(() => {
-        handleCardDealComplete();
-      }, 1000); // 마지막 카드 뒤집힌 후 1초 대기
-      
-      return () => clearTimeout(timer);
-    }
-  }, [dealtCards.size, sortedHand.length, showCardDealAnimation]);
+
+
 
   // 대기 중인 패들을 보드에 배치하는 함수
   const submitPendingCards = () => {
@@ -1355,13 +1294,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     }
   }, [boardSize]);
 
-  const handlePlayerCardReceived = (playerIndex: number) => {
-    setPlayers(prev => prev.map((player, index) => 
-      index === playerIndex 
-        ? { ...player, remainingTiles: player.remainingTiles + 1 }
-        : player
-    ));
-  };
 
   const handleCardSelect = (cardId: number) => {
     setSelectedCards(prev => 
@@ -1937,20 +1869,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
   return (
     <div className="game-screen">
-      {/* 카드 분배 애니메이션 */}
-      {showCardDealAnimation && players.length > 0 && (
-        <CardDealAnimation
-          isVisible={showCardDealAnimation}
-          onComplete={handleCardDealComplete}
-          playerCount={players.length}
-          cardsPerPlayer={16}
-          myPlayerIndex={players.findIndex(p => p.sessionId === mySessionId)} // 내 플레이어 인덱스
-          myHand={myHand}
-          onPlayerCardReceived={handlePlayerCardReceived}
-          onMyCardDealt={handleMyCardDealt}
-          gameMode={gameMode as 'easyMode' | 'normal'}
-        />
-      )}
 
       {/* 다음 라운드 대기 팝업 */}
       {waitingForNextRound && (
@@ -2089,7 +2007,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                   </span>
                   <span className="my-tiles">
                     <img src={cardImage} alt="카드" className="card-icon" />
-                    <AnimatedRemainingTiles count={showCardDealAnimation ? dealtCards.size : sortedHand.length} />
+                    <AnimatedRemainingTiles count={sortedHand.length} />
                   </span>
                 </div>
                 {players.find(p => p.sessionId === mySessionId)?.hasPassed && (
@@ -2118,16 +2036,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
               </div>
               <div className="control-buttons">
                 <button 
-                  className={`control-btn ${showCardDealAnimation ? 'disabled' : ''}`} 
-                  onClick={showCardDealAnimation ? undefined : handleViewCombinations}
-                  disabled={showCardDealAnimation}
+                  className="control-btn" 
+                  onClick={handleViewCombinations}
                 >
                   족보보기
                 </button>
                 <button 
-                  className={`control-btn ${showCardDealAnimation ? 'disabled' : ''}`} 
-                  onClick={showCardDealAnimation ? undefined : handleModeChange}
-                  disabled={showCardDealAnimation}
+                  className="control-btn" 
+                  onClick={handleModeChange}
                 >
                   {gameMode === 'easyMode' ? '초보모드' : '일반모드'}
                 </button>
@@ -2137,29 +2053,29 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
             {/* 우측 - Drop/Pass 버튼 */}
             <div className="action-buttons">
               <button 
-                className={`action-btn drop-btn ${showCardDealAnimation || !isMyTurn || isSubmitting ? 'disabled' : ''}`} 
+                className={`action-btn drop-btn ${!isMyTurn || isSubmitting ? 'disabled' : ''}`} 
                 onClick={(e) => {
                   e.preventDefault();
-                  if (showCardDealAnimation || !isMyTurn || isSubmitting) {
+                  if (!isMyTurn || isSubmitting) {
                     return;
                   }
                   handleSubmitCards();
                 }}
-                disabled={showCardDealAnimation || !isMyTurn || isSubmitting}
+                disabled={!isMyTurn || isSubmitting}
                 title={!isMyTurn ? '다른 플레이어의 차례입니다' : isSubmitting ? '제출 중입니다' : '카드를 제출합니다'}
               >
                 Submit
               </button>
               <button 
-                className={`action-btn pass-btn ${showCardDealAnimation || !isMyTurn ? 'disabled' : ''}`}
+                className={`action-btn pass-btn ${!isMyTurn ? 'disabled' : ''}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (showCardDealAnimation || !isMyTurn) {
+                  if (!isMyTurn) {
                     return;
                   }
                   handlePass();
                 }}
-                disabled={showCardDealAnimation || !isMyTurn}
+                disabled={!isMyTurn}
                 title={!isMyTurn ? '다른 플레이어의 차례입니다' : '패스합니다'}
               >
                 Pass
@@ -2171,57 +2087,47 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
           <div className="bottom-bottom">
             {/* 내 손패 */}
             <div 
-              className={`my-hand ${showCardDealAnimation ? 'dealing' : ''}`} 
+              className="my-hand" 
               ref={handRef}
-              onDragOver={showCardDealAnimation ? undefined : handleDragOver}
-              onDragLeave={showCardDealAnimation ? undefined : handleDragLeave}
-              onDrop={showCardDealAnimation ? undefined : handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
-              {(showCardDealAnimation ? visibleHand : sortedHand).map((tile, index) => (
+              {sortedHand.map((tile, index) => (
                 <div 
                   key={tile.id} 
-                  className={`hand-tile ${getDisplayColor(tile.color, gameMode)} ${selectedCards.includes(tile.id) ? 'selected' : ''} ${draggedCard === tile.id ? 'dragging' : ''} ${isSorting ? 'sorting' : ''} ${isDragging && draggedCard !== tile.id && cardOffsets[tile.id] !== undefined ? 'dragging-preview' : ''} ${showCardDealAnimation ? 'dealing' : ''} ${dealtCards.has(index) ? 'dealt' : ''}`}
+                  className={`hand-tile ${getDisplayColor(tile.color, gameMode)} ${selectedCards.includes(tile.id) ? 'selected' : ''} ${draggedCard === tile.id ? 'dragging' : ''} ${isSorting ? 'sorting' : ''} ${isDragging && draggedCard !== tile.id && cardOffsets[tile.id] !== undefined ? 'dragging-preview' : ''}`}
                   style={(isSorting || (isDragging && cardOffsets[tile.id] !== undefined)) ? {
                     transform: `translateX(${cardOffsets[tile.id]}px)`
-                  } : showCardDealAnimation ? {
-                    animationDelay: `${index * 0.12}s`
                   } : {}}
-                  onClick={showCardDealAnimation ? undefined : () => handleCardSelect(tile.id)}
-                  draggable={!isSorting && !showCardDealAnimation}
-                  onDragStart={showCardDealAnimation ? undefined : (e: React.DragEvent) => handleDragStart(e, tile.id)}
-                  onDragEnd={showCardDealAnimation ? undefined : handleDragEnd}
+                  onClick={() => handleCardSelect(tile.id)}
+                  draggable={!isSorting}
+                  onDragStart={(e: React.DragEvent) => handleDragStart(e, tile.id)}
+                  onDragEnd={handleDragEnd}
                 >
                   {/* 카드 분배 애니메이션 중에는 뒷면만 표시 */}
-                  {showCardDealAnimation && !dealtCards.has(index) ? (
-                    <div className="card-back-animation" />
-                  ) : (
-                    <>
-                      {getCardImage(getDisplayColor(tile.color, gameMode)) && (
-                        <img 
-                          src={getCardImage(getDisplayColor(tile.color, gameMode))!} 
-                          alt={getDisplayColor(tile.color, gameMode)} 
-                          className="card-image"
-                        />
-                      )}
-                      <span className="tile-value">{tile.value || '?'}</span>
-                    </>
+                  {getCardImage(getDisplayColor(tile.color, gameMode)) && (
+                    <img 
+                      src={getCardImage(getDisplayColor(tile.color, gameMode))!} 
+                      alt={getDisplayColor(tile.color, gameMode)} 
+                      className="card-image"
+                    />
                   )}
+                  <span className="tile-value">{tile.value || '?'}</span>
                 </div>
               ))}
             </div>
             {/* 정렬 버튼들 */}
             <div className="sort-buttons">
               <button 
-                className={`sort-btn ${showCardDealAnimation ? 'disabled' : ''}`} 
-                onClick={showCardDealAnimation ? undefined : handleSortByNumber}
-                disabled={showCardDealAnimation}
+                className="sort-btn" 
+                onClick={handleSortByNumber}
               >
                 숫자정렬
               </button>
               <button 
-                className={`sort-btn ${showCardDealAnimation ? 'disabled' : ''}`} 
-                onClick={showCardDealAnimation ? undefined : handleSortByColor}
-                disabled={showCardDealAnimation}
+                className="sort-btn" 
+                onClick={handleSortByColor}
               >
                 색상정렬
               </button>
