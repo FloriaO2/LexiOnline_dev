@@ -13,6 +13,20 @@ import CombinationWheel from './CombinationWheel';
 import ColyseusService from '../../services/ColyseusService';
 import Toast from '../Toast/Toast';
 
+// 이미지 프리로딩 함수
+const preloadImages = (imageUrls: string[]): Promise<void[]> => {
+  return Promise.all(
+    imageUrls.map(url => 
+      new Promise<void>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+        img.src = url;
+      })
+    )
+  );
+};
+
 interface GameScreenProps {
   onScreenChange: (screen: 'lobby' | 'waiting' | 'game' | 'result' | 'finalResult', result?: any) => void;
   playerCount: number;
@@ -81,6 +95,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     color: string;
     originalNumber: number;
   }>>([]);
+  
+  // 이미지 로딩 상태 관리
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   const [boardSize, setBoardSize] = useState({ rows: 4, cols: 15 });
   const [showCombinationGuide, setShowCombinationGuide] = useState(false);
@@ -194,6 +211,24 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     setSortedHand(sorted);
     console.log("set and sort hand");
   };
+
+  // 이미지 프리로딩
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        console.log('게임 이미지 프리로딩 시작...');
+        await preloadImages([sunImage, moonImage, starImage, cloudImage]);
+        console.log('게임 이미지 프리로딩 완료!');
+        setImagesLoaded(true);
+      } catch (error) {
+        console.error('이미지 프리로딩 실패:', error);
+        // 프리로딩 실패해도 게임은 계속 진행
+        setImagesLoaded(true);
+      }
+    };
+    
+    loadImages();
+  }, []);
 
   // Colyseus 연결 초기화
   useEffect(() => {
@@ -1974,7 +2009,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                     <div key={colIndex} className="board-slot">
                       {card && (
                         <div className={`board-card ${getDisplayColor(card.color, gameMode)} ${isMostRecent ? 'new-card' : ''}`}>
-                          {getCardImage(getDisplayColor(card.color, gameMode)) && (
+                          {gameMode === 'normal' && imagesLoaded && getCardImage(getDisplayColor(card.color, gameMode)) && (
                             <img 
                               src={getCardImage(getDisplayColor(card.color, gameMode))!} 
                               alt={getDisplayColor(card.color, gameMode)} 
@@ -2108,7 +2143,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                   onDragEnd={handleDragEnd}
                 >
                   {/* 카드 분배 애니메이션 중에는 뒷면만 표시 */}
-                  {getCardImage(getDisplayColor(tile.color, gameMode)) && (
+                  {gameMode === 'normal' && imagesLoaded && getCardImage(getDisplayColor(tile.color, gameMode)) && (
                     <img 
                       src={getCardImage(getDisplayColor(tile.color, gameMode))!} 
                       alt={getDisplayColor(tile.color, gameMode)} 

@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './CombinationGuide.css';
 import sunImage from '../../sun.png';
 import moonImage from '../../moon.png';
 import starImage from '../../star.png';
 import cloudImage from '../../cloud.png';
+
+// 이미지 프리로딩 함수
+const preloadImages = (imageUrls: string[]): Promise<void[]> => {
+  return Promise.all(
+    imageUrls.map(url => 
+      new Promise<void>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+        img.src = url;
+      })
+    )
+  );
+};
 
 interface CombinationGuideProps {
   isOpen: boolean;
@@ -13,6 +27,25 @@ interface CombinationGuideProps {
 }
 
 const CombinationGuide: React.FC<CombinationGuideProps> = ({ isOpen, onClose, onShowGameGuide, gameMode }) => {
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  // 이미지 프리로딩
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        console.log('CombinationGuide 이미지 프리로딩 시작...');
+        await preloadImages([sunImage, moonImage, starImage, cloudImage]);
+        console.log('CombinationGuide 이미지 프리로딩 완료!');
+        setImagesLoaded(true);
+      } catch (error) {
+        console.error('CombinationGuide 이미지 프리로딩 실패:', error);
+        setImagesLoaded(true);
+      }
+    };
+    
+    loadImages();
+  }, []);
+
   if (!isOpen) return null;
 
   // 카드 색상 매핑 (초보모드 ↔ 일반모드)
@@ -53,7 +86,7 @@ const CombinationGuide: React.FC<CombinationGuideProps> = ({ isOpen, onClose, on
     
     return (
       <div className={`guide-card ${displayColor}`}>
-        {gameMode === 'normal' && cardImage && (
+        {gameMode === 'normal' && imagesLoaded && cardImage && (
           <img src={cardImage} alt={displayColor} className="guide-card-image" />
         )}
         <span className="guide-card-value">{value}</span>
