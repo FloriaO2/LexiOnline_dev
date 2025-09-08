@@ -88,6 +88,8 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
   const [rounds, setRounds] = useState(3);
   const [easyMode, setEasyMode] = useState(false);
   const [blindMode, setBlindMode] = useState(false);
+  const [timeAttackMode, setTimeAttackMode] = useState(false);
+  const [timeLimit, setTimeLimit] = useState(30);
   const [isReady, setIsReady] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -190,6 +192,18 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
         setBlindMode(state.blindMode);
         console.log('초기 블라인드 모드 설정:', state.blindMode);
       }
+      
+      // 타임어택 모드 설정
+      if (state.timeAttackMode !== undefined) {
+        setTimeAttackMode(state.timeAttackMode);
+        console.log('초기 타임어택 모드 설정:', state.timeAttackMode);
+      }
+      
+      // 시간 제한 설정
+      if (state.timeLimit !== undefined) {
+        setTimeLimit(state.timeLimit);
+        console.log('초기 시간 제한 설정:', state.timeLimit);
+      }
     };
 
     // 초기 상태 로드
@@ -233,6 +247,18 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
         if (state.blindMode !== undefined) {
           setBlindMode(state.blindMode);
           console.log('블라인드 모드 업데이트:', state.blindMode);
+        }
+        
+        // 타임어택 모드 업데이트
+        if (state.timeAttackMode !== undefined) {
+          setTimeAttackMode(state.timeAttackMode);
+          console.log('타임어택 모드 업데이트:', state.timeAttackMode);
+        }
+        
+        // 시간 제한 업데이트
+        if (state.timeLimit !== undefined) {
+          setTimeLimit(state.timeLimit);
+          console.log('시간 제한 업데이트:', state.timeLimit);
         }
         
         // 본인이 그룹에 포함되어 있는지 확인
@@ -311,6 +337,16 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
     room.onMessage('blindModeChanged', (message: any) => {
       console.log('블라인드 모드 변경:', message);
       setBlindMode(message.blindMode);
+    });
+
+    room.onMessage('timeAttackModeChanged', (message: any) => {
+      console.log('타임어택 모드 변경:', message);
+      setTimeAttackMode(message.timeAttackMode);
+    });
+
+    room.onMessage('timeLimitChanged', (message: any) => {
+      console.log('시간 제한 변경:', message);
+      setTimeLimit(message.timeLimit);
     });
 
     room.onMessage('changeRejected', (message: any) => {
@@ -439,7 +475,8 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
         hideBorder={true}
         isCopyNotification={true}
       />
-      <div className="waiting-container">
+      <div className="waiting-scroll-container">
+        <div className="waiting-container">
         <div className="header">
           <h1>게임 대기실</h1>
           <div className="room-info">
@@ -500,7 +537,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
                )}
              </div>
               <div className="blindmode-setting">
-              <label>게임 모드:</label>
+              <label>카드 공개 모드:</label>
               {isHost ? (
                 <div className="radio-group">
                   <label className="radio-option">
@@ -544,6 +581,75 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
                 </div>
               )}
             </div>
+            <div className="timeattack-setting">
+              <label>턴 모드:</label>
+              {isHost ? (
+                <div className="radio-group">
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="timeAttackMode"
+                      value="free"
+                      checked={!timeAttackMode}
+                      onChange={() => {
+                        const room = ColyseusService.getRoom();
+                        if (room) {
+                          setTimeAttackMode(false);
+                          room.send('changeTimeAttackMode', { timeAttackMode: false });
+                        }
+                      }}
+                    />
+                    <span className="radio-custom"></span>
+                    <span className="radio-label">프리 모드</span>
+                  </label>
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="timeAttackMode"
+                      value="timeattack"
+                      checked={timeAttackMode}
+                      onChange={() => {
+                        const room = ColyseusService.getRoom();
+                        if (room) {
+                          setTimeAttackMode(true);
+                          room.send('changeTimeAttackMode', { timeAttackMode: true });
+                        }
+                      }}
+                    />
+                    <span className="radio-custom"></span>
+                    <span className="radio-label">타임어택 모드</span>
+                  </label>
+                </div>
+              ) : (
+                <div className="mode-info">
+                  <span className="mode-text">
+                    {timeAttackMode ? `타임어택 모드 (${timeLimit}초)` : '프리 모드'}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {timeAttackMode && isHost && (
+              <div className="timelimit-setting">
+                <label>시간 제한:</label>
+                <CustomDropdown
+                  value={timeLimit}
+                  onChange={(value) => {
+                    setTimeLimit(value);
+                    const room = ColyseusService.getRoom();
+                    if (room) {
+                      room.send('changeTimeLimit', { timeLimit: value });
+                    }
+                  }}
+                  options={[
+                    { value: 10, label: '10초' },
+                    { value: 20, label: '20초' },
+                    { value: 30, label: '30초' },
+                    { value: 40, label: '40초' },
+                  ]}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -563,6 +669,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
             방 나가기
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

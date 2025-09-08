@@ -26,6 +26,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   maxClients = 5;
   state = new MyRoomState();
   private finalGameResult: any = null;
+  private turnTimer: NodeJS.Timeout | null = null; // 타임어택 타이머
   
   // 방이 비어있을 때 자동 삭제 시간 (30분)
   autoDispose = false;
@@ -61,6 +62,36 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
         this.broadcast("blindModeChanged", { blindMode: newBlindMode });
       } else {
         client.send("changeRejected", { reason: "Invalid blind mode value." });
+      }
+    });
+
+    this.onMessage("changeTimeAttackMode", (client, data) => {
+      if (client.sessionId !== this.state.host) {
+        client.send("changeRejected", { reason: "Only the host can change game mode." });
+        return;
+      }
+      const newTimeAttackMode = data.timeAttackMode;
+      if (typeof newTimeAttackMode === "boolean") {
+        this.state.timeAttackMode = newTimeAttackMode;
+        // 모든 클라이언트에게 타임어택 모드 변경 알림
+        this.broadcast("timeAttackModeChanged", { timeAttackMode: newTimeAttackMode });
+      } else {
+        client.send("changeRejected", { reason: "Invalid time attack mode value." });
+      }
+    });
+
+    this.onMessage("changeTimeLimit", (client, data) => {
+      if (client.sessionId !== this.state.host) {
+        client.send("changeRejected", { reason: "Only the host can change time limit." });
+        return;
+      }
+      const newTimeLimit = data.timeLimit;
+      if (typeof newTimeLimit === "number" && [10, 20, 30, 40].includes(newTimeLimit)) {
+        this.state.timeLimit = newTimeLimit;
+        // 모든 클라이언트에게 시간 제한 변경 알림
+        this.broadcast("timeLimitChanged", { timeLimit: newTimeLimit });
+      } else {
+        client.send("changeRejected", { reason: "Invalid time limit value. Must be 10, 20, 30, or 40 seconds." });
       }
     });
 
@@ -385,6 +416,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
   onDispose() {
     console.log("room", this.roomId, "disposing...");
+    this.clearTurnTimer();
   }
 
   startGame() {
@@ -502,9 +534,16 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       playerOrder: this.state.playerOrder.slice(),
       round: this.state.round,
     });
+
+    // 9) 첫 번째 턴 시작 (타임어택 모드인 경우 타이머도 시작)
+    console.log(`[DEBUG] startRound 완료 - 첫 번째 턴 시작`);
+    this.nextPlayer();
   }
 
   nextPlayer() {
+    // 기존 타이머가 있다면 정리
+    this.clearTurnTimer();
+    
     this.state.nowPlayerIndex = (this.state.nowPlayerIndex + 1) % this.state.playerOrder.length;
     console.log(`[DEBUG] 턴 변경 - 새로운 플레이어: ${this.state.playerOrder[this.state.nowPlayerIndex]}, nowPlayerIndex: ${this.state.nowPlayerIndex}`);
     
@@ -527,6 +566,15 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       });
       
       this.broadcast("cycleEnded", {});
+    }
+    
+    // 타임어택 모드인 경우 타이머 시작
+    console.log(`[DEBUG] nextPlayer - timeAttackMode: ${this.state.timeAttackMode}`);
+    if (this.state.timeAttackMode) {
+      console.log(`[DEBUG] 타임어택 모드 활성화 - 타이머 시작`);
+      this.startTurnTimer();
+    } else {
+      console.log(`[DEBUG] 프리 모드 - 타이머 시작하지 않음`);
     }
     
     // 턴 변경 시 현재 플레이어 정보 업데이트
@@ -705,5 +753,58 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     // 클라이언트에게 게임 초기 상태 알림 (옵션)
     this.broadcast("gameReset", {});
   }
+
+  // 타임어택 타이머 시작
+  startTurnTimer() {
+    console.log(`[DEBUG] startTurnTimer 호출됨 - timeAttackMode: ${this.state.timeAttackMode}, timeLimit: ${this.state.timeLimit}`);
+    
+    this.clearTurnTimer(); // 기존 타이머 정리
+    
+    this.state.turnStartTime = Date.now();
+    console.log(`[DEBUG] turnStartTime 설정: ${this.state.turnStartTime}`);
+    
+    this.turnTimer = setTimeout(() => {
+      console.log(`[DEBUG] 타임어택 시간 초과 - 자동으로 pass 처리`);
+      this.handleTimeOut();
+    }, this.state.timeLimit * 1000);
+    
+    // 클라이언트에게 타이머 시작 알림
+    console.log(`[DEBUG] turnTimerStarted 메시지 브로드캐스트:`, {
+      timeLimit: this.state.timeLimit,
+      turnStartTime: this.state.turnStartTime
+    });
+    this.broadcast("turnTimerStarted", {
+      timeLimit: this.state.timeLimit,
+      turnStartTime: this.state.turnStartTime
+    });
+  }
+
+  // 타임어택 타이머 정리
+  clearTurnTimer() {
+    if (this.turnTimer) {
+      clearTimeout(this.turnTimer);
+      this.turnTimer = null;
+    }
+  }
+
+  // 시간 초과 처리
+  handleTimeOut() {
+    const currentPlayerId = this.state.playerOrder[this.state.nowPlayerIndex];
+    const currentPlayer = this.state.players.get(currentPlayerId);
+    
+    if (currentPlayer) {
+      console.log(`[DEBUG] 플레이어 ${currentPlayer.nickname} 시간 초과로 자동 pass`);
+      
+      // 클라이언트에게 시간 초과 알림
+      this.broadcast("timeOut", {
+        playerId: currentPlayerId,
+        playerNickname: currentPlayer.nickname
+      });
+      
+      // handlePass 함수를 재사용하여 pass 처리 (시간 초과임을 표시)
+      handlePass(this, null, true);
+    }
+  }
+
 
 }

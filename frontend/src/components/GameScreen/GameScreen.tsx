@@ -79,6 +79,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   const [currentCombination, setCurrentCombination] = useState<string>('');
   const [gameMode, setGameMode] = useState<'easyMode' | 'normal'>('normal');
   const [blindMode, setBlindMode] = useState(false);
+  const [timeAttackMode, setTimeAttackMode] = useState(false);
+  const [timeLimit, setTimeLimit] = useState(30);
+  const [turnStartTime, setTurnStartTime] = useState(0);
+  const [remainingTime, setRemainingTime] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [boardCards, setBoardCards] = useState<Array<{
@@ -235,6 +239,32 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     loadImages();
   }, []);
 
+  // 타임어택 타이머 관리
+  useEffect(() => {
+    console.log('타이머 useEffect 실행:', { timeAttackMode, turnStartTime, timeLimit });
+    
+    if (!timeAttackMode || turnStartTime === 0) {
+      console.log('타이머 비활성화:', { timeAttackMode, turnStartTime });
+      setRemainingTime(0);
+      return;
+    }
+
+    const updateTimer = () => {
+      const elapsed = (Date.now() - turnStartTime) / 1000;
+      const remaining = Math.max(0, timeLimit - elapsed);
+      setRemainingTime(remaining);
+      // console.log('타이머 업데이트:', { elapsed, remaining, timeLimit });
+    };
+
+    // 즉시 한 번 실행
+    updateTimer();
+
+    // 100ms마다 업데이트
+    const interval = setInterval(updateTimer, 100);
+
+    return () => clearInterval(interval);
+  }, [timeAttackMode, turnStartTime, timeLimit]);
+
   // Colyseus 연결 초기화
   useEffect(() => {
     const room = ColyseusService.getRoom();
@@ -307,6 +337,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
           round: state.round || 1,
           totalRounds: state.totalRounds || 5
         });
+        
+        // 타임어택 모드 상태 업데이트
+        if (state.timeAttackMode !== undefined) {
+          setTimeAttackMode(state.timeAttackMode);
+        }
+        if (state.timeLimit !== undefined) {
+          setTimeLimit(state.timeLimit);
+        }
+        if (state.turnStartTime !== undefined) {
+          setTurnStartTime(state.turnStartTime);
+        }
         
         // 게임이 이미 시작되었고 손패가 있다면 손패만 업데이트 (애니메이션 없이)
         const myPlayer = state.players.get(room.sessionId);
@@ -419,6 +460,19 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       setWaitingForNextRound(true);
       setReadyPlayers(new Set());
       room.send('requestReadyStatus');
+    });
+
+    // 타임어택 모드 관련 메시지
+    room.onMessage('turnTimerStarted', (message) => {
+      console.log('턴 타이머 시작:', message);
+      console.log('타임어택 모드:', timeAttackMode);
+      console.log('시간 제한:', timeLimit);
+      setTurnStartTime(message.turnStartTime);
+    });
+
+    room.onMessage('timeOut', (message) => {
+      console.log('시간 초과:', message);
+      showToast(`${message.playerNickname}님의 시간이 초과되었습니다.`, 'info', 3000);
     });
 
     room.onMessage('roundStart', (message) => {
@@ -1070,12 +1124,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   };
 
   // Toast 표시 함수
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info', duration: number = 3000) => {
     setToast({
       message,
       type,
       isVisible: true
     });
+    
+    // 지정된 시간 후 자동으로 토스트 숨기기
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, isVisible: false }));
+    }, duration);
   };
 
   // Toast 닫기 함수
@@ -2036,9 +2095,34 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                 const currentPlayerSessionId = playerOrder[nowPlayerIndex];
                 const isCurrentTurn = player.sessionId === currentPlayerSessionId;
                 
+                // 디버깅용 로그
+                /*
+                if (isCurrentTurn) {
+                  console.log('현재 턴 플레이어 렌더링:', { 
+                    playerNickname: player.nickname, 
+                    isCurrentTurn, 
+                    timeAttackMode, 
+                    remainingTime, 
+                    timeLimit 
+                  });
+                }
+                */
+                
                 return (
                   <div key={player.id} className="player-info-container">
                     <div className={`player-info-box ${isCurrentTurn ? 'current-turn' : ''} ${player.hasPassed ? 'passed' : ''}`}>
+                      {/* 타임어택 타이머 */}
+                      {timeAttackMode && isCurrentTurn && remainingTime > 0 && (
+                        <div className="timer-overlay">
+                          <div 
+                            className="timer-progress" 
+                            style={{
+                              width: `${(remainingTime / timeLimit) * 100}%`
+                            }}
+                          />
+                        </div>
+                      )}
+                      
                       <div className="player-info">
                         <div className="player-nickname">
                           {player.nickname}
@@ -2119,6 +2203,18 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
             {/* 좌측 - 내 정보 */}
             <div className="my-info">
               <div className={`my-info-box ${isMyTurn ? 'current-turn' : ''} ${players.find(p => p.sessionId === mySessionId)?.hasPassed ? 'passed' : ''}`}>
+                {/* 타임어택 타이머 */}
+                {timeAttackMode && isMyTurn && remainingTime > 0 && (
+                  <div className="timer-overlay">
+                    <div 
+                      className="timer-progress" 
+                      style={{
+                        width: `${(remainingTime / timeLimit) * 100}%`
+                      }}
+                    />
+                  </div>
+                )}
+                
                 <div className="my-nickname">
                   {players.find(p => p.sessionId === mySessionId)?.nickname || '닉네임'}
                 </div>

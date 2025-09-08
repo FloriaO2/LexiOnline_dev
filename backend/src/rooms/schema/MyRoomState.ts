@@ -28,6 +28,12 @@ export class MyRoomState extends Schema {
 
   @type("boolean") blindMode = false; // false: 공개모드, true: 블라인드모드
 
+  @type("boolean") timeAttackMode = false; // false: 프리모드, true: 타임어택모드
+
+  @type("int8") timeLimit = 30; // 타임어택 모드에서 턴 제한 시간 (초)
+
+  @type("number") turnStartTime = 0; // 현재 턴 시작 시간 (타임스탬프)
+
   @type("int8") nowPlayerIndex = 0;
 
   @type("int8") maxNumber = 0;

@@ -14,6 +14,7 @@ import {
 export interface IMyRoom extends Room<MyRoomState> {
   nextPlayer(): void;
   endRound(): void;
+  clearTurnTimer(): void;
 }
 
 // 정렬 순서 저장 메시지 처리
@@ -258,6 +259,7 @@ export function handleSubmit(room: IMyRoom, client: Client, data: any) {
 
   // 플레이어 손패 비었으면 라운드 종료 호출
   if (player.hand.length === 0) {
+    room.clearTurnTimer(); // 타이머 정리
     room.endRound();
     return;
   }
@@ -267,22 +269,24 @@ export function handleSubmit(room: IMyRoom, client: Client, data: any) {
 }
 
 // pass 메시지 처리
-export function handlePass(room: IMyRoom, client: Client) {
-  if (client.sessionId !== room.state.playerOrder[room.state.nowPlayerIndex]) {
+export function handlePass(room: IMyRoom, client: Client | null, isTimeOut: boolean = false) {
+  // client가 있는 경우 (수동 pass) 턴 체크
+  if (client && client.sessionId !== room.state.playerOrder[room.state.nowPlayerIndex]) {
     client.send("passRejected", { reason: "Not your turn." });
     return;
   }
   
   // pass 스티커 때문에 추가함
   // 현재 플레이어의 pass 상태를 true로 설정
-  const currentPlayer = room.state.players.get(client.sessionId);
+  const currentPlayerId = room.state.playerOrder[room.state.nowPlayerIndex];
+  const currentPlayer = room.state.players.get(currentPlayerId);
   if (currentPlayer) {
     currentPlayer.hasPassed = true;
   }
   
   // pass 상태를 모든 클라이언트에게 브로드캐스트
   room.broadcast("playerPassed", {
-    playerId: client.sessionId,
+    playerId: currentPlayerId,
     hasPassed: true
   });
   

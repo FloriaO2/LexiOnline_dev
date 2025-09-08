@@ -6,15 +6,39 @@
   justify-content: center;
   align-items: center;
   font-family: 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+.waiting-scroll-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2.5vh 0;
+  box-sizing: border-box;
+}
+
+/* 스크롤바 숨기기 */
+.waiting-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.waiting-scroll-container {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 .waiting-container {
   background: rgba(26, 26, 26, 0.95);
-  padding: 0vh 3vw;
+  padding: 2vh 3vw;
   border-radius: 1.5vw;
   box-shadow: 0 1.5vw 3vw rgba(0, 0, 0, 0.5);
   min-width: 45vw;
   max-width: 55vw;
+  min-height: 80vh;
   backdrop-filter: blur(0.8vw);
   border: 0.08vw solid rgba(255, 255, 255, 0.15);
 }
@@ -234,6 +258,55 @@
 }
 
 .mode-text {
+  font-size: 1.1vw;
+  font-weight: 600;
+  color: #495057;
+  text-align: center;
+  width: 100%;
+}
+
+/* 타임어택 모드 설정 스타일 */
+.timeattack-setting {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2vw;
+}
+
+.timeattack-setting label {
+  font-size: 1.1vw;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* 시간 제한 설정 스타일 */
+.timelimit-setting {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2vw;
+}
+
+.timelimit-setting label {
+  font-size: 1.1vw;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* 시간 제한 안내 텍스트 스타일 */
+.timelimit-info {
+  display: flex;
+  align-items: center;
+  padding: 0.6vw 1.2vw;
+  border: 0.12vw solid #dee2e6;
+  border-radius: 0.8vw;
+  min-width: 8vw;
+  box-shadow: 0 0.2vw 0.8vw rgba(0, 0, 0, 0.1);
+}
+
+.timelimit-text {
   font-size: 1.1vw;
   font-weight: 600;
   color: #495057;
