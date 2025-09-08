@@ -94,6 +94,10 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
+/* 2명 배치 */
+.circular-layout.players-2 .player-box:nth-child(1) { transform: rotate(0deg) translateY(-25vh) rotate(0deg); }
+.circular-layout.players-2 .player-box:nth-child(2) { transform: rotate(180deg) translateY(-25vh) rotate(-180deg); }
+
 /* 3명 배치 */
 .circular-layout.players-3 .player-box:nth-child(1) { transform: rotate(0deg) translateY(-30vh) rotate(0deg); }
 .circular-layout.players-3 .player-box:nth-child(2) { transform: rotate(120deg) translateY(-45vh) rotate(-120deg); }
@@ -152,6 +156,23 @@
   box-shadow: 0 0.3vh 0.8vh rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(0.5vh);
   border: 0.1vh solid rgba(255, 255, 255, 0.2);
+}
+
+/* 2명 플레이어용 - 각 플레이어별 정확한 위치 지정 */
+.circular-layout.players-2 .player-box:nth-child(1) .tiles-info .remaining-count {
+  transform: rotate(0deg) translateY(6vh) rotate(0deg);
+}
+
+.circular-layout.players-2 .player-box:nth-child(1) .tiles-info .tile-count {
+  transform: rotate(0deg) translateY(12vh) rotate(0deg);
+}
+
+.circular-layout.players-2 .player-box:nth-child(2) .tiles-info .remaining-count {
+  transform: rotate(180deg) translateY(9.5vh) rotate(-180deg);
+}
+
+.circular-layout.players-2 .player-box:nth-child(2) .tiles-info .tile-count {
+  transform: rotate(180deg) translateY(15vh) rotate(-180deg);
 }
 
 /* 3명 플레이어용 - 각 플레이어별 정확한 위치 지정 */

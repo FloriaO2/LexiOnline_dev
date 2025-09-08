@@ -1,4 +1,5 @@
 // backend/src/gameLogic/calculateRatings.ts
+import { rate, Rating } from 'ts-trueskill';
 
 export interface RatingData {
   playerId: string;
@@ -15,23 +16,53 @@ export interface RatingResult extends RatingData {
 }
 
 /**
- * Simple rating calculation without ts-trueskill dependency
- * This is a temporary implementation for deployment
+ * TrueSkill 기반 레이팅 계산
+ * 정확한 소숫점 계산으로 레이팅 변동을 계산합니다.
  */
 export function calculateRatings(players: RatingData[]): RatingResult[] {
-  // Simple rating adjustment based on rank
-  // Higher rank (lower number) gets positive adjustment
-  // Lower rank (higher number) gets negative adjustment
-  
-  return players.map((player) => {
-    const rankAdjustment = (players.length - player.rank + 1) * 5; // Simple adjustment
-    const newMu = Math.max(25, player.rating_mu_before + rankAdjustment);
-    const newSigma = Math.max(8.33, player.rating_sigma_before - 0.5); // Slightly decrease uncertainty
-    
-    return {
-      ...player,
-      rating_mu_after: newMu,
-      rating_sigma_after: newSigma,
-    };
+  // 순위별로 그룹화 (동일 순위 처리)
+  const rankGroups: { [rank: number]: RatingData[] } = {};
+  players.forEach(player => {
+    if (!rankGroups[player.rank]) {
+      rankGroups[player.rank] = [];
+    }
+    rankGroups[player.rank].push(player);
   });
+
+  // 순위별로 정렬된 그룹 생성
+  const sortedRanks = Object.keys(rankGroups).map(Number).sort((a, b) => a - b);
+  const teams: Rating[][] = [];
+  
+  sortedRanks.forEach(rank => {
+    const groupPlayers = rankGroups[rank];
+    const team: Rating[] = groupPlayers.map(player => 
+      new Rating(player.rating_mu_before, player.rating_sigma_before)
+    );
+    teams.push(team);
+  });
+
+  // TrueSkill 계산 실행
+  const newRatings = rate(teams);
+
+  // 결과 매핑
+  const results: RatingResult[] = [];
+  let teamIndex = 0;
+  
+  sortedRanks.forEach(rank => {
+    const groupPlayers = rankGroups[rank];
+    const teamRatings = newRatings[teamIndex];
+    
+    groupPlayers.forEach((player, playerIndex) => {
+      const newRating = teamRatings[playerIndex];
+      results.push({
+        ...player,
+        rating_mu_after: newRating.mu,
+        rating_sigma_after: newRating.sigma,
+      });
+    });
+    
+    teamIndex++;
+  });
+
+  return results;
 }

@@ -6,6 +6,7 @@ export interface User {
   profileImageUrl?: string;
   rating_mu: number;
   rating_sigma: number;
+  playCount_2p: number;
   playCount_3p: number;
   /* ...필요한 필드 추가 ... */
 }

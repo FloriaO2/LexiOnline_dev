@@ -30,7 +30,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   // 방이 비어있을 때 자동 삭제 시간 (30분)
   autoDispose = false;
 
-  maxNumberMap: Record<number, number> = { 3: 9, 4: 13, 5: 15 };
+  maxNumberMap: Record<number, number> = { 2: 9, 3: 9, 4: 13, 5: 15 };
 
   onCreate(options: any) {
     console.log(`[DEBUG] 방 생성됨: ${this.roomId}`);
@@ -243,7 +243,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
         return;
       }
 
-      if (this.state.players.size < 3) {
+      if (this.state.players.size < 2) {
         console.log(`[DEBUG] 플레이어 수 부족: ${this.state.players.size}`);
         client.send("startRejected", { reason: "Not enough players." });
         return;
@@ -632,7 +632,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
       console.log(`[DEBUG] 유저 ${userId}의 DB 저장을 시도합니다.`);
       try {
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
           await tx.gameHistory.create({
             data: {
               userId,

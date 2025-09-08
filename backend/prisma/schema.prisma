@@ -24,9 +24,14 @@ model User {
   lastLoginAt     DateTime?
 
   // 플레이 횟수
+  playCount_2p    Int           @default(0)
   playCount_3p    Int           @default(0)
   playCount_4p    Int           @default(0)
   playCount_5p    Int           @default(0)
+
+  // 2인 게임 순위 횟수
+  wins_2p         Int           @default(0)
+  second_2p       Int           @default(0)
 
   // 3인 게임 순위 횟수
   wins_3p         Int           @default(0)

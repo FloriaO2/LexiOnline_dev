@@ -554,7 +554,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
           >
             {isReady ? '준비 취소' : '준비하기'}
           </button>
-          {isHost && allPlayersReady && players.length >= 3 && (
+          {isHost && allPlayersReady && players.length >= 2 && (
             <button className="btn btn-start" onClick={handleStartGame}>
               게임 시작
             </button>

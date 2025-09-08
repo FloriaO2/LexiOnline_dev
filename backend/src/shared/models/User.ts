@@ -12,9 +12,13 @@ export interface User {
   updatedAt: string;
   lastLoginAt?: string;
   
+  playCount_2p: number;
   playCount_3p: number;
   playCount_4p: number;
   playCount_5p: number;
+  
+  wins_2p: number;
+  second_2p: number;
   
   wins_3p: number;
   second_3p: number;
