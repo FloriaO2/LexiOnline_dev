@@ -83,7 +83,9 @@ class ColyseusService {
   async joinRoom(roomId: string, options: any = {}): Promise<Room> {
     try {
       // roomId가 실제 방 ID인지 확인하고 참가
-      this.room = await this.client.joinById(roomId, options);
+      // 코드로 직접 입장하는 경우 비밀번호 검증을 무시
+      const joinOptions = { ...options, requirePassword: false };
+      this.room = await this.client.joinById(roomId, joinOptions);
       this.isConnected = true;
       
       // 방 정보 저장
@@ -164,6 +166,26 @@ class ColyseusService {
       }
     }
     return this.roomInfo;
+  }
+
+  // 공개방 목록 조회
+  async getPublicRooms(): Promise<any[]> {
+    try {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const apiUrl = process.env.REACT_APP_API_URL || 
+        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      
+      const response = await fetch(`${apiUrl}/api/rooms`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch public rooms');
+      }
+      
+      const data = await response.json();
+      return data.rooms || [];
+    } catch (error) {
+      console.error('공개방 목록 조회 실패:', error);
+      throw error;
+    }
   }
 
   // 저장된 방에 재연결 시도

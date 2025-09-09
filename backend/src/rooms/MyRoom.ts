@@ -35,6 +35,35 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
   onCreate(options: any) {
     console.log(`[DEBUG] 방 생성됨: ${this.roomId}`);
+    console.log(`[DEBUG] 방 생성 옵션:`, options);
+    
+    // 방 생성 옵션에서 방 타입과 비밀번호 설정
+    if (options.roomType) {
+      this.state.roomType = options.roomType;
+      console.log(`[DEBUG] 방 타입 설정: ${options.roomType}`);
+    }
+    if (options.roomPassword) {
+      this.state.roomPassword = options.roomPassword;
+      console.log(`[DEBUG] 방 비밀번호 설정: ${options.roomPassword}`);
+    }
+    if (options.roomTitle) {
+      this.state.roomTitle = options.roomTitle;
+      console.log(`[DEBUG] 방 제목 설정: ${options.roomTitle}`);
+    }
+    
+    // 방 메타데이터 설정 (공개방 목록 조회용)
+    const metadata = {
+      roomType: this.state.roomType,
+      roomTitle: this.state.roomTitle,
+      roomPassword: this.state.roomType === 'private' ? '***' : '', // 비밀번호는 마스킹
+      createdAt: new Date().toISOString()
+    };
+    
+    console.log(`[DEBUG] 메타데이터 설정:`, metadata);
+    this.setMetadata(metadata);
+    
+    console.log(`[DEBUG] 방 설정 완료 - 타입: ${this.state.roomType}, 제목: ${this.state.roomTitle}`);
+    
     this.onMessage("changeRounds", (client, data) => {
       if (client.sessionId !== this.state.host) {
         client.send("changeRejected", { reason: "Only the host can change rounds." });
@@ -300,6 +329,14 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   async onJoin(client: Client, options: any) {
     if (this.state.round > 0) {
       throw new Error("게임이 이미 시작되었습니다.");
+    }
+
+    // 비밀방인 경우 비밀번호 검증 (단, 코드로 직접 입장하는 경우는 제외)
+    if (this.state.roomType === "private" && options.requirePassword !== false) {
+      const providedPassword = options.roomPassword;
+      if (!providedPassword || providedPassword !== this.state.roomPassword) {
+        throw new Error("비밀번호가 올바르지 않습니다.");
+      }
     }
 
     const player = new PlayerState();

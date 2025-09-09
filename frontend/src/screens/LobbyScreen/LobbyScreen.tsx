@@ -19,7 +19,12 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'join' | 'public'>('create');
+  const [roomType, setRoomType] = useState<'public' | 'private'>('public');
+  const [roomTitle, setRoomTitle] = useState('');
+  const [roomPassword, setRoomPassword] = useState('');
+  const [publicRooms, setPublicRooms] = useState<any[]>([]);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -69,6 +74,20 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       });
   }, [token]);
 
+  // 공개방 탭이 활성화될 때 공개방 목록 로드
+  useEffect(() => {
+    if (activeTab === 'public' && token) {
+      loadPublicRooms();
+    }
+  }, [activeTab, token]);
+
+  // 닉네임이 변경될 때 방 제목도 자동으로 업데이트
+  useEffect(() => {
+    if (nickname.trim() && !roomTitle.trim()) {
+      setRoomTitle(nickname.trim());
+    }
+  }, [nickname, roomTitle]);
+
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({
       message,
@@ -81,16 +100,45 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     setToast(prev => ({ ...prev, isVisible: false }));
   };
 
+  const loadPublicRooms = async () => {
+    setIsLoadingRooms(true);
+    try {
+      const rooms = await ColyseusService.getPublicRooms();
+      setPublicRooms(rooms);
+    } catch (error) {
+      console.error('공개방 목록 로드 실패:', error);
+      showToast('공개방 목록을 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setIsLoadingRooms(false);
+    }
+  };
+
   const handleCreateRoom = async () => {
     if (!nickname.trim()) {
       showToast('닉네임을 입력해주세요.', 'error');
       return;
     }
 
+    // 비밀방인 경우 비밀번호 필수
+    if (roomType === 'private' && !roomPassword.trim()) {
+      showToast('비밀번호를 입력해주세요.', 'error');
+      return;
+    }
+
     setIsConnecting(true);
     try {
       const authToken = sessionStorage.getItem('access_token');
-      const room = await ColyseusService.createRoom({ authToken });
+      const roomOptions: any = { authToken };
+      
+      // 방 타입에 따른 옵션 설정
+      roomOptions.roomType = roomType;
+      // 방 제목 설정 (사용자가 입력한 제목이 있으면 사용, 없으면 닉네임 사용)
+      roomOptions.roomTitle = roomTitle.trim() || nickname.trim();
+      if (roomType === 'private') {
+        roomOptions.roomPassword = roomPassword.trim();
+      }
+      
+      const room = await ColyseusService.createRoom(roomOptions);
       console.log('방 생성 성공:', room.sessionId);
       
       // 닉네임 설정 및 중복 체크
@@ -143,6 +191,60 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     } catch (error) {
       console.error('방 참가 실패:', error);
       showToast('방 참가에 실패했습니다. 방 코드를 확인해주세요.', 'error');
+      setIsConnecting(false);
+    }
+  };
+
+  const handleJoinPublicRoom = async (roomId: string, roomType: string) => {
+    if (!nickname.trim()) {
+      showToast('닉네임을 입력해주세요.', 'error');
+      return;
+    }
+
+    // 비밀방인 경우 비밀번호 입력 받기
+    let password = '';
+    if (roomType === 'private') {
+      password = prompt('비밀번호를 입력하세요:') || '';
+      if (!password.trim()) {
+        showToast('비밀번호를 입력해주세요.', 'error');
+        return;
+      }
+    }
+
+    setIsConnecting(true);
+    try {
+      const authToken = sessionStorage.getItem('access_token');
+      const joinOptions: any = { authToken };
+      
+      if (roomType === 'private') {
+        joinOptions.roomPassword = password;
+        joinOptions.requirePassword = true; // 목록에서 클릭한 경우 비밀번호 검증 필요
+      }
+      
+      const room = await ColyseusService.joinRoom(roomId, joinOptions);
+      console.log('방 참가 성공:', room.sessionId);
+      
+      // 닉네임 설정 및 중복 체크
+      room.onMessage('nicknameRejected', (message) => {
+        console.error('닉네임 설정 거부:', message.reason);
+        showToast(`닉네임 설정 실패: 해당 방에 이미 존재하는 닉네임입니다.`, 'error');
+        setIsConnecting(false);
+        ColyseusService.disconnect();
+      });
+
+      room.onMessage('nicknameUpdate', () => {
+        // 닉네임 설정 성공 시 대기실로 이동
+        onScreenChange('waiting');
+      });
+
+      room.send('setNickname', { nickname: nickname.trim() });
+    } catch (error) {
+      console.error('방 참가 실패:', error);
+      if (error instanceof Error && error.message.includes('비밀번호')) {
+        showToast('비밀번호가 올바르지 않습니다.', 'error');
+      } else {
+        showToast('방 참가에 실패했습니다.', 'error');
+      }
       setIsConnecting(false);
     }
   };
@@ -269,11 +371,18 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                 <span className={`tab-icon ${token ? 'compact' : ''}`}>🚪</span>
                 방 참가하기
               </button>
+              <button 
+                className={`tab-button ${activeTab === 'public' ? 'active' : ''} ${token ? 'compact' : ''}`}
+                onClick={() => setActiveTab('public')}
+              >
+                <span className={`tab-icon ${token ? 'compact' : ''}`}>🌐</span>
+                공개방 목록
+              </button>
             </div>
 
             {/* 탭 컨텐츠 */}
             <div className={`tab-content ${token ? 'compact' : ''}`}>
-              {activeTab === 'create' ? (
+              {activeTab === 'create' && (
                 <div className="create-room-tab">
                   <div className={`tab-header ${token ? 'compact' : ''}`}>
                     <h3>새로운 게임 방 만들기</h3>
@@ -292,6 +401,61 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                         className={`input-field ${token ? 'compact' : ''}`}
                       />
                     </div>
+
+                  </div>
+
+                  <div className={`input-section ${token ? 'compact' : ''}`}>
+                    <div className={`input-group ${token ? 'compact' : ''}`}>
+                      <label htmlFor="roomTitle">방 제목</label>
+                      <input
+                        type="text"
+                        id="roomTitle"
+                        value={roomTitle}
+                        onChange={(e) => setRoomTitle(e.target.value)}
+                        placeholder="방 제목을 입력하세요 (기본값: 닉네임)"
+                        className={`input-field ${token ? 'compact' : ''}`}
+                      />
+                    </div>
+
+                    <div className={`input-group ${token ? 'compact' : ''}`}>
+                      <label>방 타입</label>
+                      <div className="room-type-selector-horizontal">
+                        <label className="radio-option-horizontal">
+                          <input
+                            type="radio"
+                            name="roomType"
+                            value="public"
+                            checked={roomType === 'public'}
+                            onChange={(e) => setRoomType(e.target.value as 'public')}
+                          />
+                          <span>공개방</span>
+                        </label>
+                        <label className="radio-option-horizontal">
+                          <input
+                            type="radio"
+                            name="roomType"
+                            value="private"
+                            checked={roomType === 'private'}
+                            onChange={(e) => setRoomType(e.target.value as 'private')}
+                          />
+                          <span>비밀방</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {roomType === 'private' && (
+                      <div className={`input-group ${token ? 'compact' : ''}`}>
+                        <label htmlFor="roomPassword">비밀번호</label>
+                        <input
+                          type="password"
+                          id="roomPassword"
+                          value={roomPassword}
+                          onChange={(e) => setRoomPassword(e.target.value)}
+                          placeholder="비밀번호를 입력하세요"
+                          className={`input-field ${token ? 'compact' : ''}`}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <button 
@@ -312,7 +476,9 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                     )}
                   </button>
                 </div>
-              ) : (
+              )}
+              
+              {activeTab === 'join' && (
                 <div className="join-room-tab">
                   <div className={`tab-header ${token ? 'compact' : ''}`}>
                     <h3>기존 방에 참가하기</h3>
@@ -362,6 +528,82 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                       </>
                     )}
                   </button>
+                </div>
+              )}
+              
+              {activeTab === 'public' && (
+                <div className="public-rooms-tab">
+                  <div className={`tab-header ${token ? 'compact' : ''}`}>
+                    <h3>공개방 목록</h3>
+                    <p>다른 플레이어들이 만든 공개방에 참가해보세요!</p>
+                  </div>
+                  
+                  <div className={`input-section ${token ? 'compact' : ''}`}>
+                    <div className={`input-group ${token ? 'compact' : ''}`}>
+                      <label htmlFor="public-nickname">닉네임</label>
+                      <input
+                        type="text"
+                        id="public-nickname"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        placeholder="닉네임을 입력하세요"
+                        className={`input-field ${token ? 'compact' : ''}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="public-rooms-list">
+                    {isLoadingRooms ? (
+                      <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p>공개방 목록을 불러오는 중...</p>
+                      </div>
+                    ) : publicRooms.length === 0 ? (
+                      <div className="no-rooms">
+                        <p>현재 활성화된 공개방이 없습니다.</p>
+                        <button 
+                          className="btn btn-secondary"
+                          onClick={loadPublicRooms}
+                        >
+                          새로고침
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="rooms-grid">
+                        {publicRooms.map((room) => (
+                          <div key={room.roomId} className="room-card">
+                            <div className="room-info">
+                              <div className="room-header">
+                                <span className={`room-type-badge ${room.roomType}`}>
+                                  {room.roomType === 'private' ? '🔒 비밀방' : '🌐 공개방'}
+                                </span>
+                                <h4 className="room-title">{room.title}</h4>
+                                <div className="player-count">
+                                  <span className="player-numbers">
+                                    <span className="current-players">{room.playerCount}</span>
+                                    <span className="player-separator">/</span>
+                                    <span className="max-players">{room.maxClients}</span>
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="room-meta"> 
+                                <button
+                                  className="join-button"
+                                  onClick={() => handleJoinPublicRoom(room.roomId, room.roomType)}
+                                  disabled={!nickname.trim() || isConnecting || room.playerCount >= room.maxClients}
+                                  title={room.playerCount >= room.maxClients ? '방이 가득참' : 
+                                         room.roomType === 'private' ? '비밀번호 입력' : '참가하기'}
+                                >
+                                  {room.playerCount >= room.maxClients ? '🚫' : 
+                                   room.roomType === 'private' ? '🔑' : '▶'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

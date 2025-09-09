@@ -568,6 +568,278 @@
   font-size: 0.95vw;
 }
 
+/* 방 타입 선택 스타일 */
+.room-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8vw;
+  margin-top: 0.5vw;
+}
+
+.room-type-selector-horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: 1.2vw;
+  margin-top: 0.5vw;
+  justify-content: center;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  padding: 0.8vw;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.8vw;
+  border: 0.1vw solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.radio-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.radio-option input[type="radio"] {
+  margin: 0;
+  width: 1.2vw;
+  height: 1.2vw;
+  accent-color: #4a9eff;
+}
+
+.radio-option span {
+  color: #090909aa;
+  font-size: 1.1vw;
+  font-weight: 500;
+}
+
+.radio-option-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 0.6vw;
+  padding: 0.8vw 1.5vw;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.8vw;
+  border: 0.1vw solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 8vw;
+  justify-content: center;
+}
+
+.radio-option-horizontal:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.radio-option-horizontal input[type="radio"] {
+  margin: 0;
+  width: 1.2vw;
+  height: 1.2vw;
+  accent-color: #4a9eff;
+}
+
+.radio-option-horizontal span {
+  color: #ffffff;
+  font-size: 1.1vw;
+  font-weight: 500;
+}
+
+/* 공개방 목록 스타일 */
+.public-rooms-list {
+  margin-top: 1.5vw;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.2vw;
+  padding: 1vw 0;
+}
+
+.room-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 0.1vw solid rgba(255, 255, 255, 0.1);
+  border-radius: 1vw;
+  padding: 0.7vw;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.room-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-0.2vw);
+}
+
+.room-info {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-header {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1vw;
+  flex: 1;
+}
+
+.room-title {
+  color: #ffffff;
+  font-size: 1.3vw;
+  font-weight: 600;
+  margin: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 16.5vw;
+  padding-right: 0.4vw;
+}
+
+.room-type-badge {
+  font-size: 0.9vw;
+  padding: 0.3vw 0.6vw;
+  border-radius: 0.4vw;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-left: 0.4vw;
+}
+
+.room-type-badge.public {
+  background: rgba(74, 158, 255, 0.2);
+  color: #4a9eff;
+  border: 0.1vw solid rgba(74, 158, 255, 0.3);
+}
+
+.room-type-badge.private {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border: 0.1vw solid rgba(255, 193, 7, 0.3);
+}
+
+.room-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8vw;
+}
+
+.player-count {
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.4vw 0.8vw;
+  border-radius: 0.6vw;
+  border: 0.1vw solid rgba(255, 255, 255, 0.1);
+  margin-right: 0.4vw;
+}
+
+.player-icon {
+  font-size: 1.1vw;
+  opacity: 0.8;
+}
+
+.player-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.2vw;
+  font-size: 1vw;
+  font-weight: 600;
+}
+
+.current-players {
+  color: #4a9eff;
+  font-weight: 700;
+}
+
+.player-separator {
+  color: #cccccc;
+  font-weight: 400;
+}
+
+.max-players {
+  color: #888888;
+  font-weight: 500;
+}
+
+.join-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 0.5vw;
+  padding: 0.6vw 0.8vw;
+  font-size: 1.2vw;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5vw;
+  height: 2.5vw;
+  box-shadow: 0 0.2vw 0.5vw rgba(102, 126, 234, 0.3);
+  margin-right: 0.4vw;
+}
+
+.join-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7680f0 0%, #8650b8 100%);
+  transform: translateY(-0.1vw);
+  box-shadow: 0 0.3vw 0.8vw rgba(102, 126, 234, 0.4);
+}
+
+.join-button:disabled {
+  background: linear-gradient(135deg, #666666 0%, #888888 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.room-id {
+  color: #888888;
+  font-size: 0.9vw;
+  margin: 0.3vw 0;
+  text-align: left;
+  font-family: 'Courier New', monospace;
+}
+
+.btn-small {
+  padding: 0.6vw 1.2vw;
+  font-size: 1vw;
+  margin-top: 1vw;
+  align-self: flex-end;
+}
+
+.no-rooms {
+  text-align: center;
+  padding: 3vw;
+  color: #b0b0b0;
+}
+
+.no-rooms p {
+  font-size: 1.2vw;
+  margin-bottom: 1.5vw;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 0.1vw solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .lobby-container {

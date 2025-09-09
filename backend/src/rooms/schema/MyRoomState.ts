@@ -6,6 +6,15 @@ export class MyRoomState extends Schema {
 
   @type("string") host = "";
 
+  // 방 타입: "public" | "private" | "code"
+  @type("string") roomType = "code"; // 기본값은 기존 방식(코드 입력)
+
+  // 비밀방일 때 사용할 비밀번호
+  @type("string") roomPassword = "";
+
+  // 방 제목 (공개방 목록에서 표시)
+  @type("string") roomTitle = "";
+
   @type("int8") lastPlayerIndex = 0;
 
   @type("int8") lastHighestValue = -1; // order decision
