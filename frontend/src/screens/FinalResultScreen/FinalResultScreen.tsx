@@ -32,6 +32,12 @@ const FinalResultScreen: React.FC<FinalResultScreenProps> = ({ finalScores, onSc
       return null;
     }
     const change = player.rating_mu_after - player.rating_mu_before;
+    
+    // 자동 우승의 경우 점수 조정을 +0으로 표시
+    if (Math.abs(change) < 0.001) {
+      return '+0.00';
+    }
+    
     const sign = change >= 0 ? '+' : '';
     return `${sign}${change.toFixed(2)}`;
   };

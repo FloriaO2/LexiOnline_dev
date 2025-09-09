@@ -410,9 +410,129 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     });
 
     console.log(`플레이어 ${client.sessionId} 퇴장. 현재 플레이어 수: ${this.state.players.size}`);
+
+    // 게임 중이고 플레이어가 1명만 남았을 경우 자동 우승 처리
+    if (this.state.round > 0 && this.state.players.size === 1) {
+      console.log(`[DEBUG] 게임 중 플레이어가 1명만 남음. 자동 우승 처리 시작.`);
+      this.handleAutoWin();
+    }
   }
 
   // ------------------------------------------------------------------- 프론트엔드 관련 추가 끝
+
+  /**
+   * 게임 중 플레이어가 1명만 남았을 때 자동 우승 처리
+   */
+  async handleAutoWin() {
+    console.log(`[DEBUG] handleAutoWin() 실행 시작`);
+    
+    // 타이머 정리
+    this.clearTurnTimer();
+    
+    // 남은 플레이어를 우승자로 처리
+    const remainingPlayerId = this.state.players.keys().next().value;
+    const remainingPlayer = this.state.players.get(remainingPlayerId);
+    
+    if (!remainingPlayer) {
+      console.error(`[ERROR] 남은 플레이어를 찾을 수 없습니다.`);
+      return;
+    }
+
+    console.log(`[DEBUG] 자동 우승자: ${remainingPlayer.nickname} (${remainingPlayerId})`);
+
+    // 1) 최종 점수 수집 (점수 조정을 모두 +0으로 설정)
+    const finalScores = Array.from(this.state.players.entries()).map(([sessionId, player]) => ({
+      playerId: sessionId,
+      userId: player.userId,
+      score: player.score, // 기존 점수 유지
+      nickname: player.nickname,
+      rating_mu_before: player.ratingMu,
+      rating_sigma_before: player.ratingSigma
+    }));
+
+    // 자동 우승의 경우 점수 조정을 모두 +0으로 설정
+    const finalScoresWithRank = finalScores.map((player, index) => ({
+      ...player,
+      rank: 1, // 모든 플레이어를 1등으로 처리
+      scoreDiff: 0 // 점수 조정을 +0으로 설정
+    }));
+
+    // 레이팅 계산 (자동 우승의 경우 레이팅 변동 없음)
+    const finalScoresWithRating = finalScoresWithRank.map(player => ({
+      ...player,
+      rating_mu_after: player.rating_mu_before, // 레이팅 변동 없음
+      rating_sigma_after: player.rating_sigma_before // 레이팅 변동 없음
+    }));
+
+    const dbSaveResults = [];
+
+    // 2) 로그인 유저에 대해서만 DB 저장 (레이팅 변동 없음)
+    for (const playerData of finalScoresWithRating) {
+      const { userId, score, rank, rating_mu_before, rating_sigma_before, rating_mu_after, rating_sigma_after } = playerData;
+      
+      if (!userId) {
+        dbSaveResults.push({ userId: null, success: false, reason: 'Not a logged-in user' });
+        continue;
+      }
+
+      console.log(`[DEBUG] 자동 우승 - 유저 ${userId}의 DB 저장을 시도합니다.`);
+      try {
+        await prisma.$transaction(async (tx: any) => {
+          await tx.gameHistory.create({
+            data: {
+              userId,
+              playerCount: finalScores.length,
+              rank,
+              score,
+              scoresAll: finalScores.map(f => f.score),
+              rating_mu_before,
+              rating_sigma_before,
+              rating_mu_after,
+              rating_sigma_after,
+              gameId: this.roomId,
+            },
+          });
+
+          // 자동 우승의 경우 레이팅 업데이트는 하지 않음 (변동 없음)
+          // await tx.user.update({
+          //   where: { id: userId },
+          //   data: {
+          //     rating_mu: rating_mu_after,
+          //     rating_sigma: rating_sigma_after,
+          //   },
+          // });
+        });
+        console.log(`[DEBUG] 자동 우승 - 유저 ${userId}의 게임 결과 DB 저장 성공 (레이팅 변동 없음)`);
+        dbSaveResults.push({ userId, success: true });
+      } catch (err) {
+        console.error(`[ERROR] 자동 우승 - 유저 ${userId}의 DB 저장 트랜잭션 실패:`, err);
+        const reason = err instanceof Error ? err.message : 'An unknown error occurred';
+        dbSaveResults.push({ userId, success: false, reason });
+      }
+    }
+
+    // 3) 최종 결과를 state에 저장
+    this.finalGameResult = { 
+      finalScores: finalScoresWithRating,
+      dbSaveResults 
+    };
+    console.log(`[DEBUG] 자동 우승 - 최종 게임 결과가 생성되어 저장되었습니다.`);
+
+    // 4) 클라이언트에게 자동 우승 결과 전송
+    this.broadcast("autoWinResult", {
+      winner: {
+        playerId: remainingPlayerId,
+        nickname: remainingPlayer.nickname || '익명'
+      },
+      finalScores: finalScoresWithRating,
+      message: "다른 플레이어들이 나가서 자동으로 우승했습니다!"
+    });
+
+    // 5) 게임 완전 종료 알림
+    this.broadcast("gameIsOver");
+    
+    console.log(`[DEBUG] handleAutoWin() 완료`);
+  }
 
   onDispose() {
     console.log("room", this.roomId, "disposing...");

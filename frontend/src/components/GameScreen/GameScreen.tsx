@@ -424,6 +424,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       onScreenChange('finalResult', message.finalScores);
     });
 
+    // 자동 우승 결과 처리
+    room.onMessage('autoWinResult', (message) => {
+      console.log('자동 우승 결과 수신:', message);
+      showToast(message.message, 'success');
+      // 최종 결과 화면으로 이동
+      onScreenChange('finalResult', message.finalScores);
+    });
+
     room.onMessage('roundEnded', (message) => {
       console.log('라운드 종료:', message);
       setBoardCards([]);
