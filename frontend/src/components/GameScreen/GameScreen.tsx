@@ -432,6 +432,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       onScreenChange('finalResult', message.finalScores);
     });
 
+    // maxNumber 변경 예정 알림 처리
+    room.onMessage('maxNumberWillUpdate', (message) => {
+      console.log('maxNumber 변경 예정 수신:', message);
+      showToast(message.message, 'info');
+    });
+
     room.onMessage('roundEnded', (message) => {
       console.log('라운드 종료:', message);
       setBoardCards([]);

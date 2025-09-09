@@ -377,11 +377,31 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
   onLeave(client: Client, consented: boolean) {
     const wasHost = client.sessionId === this.state.host;
+    const wasCurrentPlayer = client.sessionId === this.state.playerOrder[this.state.nowPlayerIndex];
     
     this.state.players.delete(client.sessionId);
 
+    // playerOrder에서 해당 플레이어 제거 (더 안전한 방법)
     const idx = this.state.playerOrder.indexOf(client.sessionId);
-    if (idx !== -1) this.state.playerOrder.splice(idx, 1);
+    if (idx !== -1) {
+      this.state.playerOrder.splice(idx, 1);
+      console.log(`[DEBUG] playerOrder에서 플레이어 제거: ${client.sessionId} (인덱스: ${idx})`);
+      console.log(`[DEBUG] 제거 후 playerOrder: ${this.state.playerOrder.join(', ')}`);
+    } else {
+      console.warn(`[WARNING] playerOrder에서 플레이어를 찾을 수 없음: ${client.sessionId}`);
+    }
+
+    // 턴 인덱스 조정 (나간 플레이어가 현재 턴이었거나 그 이후 순서였을 경우)
+    if (idx !== -1 && idx <= this.state.nowPlayerIndex) {
+      this.state.nowPlayerIndex = Math.max(0, this.state.nowPlayerIndex - 1);
+      console.log(`[DEBUG] 플레이어 퇴장으로 턴 인덱스 조정: ${idx} → ${this.state.nowPlayerIndex}`);
+    }
+    
+    // 턴 인덱스가 유효 범위를 벗어났을 경우 조정
+    if (this.state.nowPlayerIndex >= this.state.playerOrder.length) {
+      this.state.nowPlayerIndex = this.state.nowPlayerIndex % this.state.playerOrder.length;
+      console.log(`[DEBUG] 턴 인덱스 범위 초과로 조정: ${this.state.nowPlayerIndex}`);
+    }
 
     if (wasHost) {
       const next = this.state.players.keys().next().value;
@@ -412,9 +432,44 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     console.log(`플레이어 ${client.sessionId} 퇴장. 현재 플레이어 수: ${this.state.players.size}`);
 
     // 게임 중이고 플레이어가 1명만 남았을 경우 자동 우승 처리
+    console.log(`[DEBUG] 자동 우승 조건 확인: round=${this.state.round}, players.size=${this.state.players.size}`);
     if (this.state.round > 0 && this.state.players.size === 1) {
       console.log(`[DEBUG] 게임 중 플레이어가 1명만 남음. 자동 우승 처리 시작.`);
       this.handleAutoWin();
+    } else if (this.state.round > 0 && this.state.players.size > 1) {
+      // 게임 중이고 플레이어가 2명 이상 남았을 경우
+      
+      // 다음 라운드에서 maxNumber 조정 예정 알림
+      const expectedMaxNumber = this.maxNumberMap[this.state.players.size] ?? 15;
+      if (expectedMaxNumber !== this.state.maxNumber) {
+        console.log(`[DEBUG] 플레이어 수 변경으로 다음 라운드에서 maxNumber 조정 예정: ${this.state.maxNumber} → ${expectedMaxNumber}`);
+        
+        // 모든 클라이언트에게 다음 라운드에서 maxNumber 변경 예정 알림
+        this.broadcast("maxNumberWillUpdate", {
+          currentMaxNumber: this.state.maxNumber,
+          expectedMaxNumber: expectedMaxNumber,
+          playerCount: this.state.players.size,
+          message: `플레이어 수가 ${this.state.players.size}명으로 변경되어 다음 라운드부터 카드 범위가 조정됩니다.`
+        });
+      }
+      
+      // 나간 플레이어가 현재 턴이었을 경우 다음 플레이어로 턴 변경
+      if (wasCurrentPlayer) {
+        console.log(`[DEBUG] 현재 턴 플레이어가 나감. 다음 플레이어로 턴 변경.`);
+        this.nextPlayer();
+      } else {
+        // 현재 턴 플레이어가 아닌 경우 턴 변경 알림만 전송
+        this.broadcast("turnChanged", {
+          currentPlayerId: this.state.playerOrder[this.state.nowPlayerIndex],
+          allPlayers: Array.from(this.state.players.entries()).map(([id, p]) => ({
+            sessionId: id,
+            nickname: p.nickname || '익명',
+            score: p.score,
+            remainingTiles: p.hand ? p.hand.length : 0,
+            isCurrentPlayer: id === this.state.playerOrder[this.state.nowPlayerIndex]
+          }))
+        });
+      }
     }
   }
 
@@ -555,11 +610,37 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   startRound() {
     console.log(`[DEBUG] startRound() 호출됨 - round: ${this.state.round}, playerCount: ${this.state.players.size}`);
     
+    // 플레이어 수가 변경되었을 경우 maxNumber 재조정
+    const expectedMaxNumber = this.maxNumberMap[this.state.players.size] ?? 15;
+    if (expectedMaxNumber !== this.state.maxNumber) {
+      console.log(`[DEBUG] startRound에서 maxNumber 재조정: ${this.state.maxNumber} → ${expectedMaxNumber}`);
+      this.state.maxNumber = expectedMaxNumber;
+    }
+    
     const maxNumber = this.state.maxNumber;
     const playerCount = this.state.players.size;
 
-    // playerOrder가 이미 입장 역순으로 관리되고 있다고 가정
-    const order = this.state.playerOrder;
+    // playerOrder와 players Map 동기화 확인 및 수정
+    let order = this.state.playerOrder;
+    const currentPlayerIds = Array.from(this.state.players.keys());
+    
+    console.log(`[DEBUG] startRound - 현재 players: ${currentPlayerIds.join(', ')}`);
+    console.log(`[DEBUG] startRound - 현재 playerOrder: ${order.join(', ')}`);
+    
+    // playerOrder에서 존재하지 않는 플레이어 제거
+    const validOrder = order.filter(playerId => this.state.players.has(playerId));
+    if (validOrder.length !== order.length) {
+      console.log(`[DEBUG] playerOrder 동기화 필요 - 유효하지 않은 플레이어 제거`);
+      console.log(`[DEBUG] 동기화 전: ${order.join(', ')}`);
+      console.log(`[DEBUG] 동기화 후: ${validOrder.join(', ')}`);
+      
+      // playerOrder 재구성
+      this.state.playerOrder.clear();
+      validOrder.forEach(playerId => this.state.playerOrder.push(playerId));
+      
+      // order 변수 업데이트
+      order = this.state.playerOrder;
+    }
 
     // 1) 덱 생성 및 셔플
     const deck = createShuffledDeck(maxNumber);
@@ -581,6 +662,8 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     const cloud3PlayerId = findPlayerWithCloud3(this.state.players, maxNumber);
     
     console.log(`[DEBUG] 구름 3 검색 결과: playerId=${cloud3PlayerId}, maxNumber=${maxNumber}`);
+    console.log(`[DEBUG] 현재 playerOrder: ${order.join(', ')}`);
+    console.log(`[DEBUG] 현재 플레이어 수: ${this.state.players.size}`);
 
     if (cloud3PlayerId === null) {
       console.error("[BUG] 구름3이 분배되지 않음! 코드 버그 점검 필요");
@@ -592,10 +675,24 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     const cloud3Index = cloud3PlayerId !== null ? order.indexOf(cloud3PlayerId) : 0;
     
     console.log(`[DEBUG] 구름 3 플레이어 인덱스: ${cloud3Index}, playerOrder: ${order.join(', ')}`);
+    console.log(`[DEBUG] 구름 3 플레이어 닉네임: ${this.state.players.get(cloud3PlayerId)?.nickname}`);
+    console.log(`[DEBUG] 구름 3 플레이어 ID: ${cloud3PlayerId}`);
+    console.log(`[DEBUG] 현재 playerOrder 길이: ${order.length}`);
+    console.log(`[DEBUG] playerOrder 상세: ${order.map((id, idx) => `${idx}:${id}`).join(', ')}`);
 
-    this.state.nowPlayerIndex = cloud3Index;
+    // 인덱스 유효성 검사
+    if (cloud3Index === -1) {
+      console.error(`[ERROR] 구름 3 플레이어(${cloud3PlayerId})를 playerOrder에서 찾을 수 없음!`);
+      console.error(`[ERROR] 현재 playerOrder: ${order.join(', ')}`);
+      console.error(`[ERROR] 현재 players: ${Array.from(this.state.players.keys()).join(', ')}`);
+      // 첫 번째 플레이어로 대체
+      this.state.nowPlayerIndex = 0;
+    } else {
+      // 구름 3을 가진 플레이어가 선이 되도록 nowPlayerIndex 설정
+      this.state.nowPlayerIndex = cloud3Index;
+    }
     
-    console.log(`[DEBUG] 라운드 시작 - 구름3 플레이어: ${this.state.playerOrder[cloud3Index]}, nowPlayerIndex: ${cloud3Index}`);
+    console.log(`[DEBUG] 라운드 시작 - 구름3 플레이어: ${this.state.playerOrder[this.state.nowPlayerIndex]}, nowPlayerIndex: ${this.state.nowPlayerIndex}`);
 
     // 6) 기타 상태 초기화
     this.state.lastType = 0;
@@ -657,7 +754,12 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
     // 9) 첫 번째 턴 시작 (타임어택 모드인 경우 타이머도 시작)
     console.log(`[DEBUG] startRound 완료 - 첫 번째 턴 시작`);
-    this.nextPlayer();
+    // nextPlayer()를 호출하지 않음 - 이미 nowPlayerIndex가 구름3 플레이어로 설정됨
+    
+    // 타임어택 모드인 경우 첫 번째 턴 타이머 시작
+    if (this.state.timeAttackMode) {
+      this.startTurnTimer();
+    }
   }
 
   nextPlayer() {
