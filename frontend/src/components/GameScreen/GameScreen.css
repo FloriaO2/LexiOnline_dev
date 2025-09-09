@@ -808,6 +808,11 @@
 .hand-tile {
   cursor: grab;
   transition: all 0.3s ease;
+  flex: 1;
+  max-width: calc((100% - 10vw - 4px * 15) / 16);
+  aspect-ratio: 42/60;
+  min-width: 25px;
+  min-height: 36px;
 }
 
 .hand-tile:active {
@@ -979,35 +984,19 @@
 
 
 
-/* 1440px 미만: 기존 반응형 유지 */
-@media (max-width: 1440px) {
-  .game-container {
-    width: 95%;
-    height: 95%;
-  }
-  
-  .bottom-top {
-    flex-direction: row;
-    gap: 8px;
-  }
-  
-  .bottom-section {
-    min-height: 160px;
-  }
-  
-  /*
-  .bottom-bottom {
-    min-height: 90px;
-  }
-    */
-  
-  .hand-tile {
-    flex: 1;
-    max-width: calc((100% - 10vw - 4px * 15) / 16);
-    aspect-ratio: 42/60;
-    min-width: 25px;
-    min-height: 36px;
-  }
+/* 기본 스타일 (1440px 미만) */
+.game-container {
+  width: 95%;
+  height: 95%;
+}
+
+.bottom-top {
+  flex-direction: row;
+  gap: 8px;
+}
+
+.bottom-section {
+  min-height: 160px;
 } 
 
 /* 1440px 이상 */
@@ -1029,19 +1018,6 @@
   .bottom-section {
     min-height: 200px;
   }
-  /*
-  .bottom-bottom {
-    min-height: 120px;
-  }
-    */
-  
-  .hand-tile {
-    flex: 1;
-    max-width: calc((100% - 10vw - 4px * 15) / 16);
-    aspect-ratio: 42/60;
-    min-width: 35px;
-    min-height: 50px;
-  }
 }
 
 /* 1920px 이상 */
@@ -1059,15 +1035,10 @@
   .bottom-section {
     min-height: 240px;
   }
-  /*
-  .bottom-bottom {
-    min-height: 140px;
-  }
-    */
   
   .hand-tile {
     flex: 1;
-    max-width: calc((100% - 10vw - 4px * 15) / 16);
+    max-width: calc((100% - 10vw - 4px * 20) / 16);
     aspect-ratio: 42/60;
     min-width: 40px;
     min-height: 57px;
@@ -1075,39 +1046,6 @@
   
   .pass-text {
     font-size: 1.1vw;
-  }
-}
-
-/* 2560px 이상 */
-@media (min-width: 2560px) {
-  .game-container {
-    width: 80vw;
-    height: 85vh;
-    gap: 24px;
-    border-radius: 28px;
-    padding: 4vh 8vw;
-    margin: 0 10vw;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
-    font-size: 1.6vw;
-  }
-  .bottom-section {
-    min-height: 280px;
-  }
-  /*
-  .bottom-bottom {
-    min-height: 160px;
-  }*/
-  
-  .hand-tile {
-    flex: 1;
-    max-width: calc((100% - 10vw - 4px * 15) / 16);
-    aspect-ratio: 42/60;
-    min-width: 45px;
-    min-height: 64px;
-  }
-  
-  .pass-text {
-    font-size: 1.5vw;
   }
 }
 

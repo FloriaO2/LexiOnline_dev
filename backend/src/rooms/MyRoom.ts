@@ -31,7 +31,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   // 방이 비어있을 때 자동 삭제 시간 (30분)
   autoDispose = false;
 
-  maxNumberMap: Record<number, number> = { 2: 9, 3: 9, 4: 13, 5: 15 };
+  maxNumberMap: Record<number, number> = { 2: 7, 3: 9, 4: 13, 5: 15 };
 
   onCreate(options: any) {
     console.log(`[DEBUG] 방 생성됨: ${this.roomId}`);
