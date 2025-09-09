@@ -537,7 +537,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
                )}
              </div>
               <div className="blindmode-setting">
-              <label>카드 공개 모드:</label>
+              <label>전략 모드:</label>
               {isHost ? (
                 <div className="radio-group">
                   <label className="radio-option">
@@ -582,7 +582,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
               )}
             </div>
             <div className="timeattack-setting">
-              <label>턴 모드:</label>
+              <label>진행 방식:</label>
               {isHost ? (
                 <div className="radio-group">
                   <label className="radio-option">
