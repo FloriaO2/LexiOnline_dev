@@ -6,6 +6,7 @@ import { User } from '../../shared/models/User'
 import { GameHistory } from '../../shared/models/GameHistory'
 import ColyseusService from '../../services/ColyseusService';
 import Toast from '../../components/Toast/Toast';
+import PasswordModal from '../../components/PasswordModal/PasswordModal';
 
 interface LobbyScreenProps {
   onScreenChange: (screen: 'lobby' | 'waiting' | 'game' | 'result') => void;
@@ -33,6 +34,15 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     message: '',
     type: 'info',
     isVisible: false
+  });
+  const [passwordModal, setPasswordModal] = useState<{
+    isOpen: boolean;
+    roomId: string;
+    roomTitle: string;
+  }>({
+    isOpen: false,
+    roomId: '',
+    roomTitle: ''
   });
 
   useEffect(() => {
@@ -136,7 +146,10 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       roomOptions.roomTitle = roomTitle.trim() || nickname.trim();
       if (roomType === 'private') {
         roomOptions.roomPassword = roomPassword.trim();
+        console.log(`[DEBUG] 비밀방 생성 - 비밀번호: "${roomPassword.trim()}" (길이: ${roomPassword.trim().length})`);
       }
+      
+      console.log(`[DEBUG] 방 생성 옵션:`, JSON.stringify(roomOptions, null, 2));
       
       const room = await ColyseusService.createRoom(roomOptions);
       console.log('방 생성 성공:', room.sessionId);
@@ -171,7 +184,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     setIsConnecting(true);
     try {
       const authToken = sessionStorage.getItem('access_token');
-      const room = await ColyseusService.joinRoom(roomCode, { authToken });
+      // 방 코드로 입장하는 경우는 비밀번호 검증 우회 (이미 방에 대한 접근 권한이 있다고 가정)
+      const room = await ColyseusService.joinRoom(roomCode, { 
+        authToken, 
+        requirePassword: false 
+      });
       console.log('방 참가 성공:', room.sessionId);
       
       // 닉네임 설정 및 중복 체크
@@ -195,34 +212,50 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     }
   };
 
-  const handleJoinPublicRoom = async (roomId: string, roomType: string) => {
+  const handleJoinPublicRoom = async (roomId: string, roomType: string, roomTitle?: string) => {
     if (!nickname.trim()) {
       showToast('닉네임을 입력해주세요.', 'error');
       return;
     }
 
-    // 비밀방인 경우 비밀번호 입력 받기
-    let password = '';
+    // 비밀방인 경우 비밀번호 모달 열기
     if (roomType === 'private') {
-      password = prompt('비밀번호를 입력하세요:') || '';
-      if (!password.trim()) {
-        showToast('비밀번호를 입력해주세요.', 'error');
-        return;
-      }
+      setPasswordModal({
+        isOpen: true,
+        roomId,
+        roomTitle: roomTitle || '비밀방'
+      });
+      return;
     }
 
+    // 공개방인 경우 바로 참가
+    await joinRoomWithPassword(roomId, '');
+  };
+
+  const joinRoomWithPassword = async (roomId: string, password: string, isPrivateRoom: boolean = false) => {
     setIsConnecting(true);
     try {
       const authToken = sessionStorage.getItem('access_token');
       const joinOptions: any = { authToken };
       
-      if (roomType === 'private') {
+      if (isPrivateRoom) {
+        // 비밀방인 경우 항상 비밀번호 검증 필요
         joinOptions.roomPassword = password;
-        joinOptions.requirePassword = true; // 목록에서 클릭한 경우 비밀번호 검증 필요
+        joinOptions.requirePassword = true; // 명시적으로 true 설정
+        console.log(`[DEBUG] 비밀방 입장 시도 - 방 ID: ${roomId}, 비밀번호: ${password ? '제공됨' : '없음'}, requirePassword: true`);
+      } else {
+        // 공개방인 경우 비밀번호 검증 우회
+        joinOptions.requirePassword = false;
+        console.log(`[DEBUG] 공개방 입장 시도 - 방 ID: ${roomId}, requirePassword: false`);
       }
       
       const room = await ColyseusService.joinRoom(roomId, joinOptions);
       console.log('방 참가 성공:', room.sessionId);
+      
+      // 성공 시 모달 닫기
+      if (isPrivateRoom) {
+        setPasswordModal({ isOpen: false, roomId: '', roomTitle: '' });
+      }
       
       // 닉네임 설정 및 중복 체크
       room.onMessage('nicknameRejected', (message) => {
@@ -242,11 +275,26 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       console.error('방 참가 실패:', error);
       if (error instanceof Error && error.message.includes('비밀번호')) {
         showToast('비밀번호가 올바르지 않습니다.', 'error');
+        // 비밀번호 틀렸을 때는 모달을 유지하고 연결 상태만 해제
+        setIsConnecting(false);
+        return; // 모달을 닫지 않음
       } else {
         showToast('방 참가에 실패했습니다.', 'error');
+        if (isPrivateRoom) {
+          setPasswordModal({ isOpen: false, roomId: '', roomTitle: '' });
+        }
       }
       setIsConnecting(false);
     }
+  };
+
+  const handlePasswordConfirm = (password: string) => {
+    // 모달을 먼저 닫지 않고, 성공했을 때만 닫도록 joinRoomWithPassword에서 처리
+    joinRoomWithPassword(passwordModal.roomId, password, true); // 비밀방이므로 true 전달
+  };
+
+  const handlePasswordCancel = () => {
+    setPasswordModal({ isOpen: false, roomId: '', roomTitle: '' });
   };
 
   const handleLogin = async () => {
@@ -419,27 +467,23 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
 
                     <div className={`input-group ${token ? 'compact' : ''}`}>
                       <label>방 타입</label>
-                      <div className="room-type-selector-horizontal">
-                        <label className="radio-option-horizontal">
-                          <input
-                            type="radio"
-                            name="roomType"
-                            value="public"
-                            checked={roomType === 'public'}
-                            onChange={(e) => setRoomType(e.target.value as 'public')}
-                          />
-                          <span>공개방</span>
-                        </label>
-                        <label className="radio-option-horizontal">
-                          <input
-                            type="radio"
-                            name="roomType"
-                            value="private"
-                            checked={roomType === 'private'}
-                            onChange={(e) => setRoomType(e.target.value as 'private')}
-                          />
-                          <span>비밀방</span>
-                        </label>
+                      <div className="room-type-selector">
+                        <button
+                          type="button"
+                          className={`room-type-button ${roomType === 'public' ? 'active' : ''}`}
+                          onClick={() => setRoomType('public')}
+                        >
+                          <span className="room-type-icon">🌐</span>
+                          공개방
+                        </button>
+                        <button
+                          type="button"
+                          className={`room-type-button ${roomType === 'private' ? 'active' : ''}`}
+                          onClick={() => setRoomType('private')}
+                        >
+                          <span className="room-type-icon">🔒</span>
+                          비밀방
+                        </button>
                       </div>
                     </div>
 
@@ -589,13 +633,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                               <div className="room-meta"> 
                                 <button
                                   className="join-button"
-                                  onClick={() => handleJoinPublicRoom(room.roomId, room.roomType)}
+                                  onClick={() => handleJoinPublicRoom(room.roomId, room.roomType, room.title)}
                                   disabled={!nickname.trim() || isConnecting || room.playerCount >= room.maxClients}
                                   title={room.playerCount >= room.maxClients ? '방이 가득참' : 
                                          room.roomType === 'private' ? '비밀번호 입력' : '참가하기'}
                                 >
                                   {room.playerCount >= room.maxClients ? '🚫' : 
-                                   room.roomType === 'private' ? '🔑' : '▶'}
+                                   room.roomType === 'private' ? 'JOIN' : 'JOIN'}
                                 </button>
                               </div>
                             </div>
@@ -643,6 +687,14 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         onClose={hideToast}
         duration={2000}
         showCloseButton={false}
+      />
+
+      {/* 비밀번호 입력 모달 */}
+      <PasswordModal
+        isOpen={passwordModal.isOpen}
+        onClose={handlePasswordCancel}
+        onConfirm={handlePasswordConfirm}
+        roomTitle={passwordModal.roomTitle}
       />
     </div>
   );

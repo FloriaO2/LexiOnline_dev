@@ -7,14 +7,19 @@ import authRouter from "./routes/auth";
 import { matchMaker } from "colyseus";
 
 import { MyRoom } from "./rooms/MyRoom";
+import { CleanupScheduler } from "./cleanupScheduler";
 
 // gameServer를 전역으로 저장
 let globalGameServer: any = null;
+let cleanupScheduler: CleanupScheduler | null = null;
 
 export default config({
   initializeGameServer: (gameServer) => {
     gameServer.define('my_room', MyRoom);
     globalGameServer = gameServer; // 전역 변수에 저장
+    
+    // 빈 방 정리 스케줄러 초기화
+    cleanupScheduler = new CleanupScheduler(gameServer);
   },
 
   initializeExpress: (app) => {
@@ -54,7 +59,7 @@ export default config({
         console.log('MatchMaker structure:', matchMaker ? Object.keys(matchMaker) : 'No matchMaker');
         
         // 모든 방을 조회하기 위해 다양한 방법 시도
-        let rooms = [];
+        let rooms: any[] = [];
         try {
           // 방법 1: matchMaker.query()에 빈 조건으로 모든 방 조회
           if (matchMaker && matchMaker.query) {
@@ -70,9 +75,9 @@ export default config({
             console.log('Available matchMaker methods:', Object.keys(matchMaker));
             
             // 방법 3: 직접 rooms 속성 접근 시도
-            if (globalGameServer.rooms) {
+            if ((globalGameServer as any).rooms) {
               console.log('Trying globalGameServer.rooms...');
-              rooms = Object.values(globalGameServer.rooms);
+              rooms = Object.values((globalGameServer as any).rooms);
               console.log('globalGameServer.rooms result:', rooms.length, 'rooms');
             }
             
@@ -80,8 +85,8 @@ export default config({
             if (rooms.length === 0) {
               console.log('Trying alternative methods...');
               // matchMaker의 다른 메서드들 확인
-              if (matchMaker.rooms) {
-                rooms = Object.values(matchMaker.rooms);
+              if ((matchMaker as any).rooms) {
+                rooms = Object.values((matchMaker as any).rooms);
                 console.log('matchMaker.rooms result:', rooms.length, 'rooms');
               }
             }
@@ -163,5 +168,7 @@ export default config({
 
   beforeListen: () => {
     // Listen 전 작업이 필요하면 여기에 작성
-  }
+  },
+
+
 });

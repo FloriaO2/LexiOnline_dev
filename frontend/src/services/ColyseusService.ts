@@ -83,8 +83,11 @@ class ColyseusService {
   async joinRoom(roomId: string, options: any = {}): Promise<Room> {
     try {
       // roomId가 실제 방 ID인지 확인하고 참가
-      // 코드로 직접 입장하는 경우 비밀번호 검증을 무시
-      const joinOptions = { ...options, requirePassword: false };
+      // options에서 requirePassword가 명시적으로 설정되지 않은 경우에만 false로 설정
+      const joinOptions = { ...options };
+      if (joinOptions.requirePassword === undefined) {
+        joinOptions.requirePassword = false; // 기본값은 false (방 코드로 입장하는 경우)
+      }
       this.room = await this.client.joinById(roomId, joinOptions);
       this.isConnected = true;
       

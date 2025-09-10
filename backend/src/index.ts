@@ -12,6 +12,7 @@
 import { listen } from "@colyseus/tools";
 import app from "./app.config";
 import { PrismaClient } from "@prisma/client";
+import { CleanupScheduler } from "./cleanupScheduler";
 
 const prisma = new PrismaClient();
 
@@ -19,9 +20,15 @@ async function main() {
   try {
     await prisma.$connect();
     console.log("✅ Prisma connected successfully.");
+    
     // Express + Colyseus
-    listen(app); // 이 app에는 Express가 탑재된 상태
+    const gameServer = await listen(app); // 이 app에는 Express가 탑재된 상태
     console.log("🚀 Colyseus server is listening...");
+    
+    // 빈 방 정리 스케줄러 시작
+    const cleanupScheduler = new CleanupScheduler(gameServer);
+    cleanupScheduler.start();
+    
   } catch (error) {
     console.error("❌ Failed to connect Prisma:", error);
     process.exit(1);
