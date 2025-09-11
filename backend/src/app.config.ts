@@ -7,6 +7,7 @@ import authRouter from "./routes/auth";
 import { matchMaker } from "colyseus";
 
 import { MyRoom } from "./rooms/MyRoom";
+import { LobbyRoom } from "./rooms/LobbyRoom";
 import { CleanupScheduler } from "./cleanupScheduler";
 
 // gameServer를 전역으로 저장
@@ -16,6 +17,7 @@ let cleanupScheduler: CleanupScheduler | null = null;
 export default config({
   initializeGameServer: (gameServer) => {
     gameServer.define('my_room', MyRoom);
+    gameServer.define('lobby_room', LobbyRoom);
     globalGameServer = gameServer; // 전역 변수에 저장
     
     // 빈 방 정리 스케줄러 초기화

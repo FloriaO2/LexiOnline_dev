@@ -3,7 +3,9 @@ import { Client, Room } from "colyseus.js";
 class ColyseusService {
   private client: Client;
   private room: Room | null = null;
+  private lobbyRoom: Room | null = null;
   private isConnected: boolean = false;
+  private isLobbyConnected: boolean = false;
   private roomInfo: { roomId: string; sessionId: string; nickname: string } | null = null;
 
   constructor() {
@@ -26,6 +28,11 @@ class ColyseusService {
       }
 
       this.isConnected = true;
+      
+      // Colyseus playground 메시지 타입 핸들러 (콘솔 오류 방지)
+      this.room.onMessage('__playground_message_types', () => {
+        // 개발자 도구 메시지 무시
+      });
       
       // 방 정보 저장
       this.saveRoomInfo();
@@ -55,6 +62,11 @@ class ColyseusService {
     try {
       this.room = await this.client.create("my_room", options);
       this.isConnected = true;
+      
+      // Colyseus playground 메시지 타입 핸들러 (콘솔 오류 방지)
+      this.room.onMessage('__playground_message_types', () => {
+        // 개발자 도구 메시지 무시
+      });
       
       // 방 정보 저장
       this.saveRoomInfo();
@@ -189,6 +201,72 @@ class ColyseusService {
       console.error('공개방 목록 조회 실패:', error);
       throw error;
     }
+  }
+
+  // 로비 방에 연결하여 실시간 방 목록 업데이트 수신
+  async connectToLobby(): Promise<Room> {
+    try {
+      
+      // 이미 로비 방에 연결되어 있다면 기존 연결 반환
+      if (this.lobbyRoom && this.isLobbyConnected) {
+        return this.lobbyRoom;
+      }
+      
+      this.lobbyRoom = await this.client.joinOrCreate("lobby_room");
+      this.isLobbyConnected = true;
+      
+      // Colyseus playground 메시지 타입 핸들러 (콘솔 오류 방지)
+      this.lobbyRoom.onMessage('__playground_message_types', () => {
+        // 개발자 도구 메시지 무시
+      });
+      
+      // 연결 상태 이벤트 리스너
+      this.lobbyRoom.onLeave((code) => {
+        this.isLobbyConnected = false;
+        this.lobbyRoom = null;
+        
+        // 비정상 종료인 경우 재연결 시도
+        if (code === 1006) {
+          setTimeout(() => {
+            this.connectToLobby().catch(error => {
+              console.error("로비 방 재연결 실패:", error);
+            });
+          }, 3000);
+        }
+      });
+
+      this.lobbyRoom.onError((code, message) => {
+        console.error("로비 방 연결 오류:", code, message);
+        this.isLobbyConnected = false;
+        this.lobbyRoom = null;
+      });
+
+      return this.lobbyRoom;
+    } catch (error) {
+      console.error("로비 방 연결 실패:", error);
+      this.isLobbyConnected = false;
+      this.lobbyRoom = null;
+      throw error;
+    }
+  }
+
+  // 로비 방 연결 해제
+  disconnectLobby() {
+    if (this.lobbyRoom) {
+      this.lobbyRoom.leave();
+      this.lobbyRoom = null;
+      this.isLobbyConnected = false;
+    }
+  }
+
+  // 로비 방 연결 상태 확인
+  isLobbyRoomConnected(): boolean {
+    return this.isLobbyConnected && this.lobbyRoom !== null;
+  }
+
+  // 로비 방 인스턴스 반환
+  getLobbyRoom(): Room | null {
+    return this.lobbyRoom;
   }
 
   // 저장된 방에 재연결 시도

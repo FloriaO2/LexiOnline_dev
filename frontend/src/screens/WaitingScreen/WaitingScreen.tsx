@@ -121,6 +121,8 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
       navigate('/waiting');
     }
 
+    // WaitingScreen에서는 로비 방 연결 불필요 (LobbyScreen에서만 처리)
+
     let room = ColyseusService.getRoom();
     
     // 방에 연결되지 않은 경우, 저장된 방 정보로 재연결 시도
@@ -143,6 +145,8 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({ onScreenChange, playerCou
     }
 
     setupRoomListeners(room);
+    
+    // WaitingScreen에서는 로비 방 연결을 하지 않으므로 해제할 필요 없음
   }, [onScreenChange, navigate]);
 
   const setupRoomListeners = (room: any) => {

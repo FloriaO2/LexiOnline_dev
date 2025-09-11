@@ -21,37 +21,53 @@ import {
 import { calculateRanks } from "../gameLogic/calculateRanks";
 import { calculateRatings } from "../gameLogic/calculateRatings";
 import { DEFAULT_RATING_MU, DEFAULT_RATING_SIGMA } from "../constants/rating";
+import { matchMaker } from "colyseus";
 
 export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   maxClients = 5;
   state = new MyRoomState();
   private finalGameResult: any = null;
   private turnTimer: NodeJS.Timeout | null = null; // 타임어택 타이머
-  private connectionCheckTimer: NodeJS.Timeout | null = null; // 연결 상태 체크 타이머
   
   // 방이 비어있을 때 자동 삭제 시간 (30분)
   autoDispose = false;
 
   maxNumberMap: Record<number, number> = { 2: 7, 3: 9, 4: 13, 5: 15 };
 
+  // LobbyRoom에 방 목록 업데이트 알림 전송
+  private async notifyLobbyRoomListUpdate(type: 'roomCreated' | 'roomDeleted' | 'roomUpdated', roomData?: any) {
+    try {
+      // LobbyRoom 찾기
+      const lobbyRooms = await matchMaker.query({ name: 'lobby_room' });
+      
+      if (lobbyRooms.length === 0) {
+        return; // 로비 방이 없으면 무시
+      }
+      
+      // 모든 로비 방에 알림 전송
+      for (const lobbyRoom of lobbyRooms) {
+        try {
+          await (matchMaker as any).remoteRoomCall(lobbyRoom.roomId, 'notifyRoomListUpdate', [type, roomData]);
+        } catch (error) {
+          // 알림 전송 실패 시 무시 (로비 방이 없을 수 있음)
+        }
+      }
+    } catch (error) {
+      // 전체 알림 전송 실패 시 무시
+    }
+  }
+
   onCreate(options: any) {
-    console.log(`[DEBUG] 방 생성됨: ${this.roomId}`);
-    console.log(`[DEBUG] 방 생성 옵션:`, JSON.stringify(options, null, 2));
     
     // 방 생성 옵션에서 방 타입과 비밀번호 설정
     if (options.roomType) {
       this.state.roomType = options.roomType;
-      console.log(`[DEBUG] 방 타입 설정: ${options.roomType}`);
     }
     if (options.roomPassword) {
       this.state.roomPassword = options.roomPassword;
-      console.log(`[DEBUG] 방 비밀번호 설정: "${options.roomPassword}" (길이: ${options.roomPassword.length})`);
-    } else {
-      console.log(`[DEBUG] 방 비밀번호가 제공되지 않음 - options.roomPassword: ${options.roomPassword}`);
     }
     if (options.roomTitle) {
       this.state.roomTitle = options.roomTitle;
-      console.log(`[DEBUG] 방 제목 설정: ${options.roomTitle}`);
     }
     
     // 방 메타데이터 설정 (공개방 목록 조회용)
@@ -62,10 +78,18 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       createdAt: new Date().toISOString()
     };
     
-    console.log(`[DEBUG] 메타데이터 설정:`, metadata);
     this.setMetadata(metadata);
     
-    console.log(`[DEBUG] 방 설정 완료 - 타입: ${this.state.roomType}, 제목: ${this.state.roomTitle}, 비밀번호: "${this.state.roomPassword}" (길이: ${this.state.roomPassword.length})`);
+    // 방 생성 완료 시 로비 방으로 알림 전송 (LobbyRoom 연결을 기다리기 위해 지연)
+    setTimeout(() => {
+      this.notifyLobbyRoomListUpdate("roomCreated", {
+        roomId: this.roomId,
+        roomType: this.state.roomType,
+        roomTitle: this.state.roomTitle,
+        playerCount: 0,
+        maxClients: this.maxClients
+      });
+    }, 2000); // 2초로 지연 시간 증가
     
     this.onMessage("changeRounds", (client, data) => {
       if (client.sessionId !== this.state.host) {
@@ -332,6 +356,11 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   async onJoin(client: Client, options: any) {
     console.log(`[DEBUG] onJoin 호출됨 - 방 타입: ${this.state.roomType}, options:`, JSON.stringify(options, null, 2));
     
+    // 구글 로그인 사용자만 접속 가능 (authToken 필수)
+    if (!options.authToken) {
+      throw new Error("구글 로그인이 필요합니다.");
+    }
+    
     if (this.state.round > 0) {
       throw new Error("게임이 이미 시작되었습니다.");
     }
@@ -436,11 +465,6 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     });
 
     console.log(`플레이어 ${client.sessionId} 입장. 현재 플레이어 수: ${this.state.players.size}`);
-    
-    // 연결 상태 체크 타이머 시작 (첫 번째 플레이어 입장 시)
-    if (this.state.players.size === 1 && !this.connectionCheckTimer) {
-      this.startConnectionCheck();
-    }
   }
 
   onLeave(client: Client, consented: boolean) {
@@ -510,7 +534,12 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     // 모든 플레이어가 나갔을 경우 방 자동 삭제
     if (this.state.players.size === 0) {
       console.log(`[DEBUG] 모든 플레이어가 퇴장했습니다. 방 ${this.roomId}을 삭제합니다.`);
-      this.stopConnectionCheck();
+      
+      // 방 삭제 전에 로비 방으로 알림 전송
+      this.notifyLobbyRoomListUpdate("roomDeleted", {
+        roomId: this.roomId
+      });
+      
       this.disconnect();
       return;
     }
@@ -676,84 +705,8 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   onDispose() {
     console.log("room", this.roomId, "disposing...");
     this.clearTurnTimer();
-    this.stopConnectionCheck();
   }
 
-  // 연결 상태 체크 시작
-  private startConnectionCheck() {
-    console.log(`[DEBUG] 연결 상태 체크 타이머 시작 - 방 ID: ${this.roomId}`);
-    this.connectionCheckTimer = setInterval(() => {
-      this.checkConnections();
-    }, 30000); // 30초마다 체크
-  }
-
-  // 연결 상태 체크 중지
-  private stopConnectionCheck() {
-    if (this.connectionCheckTimer) {
-      console.log(`[DEBUG] 연결 상태 체크 타이머 중지 - 방 ID: ${this.roomId}`);
-      clearInterval(this.connectionCheckTimer);
-      this.connectionCheckTimer = null;
-    }
-  }
-
-  // 연결 상태 체크
-  private checkConnections() {
-    console.log(`[DEBUG] 연결 상태 체크 - 방 ID: ${this.roomId}, 플레이어 수: ${this.state.players.size}`);
-    
-    // 실제 연결된 클라이언트 수와 상태의 플레이어 수 비교
-    const connectedClients = Array.from(this.clients.keys());
-    const statePlayers = Array.from(this.state.players.keys());
-    
-    console.log(`[DEBUG] 연결된 클라이언트: ${connectedClients.join(', ')}`);
-    console.log(`[DEBUG] 상태의 플레이어: ${statePlayers.join(', ')}`);
-    
-    // 상태에는 있지만 실제로는 연결되지 않은 플레이어 찾기
-    const disconnectedPlayers = statePlayers.filter(playerId => !connectedClients.includes(playerId));
-    
-    if (disconnectedPlayers.length > 0) {
-      console.log(`[DEBUG] 연결이 끊어진 플레이어 발견: ${disconnectedPlayers.join(', ')}`);
-      
-      // 연결이 끊어진 플레이어들을 상태에서 제거
-      disconnectedPlayers.forEach(playerId => {
-        console.log(`[DEBUG] 연결 끊어진 플레이어 제거: ${playerId}`);
-        this.state.players.delete(playerId);
-        
-        // playerOrder에서도 제거
-        const idx = this.state.playerOrder.indexOf(playerId);
-        if (idx !== -1) {
-          this.state.playerOrder.splice(idx, 1);
-        }
-      });
-      
-      // 호스트가 연결이 끊어진 경우 새로운 호스트 설정
-      if (disconnectedPlayers.includes(this.state.host)) {
-        const next = this.state.players.keys().next().value;
-        this.state.host = next ? next : "";
-        console.log(`[DEBUG] 새로운 호스트 설정: ${this.state.host}`);
-      }
-      
-      // 플레이어 목록 업데이트 브로드캐스트
-      const playersList = Array.from(this.state.players.entries()).map(([id, p]) => ({
-        playerId: id,
-        nickname: p.nickname || '익명',
-        isReady: p.ready,
-        isHost: this.state.host === id
-      }));
-      
-      this.broadcast("playersUpdated", {
-        players: playersList
-      });
-      
-      console.log(`[DEBUG] 연결 끊어진 플레이어 제거 완료. 현재 플레이어 수: ${this.state.players.size}`);
-      
-      // 모든 플레이어가 연결이 끊어진 경우 방 삭제
-      if (this.state.players.size === 0) {
-        console.log(`[DEBUG] 모든 플레이어의 연결이 끊어졌습니다. 방 ${this.roomId}을 삭제합니다.`);
-        this.stopConnectionCheck();
-        this.disconnect();
-      }
-    }
-  }
 
   startGame() {
     // easyMode 설정은 각 플레이어의 설정을 따르며, 방 전체의 easyMode는 플레이어 중 한 명이라도 true이면 true가 됨.

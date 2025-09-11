@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LobbyScreen.css';
 import logoImage from '../../logo.png';
@@ -11,6 +11,46 @@ import PasswordModal from '../../components/PasswordModal/PasswordModal';
 interface LobbyScreenProps {
   onScreenChange: (screen: 'lobby' | 'waiting' | 'game' | 'result') => void;
 }
+
+// 방 카드 컴포넌트 (memo로 최적화)
+const RoomCard = memo(({ room, onJoinRoom, nickname, isConnecting }: {
+  room: any;
+  onJoinRoom: (roomId: string, roomType: string, roomTitle: string) => void;
+  nickname: string;
+  isConnecting: boolean;
+}) => {
+  return (
+    <div className="room-card">
+      <div className="room-info">
+        <div className="room-header">
+          <span className={`room-type-badge ${room.roomType}`}>
+            {room.roomType === 'private' ? '🔒 비밀방' : '🌐 공개방'}
+          </span>
+          <h4 className="room-title">{room.title}</h4>
+          <div className="player-count">
+            <span className="player-numbers">
+              <span className="current-players">{room.playerCount}</span>
+              <span className="player-separator">/</span>
+              <span className="max-players">{room.maxClients}</span>
+            </span>
+          </div>
+        </div>
+        <div className="room-meta"> 
+          <button
+            className="join-button"
+            onClick={() => onJoinRoom(room.roomId, room.roomType, room.title)}
+            disabled={!nickname.trim() || isConnecting || room.playerCount >= room.maxClients}
+            title={room.playerCount >= room.maxClients ? '방이 가득참' : 
+                   room.roomType === 'private' ? '비밀번호 입력' : '참가하기'}
+          >
+            {room.playerCount >= room.maxClients ? '🚫' : 
+             room.roomType === 'private' ? 'JOIN' : 'JOIN'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   const navigate = useNavigate();
@@ -44,6 +84,8 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     roomId: '',
     roomTitle: ''
   });
+  const [lobbyRoom, setLobbyRoom] = useState<any>(null);
+
 
   useEffect(() => {
     if (!token) {
@@ -91,6 +133,58 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     }
   }, [activeTab, token]);
 
+  // 로비 방 연결 및 실시간 업데이트 수신 (컴포넌트 마운트 시 한 번만 실행)
+  useEffect(() => {
+    let isMounted = true;
+    
+    const connectToLobby = async () => {
+      try {
+        const room = await ColyseusService.connectToLobby();
+        
+        if (!isMounted) return; // 컴포넌트가 언마운트된 경우 중단
+        
+        setLobbyRoom(room);
+        
+        // 실시간 방 목록 업데이트 수신
+        room.onMessage('roomListUpdate', (message) => {
+          if (!isMounted) return; // 컴포넌트가 언마운트된 경우 중단
+          
+          if (message.type === 'roomCreated') {
+            // 새 방을 목록에 추가
+            addRoomToList(message.roomData);
+          } else if (message.type === 'roomDeleted') {
+            // 방을 목록에서 제거
+            removeRoomFromList(message.roomData);
+          }
+        });
+        
+        // 연결 상태 확인
+        room.onLeave((code) => {
+          if (!isMounted) return;
+        });
+
+        room.onError((code, message) => {
+          if (!isMounted) return;
+          console.error('로비 방 연결 오류:', code, message);
+        });
+        
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('로비 방 연결 실패:', error);
+      }
+    };
+    
+    // 로비 방에 연결
+    connectToLobby();
+    
+    // 컴포넌트 언마운트 시 로비 방 연결 해제
+    return () => {
+      isMounted = false;
+      ColyseusService.disconnectLobby();
+      setLobbyRoom(null);
+    };
+  }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행
+
   // 닉네임이 변경될 때 방 제목도 자동으로 업데이트
   useEffect(() => {
     if (nickname.trim() && !roomTitle.trim()) {
@@ -122,6 +216,35 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       setIsLoadingRooms(false);
     }
   };
+
+  // 개별 방 추가 (실시간 업데이트용)
+  const addRoomToList = useCallback((roomData: any) => {
+    setPublicRooms(prevRooms => {
+      // 이미 존재하는 방인지 확인
+      const exists = prevRooms.some(room => room.roomId === roomData.roomId);
+      if (exists) {
+        return prevRooms; // 이미 존재하면 변경하지 않음
+      }
+      
+      // 새 방을 목록에 추가
+      const newRoom = {
+        roomId: roomData.roomId,
+        title: roomData.roomTitle,
+        roomType: roomData.roomType,
+        playerCount: roomData.playerCount || 0,
+        maxClients: roomData.maxClients || 5
+      };
+      
+      return [...prevRooms, newRoom];
+    });
+  }, []);
+
+  // 개별 방 삭제 (실시간 업데이트용)
+  const removeRoomFromList = useCallback((roomData: any) => {
+    setPublicRooms(prevRooms => 
+      prevRooms.filter(room => room.roomId !== roomData.roomId)
+    );
+  }, []);
 
   const handleCreateRoom = async () => {
     if (!nickname.trim()) {
@@ -212,7 +335,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     }
   };
 
-  const handleJoinPublicRoom = async (roomId: string, roomType: string, roomTitle?: string) => {
+  const handleJoinPublicRoom = useCallback(async (roomId: string, roomType: string, roomTitle?: string) => {
     if (!nickname.trim()) {
       showToast('닉네임을 입력해주세요.', 'error');
       return;
@@ -230,7 +353,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
 
     // 공개방인 경우 바로 참가
     await joinRoomWithPassword(roomId, '');
-  };
+  }, [nickname]);
 
   const joinRoomWithPassword = async (roomId: string, password: string, isPrivateRoom: boolean = false) => {
     setIsConnecting(true);
@@ -428,6 +551,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
               </button>
             </div>
 
+
             {/* 탭 컨텐츠 */}
             <div className={`tab-content ${token ? 'compact' : ''}`}>
               {activeTab === 'create' && (
@@ -605,45 +729,17 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                     ) : publicRooms.length === 0 ? (
                       <div className="no-rooms">
                         <p>현재 활성화된 공개방이 없습니다.</p>
-                        <button 
-                          className="btn btn-secondary"
-                          onClick={loadPublicRooms}
-                        >
-                          새로고침
-                        </button>
                       </div>
                     ) : (
                       <div className="rooms-grid">
                         {publicRooms.map((room) => (
-                          <div key={room.roomId} className="room-card">
-                            <div className="room-info">
-                              <div className="room-header">
-                                <span className={`room-type-badge ${room.roomType}`}>
-                                  {room.roomType === 'private' ? '🔒 비밀방' : '🌐 공개방'}
-                                </span>
-                                <h4 className="room-title">{room.title}</h4>
-                                <div className="player-count">
-                                  <span className="player-numbers">
-                                    <span className="current-players">{room.playerCount}</span>
-                                    <span className="player-separator">/</span>
-                                    <span className="max-players">{room.maxClients}</span>
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="room-meta"> 
-                                <button
-                                  className="join-button"
-                                  onClick={() => handleJoinPublicRoom(room.roomId, room.roomType, room.title)}
-                                  disabled={!nickname.trim() || isConnecting || room.playerCount >= room.maxClients}
-                                  title={room.playerCount >= room.maxClients ? '방이 가득참' : 
-                                         room.roomType === 'private' ? '비밀번호 입력' : '참가하기'}
-                                >
-                                  {room.playerCount >= room.maxClients ? '🚫' : 
-                                   room.roomType === 'private' ? 'JOIN' : 'JOIN'}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
+                          <RoomCard
+                            key={room.roomId}
+                            room={room}
+                            onJoinRoom={handleJoinPublicRoom}
+                            nickname={nickname}
+                            isConnecting={isConnecting}
+                          />
                         ))}
                       </div>
                     )}
