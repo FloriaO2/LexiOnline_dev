@@ -126,20 +126,41 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       });
   }, [token]);
 
-  // 공개방 탭이 활성화될 때 공개방 목록 로드
+  // 공개방 탭이 활성화될 때 공개방 목록 로드 및 로비 방 연결 확인
   useEffect(() => {
     if (activeTab === 'public' && token) {
       loadPublicRooms();
+      
+      // 로비 방 연결 상태 확인 및 재연결 시도
+      if (!lobbyRoom) {
+        console.log('[DEBUG] 공개방 탭 활성화 시 로비 방 연결 상태 확인 중...');
+        ColyseusService.connectToLobby()
+          .then(room => {
+            setLobbyRoom(room);
+            console.log('[DEBUG] 공개방 탭에서 로비 방 재연결 성공');
+          })
+          .catch(error => {
+            console.error('[DEBUG] 공개방 탭에서 로비 방 재연결 실패:', error);
+          });
+      }
     }
-  }, [activeTab, token]);
+  }, [activeTab, token, lobbyRoom]);
 
-  // 로비 방 연결 및 실시간 업데이트 수신 (컴포넌트 마운트 시 한 번만 실행)
+  // 로비 방 연결 및 실시간 업데이트 수신 (로그인 후에만 실행)
   useEffect(() => {
     let isMounted = true;
     
+    // 토큰이 없으면 로비 방 연결하지 않음
+    if (!token) {
+      console.log('[DEBUG] 토큰이 없어서 로비 방 연결 건너뜀');
+      return;
+    }
+    
     const connectToLobby = async () => {
       try {
+        console.log('[DEBUG] 로비 방 연결 시도 중...');
         const room = await ColyseusService.connectToLobby();
+        console.log('[DEBUG] 로비 방 연결 성공:', room.sessionId);
         
         if (!isMounted) return; // 컴포넌트가 언마운트된 경우 중단
         
@@ -149,18 +170,27 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         room.onMessage('roomListUpdate', (message) => {
           if (!isMounted) return; // 컴포넌트가 언마운트된 경우 중단
           
+          console.log('[DEBUG] 로비 방에서 메시지 수신:', message);
+          
           if (message.type === 'roomCreated') {
+            console.log('[DEBUG] 새 방 생성 알림:', message.roomData);
             // 새 방을 목록에 추가
             addRoomToList(message.roomData);
           } else if (message.type === 'roomDeleted') {
+            console.log('[DEBUG] 방 삭제 알림:', message.roomData);
             // 방을 목록에서 제거
             removeRoomFromList(message.roomData);
+          } else if (message.type === 'roomUpdated') {
+            console.log('[DEBUG] 방 업데이트 알림:', message.roomData);
+            // 방 정보 업데이트 (참여자 수 등)
+            updateRoomInList(message.roomData);
           }
         });
         
         // 연결 상태 확인
         room.onLeave((code) => {
           if (!isMounted) return;
+          console.log('[DEBUG] 로비 방 연결 해제됨:', code);
         });
 
         room.onError((code, message) => {
@@ -183,7 +213,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       ColyseusService.disconnectLobby();
       setLobbyRoom(null);
     };
-  }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행
+  }, [token]); // token이 변경될 때마다 실행
 
   // 닉네임이 변경될 때 방 제목도 자동으로 업데이트
   useEffect(() => {
@@ -246,6 +276,36 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     );
   }, []);
 
+  // 개별 방 업데이트 (실시간 업데이트용)
+  const updateRoomInList = useCallback((roomData: any) => {
+    setPublicRooms(prevRooms => {
+      const existingRoomIndex = prevRooms.findIndex(room => room.roomId === roomData.roomId);
+      
+      if (existingRoomIndex !== -1) {
+        // 기존 방이 있으면 업데이트
+        const updatedRooms = [...prevRooms];
+        updatedRooms[existingRoomIndex] = {
+          ...updatedRooms[existingRoomIndex],
+          playerCount: roomData.playerCount || updatedRooms[existingRoomIndex].playerCount,
+          roomTitle: roomData.roomTitle || updatedRooms[existingRoomIndex].roomTitle,
+          roomType: roomData.roomType || updatedRooms[existingRoomIndex].roomType
+        };
+        return updatedRooms;
+      } else {
+        // 기존 방이 없으면 새로 추가 (방이 생성되었지만 목록에 반영되지 않은 경우)
+        console.log('[DEBUG] 업데이트할 방이 목록에 없어서 새로 추가:', roomData);
+        const newRoom = {
+          roomId: roomData.roomId,
+          title: roomData.roomTitle || 'Untitled Room',
+          roomType: roomData.roomType || 'public',
+          playerCount: roomData.playerCount || 0,
+          maxClients: roomData.maxClients || 5
+        };
+        return [...prevRooms, newRoom];
+      }
+    });
+  }, []);
+
   const handleCreateRoom = async () => {
     if (!nickname.trim()) {
       showToast('닉네임을 입력해주세요.', 'error');
@@ -276,6 +336,18 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       
       const room = await ColyseusService.createRoom(roomOptions);
       console.log('방 생성 성공:', room.sessionId);
+      
+      // 방 생성 후 로비 방 연결 상태 확인 및 재연결 시도
+      if (!lobbyRoom) {
+        console.log('[DEBUG] 방 생성 후 로비 방 연결 상태 확인 중...');
+        try {
+          const newLobbyRoom = await ColyseusService.connectToLobby();
+          setLobbyRoom(newLobbyRoom);
+          console.log('[DEBUG] 방 생성 후 로비 방 재연결 성공');
+        } catch (error) {
+          console.error('[DEBUG] 방 생성 후 로비 방 재연결 실패:', error);
+        }
+      }
       
       // 닉네임 설정 및 중복 체크
       room.onMessage('nicknameRejected', (message) => {

@@ -206,14 +206,18 @@ class ColyseusService {
   // 로비 방에 연결하여 실시간 방 목록 업데이트 수신
   async connectToLobby(): Promise<Room> {
     try {
+      console.log('[DEBUG] connectToLobby 호출됨');
       
       // 이미 로비 방에 연결되어 있다면 기존 연결 반환
       if (this.lobbyRoom && this.isLobbyConnected) {
+        console.log('[DEBUG] 이미 로비 방에 연결되어 있음, 기존 연결 반환');
         return this.lobbyRoom;
       }
       
+      console.log('[DEBUG] 로비 방 생성/참가 시도 중...');
       this.lobbyRoom = await this.client.joinOrCreate("lobby_room");
       this.isLobbyConnected = true;
+      console.log('[DEBUG] 로비 방 연결 완료, sessionId:', this.lobbyRoom.sessionId);
       
       // Colyseus playground 메시지 타입 핸들러 (콘솔 오류 방지)
       this.lobbyRoom.onMessage('__playground_message_types', () => {

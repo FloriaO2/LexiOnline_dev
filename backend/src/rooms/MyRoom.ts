@@ -37,22 +37,30 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   // LobbyRoom에 방 목록 업데이트 알림 전송
   private async notifyLobbyRoomListUpdate(type: 'roomCreated' | 'roomDeleted' | 'roomUpdated', roomData?: any) {
     try {
+      console.log(`[DEBUG] 로비 방 알림 전송 시도: type=${type}, roomData=`, roomData);
+      
       // LobbyRoom 찾기
       const lobbyRooms = await matchMaker.query({ name: 'lobby_room' });
+      console.log(`[DEBUG] 찾은 로비 방 수: ${lobbyRooms.length}`);
       
       if (lobbyRooms.length === 0) {
+        console.log(`[DEBUG] 로비 방이 없어서 알림 전송 건너뜀`);
         return; // 로비 방이 없으면 무시
       }
       
       // 모든 로비 방에 알림 전송
       for (const lobbyRoom of lobbyRooms) {
         try {
+          console.log(`[DEBUG] 로비 방 ${lobbyRoom.roomId}에 알림 전송 중...`);
           await (matchMaker as any).remoteRoomCall(lobbyRoom.roomId, 'notifyRoomListUpdate', [type, roomData]);
+          console.log(`[DEBUG] 로비 방 ${lobbyRoom.roomId}에 알림 전송 성공`);
         } catch (error) {
+          console.error(`[DEBUG] 로비 방 ${lobbyRoom.roomId}에 알림 전송 실패:`, error);
           // 알림 전송 실패 시 무시 (로비 방이 없을 수 있음)
         }
       }
     } catch (error) {
+      console.error(`[DEBUG] 로비 방 알림 전송 전체 실패:`, error);
       // 전체 알림 전송 실패 시 무시
     }
   }
@@ -80,16 +88,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     
     this.setMetadata(metadata);
     
-    // 방 생성 완료 시 로비 방으로 알림 전송 (LobbyRoom 연결을 기다리기 위해 지연)
-    setTimeout(() => {
-      this.notifyLobbyRoomListUpdate("roomCreated", {
-        roomId: this.roomId,
-        roomType: this.state.roomType,
-        roomTitle: this.state.roomTitle,
-        playerCount: 0,
-        maxClients: this.maxClients
-      });
-    }, 2000); // 2초로 지연 시간 증가
+    // 방 생성 시에는 로비 알림을 보내지 않음 (onJoin에서 처리)
     
     this.onMessage("changeRounds", (client, data) => {
       if (client.sessionId !== this.state.host) {
@@ -465,6 +464,27 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     });
 
     console.log(`플레이어 ${client.sessionId} 입장. 현재 플레이어 수: ${this.state.players.size}`);
+
+    // 방 목록 업데이트 (첫 번째 플레이어 입장 시에만 방 생성 알림, 이후에는 방 업데이트 알림)
+    if (this.state.players.size === 1) {
+      // 첫 번째 플레이어 입장 시 방 생성 알림
+      this.notifyLobbyRoomListUpdate("roomCreated", {
+        roomId: this.roomId,
+        roomType: this.state.roomType,
+        roomTitle: this.state.roomTitle,
+        playerCount: this.state.players.size,
+        maxClients: this.maxClients
+      });
+    } else {
+      // 추가 플레이어 입장 시 방 업데이트 알림
+      this.notifyLobbyRoomListUpdate("roomUpdated", {
+        roomId: this.roomId,
+        roomType: this.state.roomType,
+        roomTitle: this.state.roomTitle,
+        playerCount: this.state.players.size,
+        maxClients: this.maxClients
+      });
+    }
   }
 
   onLeave(client: Client, consented: boolean) {
@@ -542,6 +562,15 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       
       this.disconnect();
       return;
+    } else {
+      // 플레이어가 남아있는 경우 방 목록 업데이트
+      this.notifyLobbyRoomListUpdate("roomUpdated", {
+        roomId: this.roomId,
+        roomType: this.state.roomType,
+        roomTitle: this.state.roomTitle,
+        playerCount: this.state.players.size,
+        maxClients: this.maxClients
+      });
     }
 
     // 게임 중이고 플레이어가 1명만 남았을 경우 자동 우승 처리
