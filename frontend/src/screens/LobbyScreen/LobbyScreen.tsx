@@ -132,7 +132,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       loadPublicRooms();
       
       // 로비 방 연결 상태 확인 및 재연결 시도
-      if (!lobbyRoom) {
+      if (!lobbyRoom || !ColyseusService.isLobbyConnected()) {
         console.log('[DEBUG] 공개방 탭 활성화 시 로비 방 연결 상태 확인 중...');
         ColyseusService.connectToLobby()
           .then(room => {
@@ -144,11 +144,12 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
           });
       }
     }
-  }, [activeTab, token, lobbyRoom]);
+  }, [activeTab, token]);
 
   // 로비 방 연결 및 실시간 업데이트 수신 (로그인 후에만 실행)
   useEffect(() => {
     let isMounted = true;
+    let connectionCheckInterval: NodeJS.Timeout | null = null;
     
     // 토큰이 없으면 로비 방 연결하지 않음
     if (!token) {
@@ -191,25 +192,49 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         room.onLeave((code) => {
           if (!isMounted) return;
           console.log('[DEBUG] 로비 방 연결 해제됨:', code);
+          setLobbyRoom(null);
         });
 
         room.onError((code, message) => {
           if (!isMounted) return;
           console.error('로비 방 연결 오류:', code, message);
+          setLobbyRoom(null);
         });
         
       } catch (error) {
         if (!isMounted) return;
         console.error('로비 방 연결 실패:', error);
+        setLobbyRoom(null);
+      }
+    };
+    
+    // 연결 상태 주기적 확인 함수
+    const checkConnection = async () => {
+      if (!isMounted) return;
+      
+      const currentLobbyRoom = ColyseusService.getLobbyRoom();
+      if (!currentLobbyRoom || !ColyseusService.isLobbyConnected()) {
+        console.log('[DEBUG] 로비 방 연결 끊어짐 감지, 재연결 시도...');
+        try {
+          await connectToLobby();
+        } catch (error) {
+          console.error('[DEBUG] 주기적 재연결 실패:', error);
+        }
       }
     };
     
     // 로비 방에 연결
     connectToLobby();
     
+    // 30초마다 연결 상태 확인
+    connectionCheckInterval = setInterval(checkConnection, 30000);
+    
     // 컴포넌트 언마운트 시 로비 방 연결 해제
     return () => {
       isMounted = false;
+      if (connectionCheckInterval) {
+        clearInterval(connectionCheckInterval);
+      }
       ColyseusService.disconnectLobby();
       setLobbyRoom(null);
     };
@@ -338,7 +363,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       console.log('방 생성 성공:', room.sessionId);
       
       // 방 생성 후 로비 방 연결 상태 확인 및 재연결 시도
-      if (!lobbyRoom) {
+      if (!lobbyRoom || !ColyseusService.isLobbyConnected()) {
         console.log('[DEBUG] 방 생성 후 로비 방 연결 상태 확인 중...');
         try {
           const newLobbyRoom = await ColyseusService.connectToLobby();

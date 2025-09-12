@@ -5,7 +5,7 @@ class ColyseusService {
   private room: Room | null = null;
   private lobbyRoom: Room | null = null;
   private isConnected: boolean = false;
-  private isLobbyConnected: boolean = false;
+  private isLobbyConnectedFlag: boolean = false;
   private roomInfo: { roomId: string; sessionId: string; nickname: string } | null = null;
 
   constructor() {
@@ -209,14 +209,14 @@ class ColyseusService {
       console.log('[DEBUG] connectToLobby 호출됨');
       
       // 이미 로비 방에 연결되어 있다면 기존 연결 반환
-      if (this.lobbyRoom && this.isLobbyConnected) {
+      if (this.lobbyRoom && this.isLobbyConnectedFlag) {
         console.log('[DEBUG] 이미 로비 방에 연결되어 있음, 기존 연결 반환');
         return this.lobbyRoom;
       }
       
       console.log('[DEBUG] 로비 방 생성/참가 시도 중...');
       this.lobbyRoom = await this.client.joinOrCreate("lobby_room");
-      this.isLobbyConnected = true;
+      this.isLobbyConnectedFlag = true;
       console.log('[DEBUG] 로비 방 연결 완료, sessionId:', this.lobbyRoom.sessionId);
       
       // Colyseus playground 메시지 타입 핸들러 (콘솔 오류 방지)
@@ -226,11 +226,13 @@ class ColyseusService {
       
       // 연결 상태 이벤트 리스너
       this.lobbyRoom.onLeave((code) => {
-        this.isLobbyConnected = false;
+        console.log('[DEBUG] 로비 방 연결 해제됨, code:', code);
+        this.isLobbyConnectedFlag = false;
         this.lobbyRoom = null;
         
         // 비정상 종료인 경우 재연결 시도
-        if (code === 1006) {
+        if (code === 1006 || code === 1000) {
+          console.log('[DEBUG] 로비 방 재연결 시도 중...');
           setTimeout(() => {
             this.connectToLobby().catch(error => {
               console.error("로비 방 재연결 실패:", error);
@@ -241,14 +243,21 @@ class ColyseusService {
 
       this.lobbyRoom.onError((code, message) => {
         console.error("로비 방 연결 오류:", code, message);
-        this.isLobbyConnected = false;
+        this.isLobbyConnectedFlag = false;
         this.lobbyRoom = null;
+        
+        // 오류 발생 시 재연결 시도
+        setTimeout(() => {
+          this.connectToLobby().catch(error => {
+            console.error("로비 방 오류 후 재연결 실패:", error);
+          });
+        }, 5000);
       });
 
       return this.lobbyRoom;
     } catch (error) {
       console.error("로비 방 연결 실패:", error);
-      this.isLobbyConnected = false;
+      this.isLobbyConnectedFlag = false;
       this.lobbyRoom = null;
       throw error;
     }
@@ -259,18 +268,18 @@ class ColyseusService {
     if (this.lobbyRoom) {
       this.lobbyRoom.leave();
       this.lobbyRoom = null;
-      this.isLobbyConnected = false;
+      this.isLobbyConnectedFlag = false;
     }
-  }
-
-  // 로비 방 연결 상태 확인
-  isLobbyRoomConnected(): boolean {
-    return this.isLobbyConnected && this.lobbyRoom !== null;
   }
 
   // 로비 방 인스턴스 반환
   getLobbyRoom(): Room | null {
     return this.lobbyRoom;
+  }
+
+  // 로비 방 연결 상태 반환
+  isLobbyConnected(): boolean {
+    return this.isLobbyConnectedFlag && this.lobbyRoom !== null;
   }
 
   // 저장된 방에 재연결 시도
