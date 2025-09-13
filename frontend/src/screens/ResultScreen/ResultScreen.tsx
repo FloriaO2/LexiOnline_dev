@@ -22,7 +22,7 @@ interface ComprehensiveResult {
 }
 
 interface ResultScreenProps {
-  onScreenChange: (screen: 'lobby' | 'waiting' | 'game' | 'result' | 'finalResult') => void;
+  onScreenChange: (screen: 'lobby' | 'waiting' | 'game' | 'result' | 'finalResult', result?: any) => void;
   playerCount: number;
   roundResult: ComprehensiveResult | null;
 }
