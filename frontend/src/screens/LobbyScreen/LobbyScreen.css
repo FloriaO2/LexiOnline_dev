@@ -1,12 +1,34 @@
 .lobby-screen {
+  width: 100vw;
   height: 100vh;
   background: linear-gradient(135deg, #0f1419 0%, #1e2a3a 25%, #2d3a4a 50%, #1e2a3a 75%, #0f1419 100%);
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 3vh 1.5vw;
+  align-items: center;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+}
+
+.lobby-scroll-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2.5vh 0;
   box-sizing: border-box;
+}
+
+/* 스크롤바 숨기기 */
+.lobby-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.lobby-scroll-container {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 .lobby-container {
@@ -22,7 +44,6 @@
   border: 0.08vw solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   transition: all 0.3s ease;
 }
 
@@ -221,25 +242,13 @@
   flex: 1;
   overflow-y: auto;
   padding-right: 0.5vw;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
-/* 스크롤바 스타일링 */
 .game-section::-webkit-scrollbar {
-  width: 0.5vw;
-}
-
-.game-section::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 0.25vw;
-}
-
-.game-section::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 0.25vw;
-}
-
-.game-section::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* 탭 네비게이션 */
@@ -369,6 +378,11 @@
 
 .input-group.compact {
   margin-bottom: 1.2vw;
+}
+
+/* 특정 input-group들 사이의 여백을 줄이기 위한 클래스 */
+.input-group.compact.tight-spacing {
+  margin-bottom: 0.7vw;
 }
 
 .input-group label {
@@ -622,8 +636,15 @@
 /* 공개방 목록 스타일 */
 .public-rooms-list {
   margin-top: 1.5vw;
-  max-height: 40vh;
+  max-height: 47vh;
   overflow-y: auto;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.public-rooms-list::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .rooms-grid {
@@ -787,10 +808,62 @@
 }
 
 .btn-small {
-  padding: 0.6vw 1.2vw;
+  padding: 0.8vw 1.2vw;
   font-size: 1vw;
-  margin-top: 1vw;
+  margin-top: 0;
   align-self: flex-end;
+  min-width: 6vw;
+  white-space: nowrap;
+}
+
+/* 가로 정렬을 위한 새로운 스타일 */
+.input-group.horizontal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5vw;
+}
+
+.input-group.horizontal label {
+  margin-bottom: 0vw;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 0.8vw;
+  align-items: center;
+}
+
+.input-with-button .input-field {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.input-with-button .btn-small {
+  margin-top: 0;
+  align-self: flex-end;
+  flex-shrink: 0;
+}
+
+/* 방 참가하기 버튼 전용 스타일 - 기존 btn-primary 스타일 상속 */
+.btn-join {
+  padding: 1.2vw 1.6vw;
+  font-size: 1vw;
+  margin-top: 0;
+  align-self: center;
+  width: 8vw;
+  height: 3.2vw;
+  white-space: nowrap;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5vw;
+}
+
+.btn-join.compact {
+  padding: 1vw 1.4vw;
+  font-size: 0.9vw;
+  width: 7vw;
 }
 
 .no-rooms {

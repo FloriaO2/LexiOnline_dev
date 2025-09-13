@@ -60,7 +60,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'create' | 'join' | 'public'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'public'>('create');
   const [roomType, setRoomType] = useState<'public' | 'private'>('public');
   const [roomTitle, setRoomTitle] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
@@ -578,7 +578,8 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
 
   return (
     <div className="lobby-screen">
-      <div className={`lobby-container ${token ? 'compact' : ''}`}>
+      <div className="lobby-scroll-container">
+        <div className={`lobby-container ${token ? 'compact' : ''}`}>
         {/* 헤더 섹션 */}
         <div className={`header-section ${token ? 'compact' : ''}`}>
           <div className={`logo-section ${token ? 'compact' : ''}`}>
@@ -633,18 +634,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                 방 만들기
               </button>
               <button 
-                className={`tab-button ${activeTab === 'join' ? 'active' : ''} ${token ? 'compact' : ''}`}
-                onClick={() => setActiveTab('join')}
-              >
-                <span className={`tab-icon ${token ? 'compact' : ''}`}>🚪</span>
-                방 참가하기
-              </button>
-              <button 
                 className={`tab-button ${activeTab === 'public' ? 'active' : ''} ${token ? 'compact' : ''}`}
                 onClick={() => setActiveTab('public')}
               >
-                <span className={`tab-icon ${token ? 'compact' : ''}`}>🌐</span>
-                공개방 목록
+                <span className={`tab-icon ${token ? 'compact' : ''}`}>🚪</span>
+                방 참가하기
               </button>
             </div>
 
@@ -659,7 +653,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                   </div>
                   
                   <div className={`input-section ${token ? 'compact' : ''}`}>
-                    <div className={`input-group ${token ? 'compact' : ''}`}>
+                    <div className={`input-group ${token ? 'compact tight-spacing' : ''}`}>
                       <label htmlFor="nickname">닉네임</label>
                       <input
                         type="text"
@@ -671,9 +665,6 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                       />
                     </div>
 
-                  </div>
-
-                  <div className={`input-section ${token ? 'compact' : ''}`}>
                     <div className={`input-group ${token ? 'compact' : ''}`}>
                       <label htmlFor="roomTitle">방 제목</label>
                       <input
@@ -743,68 +734,16 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                 </div>
               )}
               
-              {activeTab === 'join' && (
-                <div className="join-room-tab">
-                  <div className={`tab-header ${token ? 'compact' : ''}`}>
-                    <h3>기존 방에 참가하기</h3>
-                    <p>친구가 만든 방에 참가하여 게임을 즐겨보세요!</p>
-                  </div>
-                  
-                  <div className={`input-section ${token ? 'compact' : ''}`}>
-                    <div className={`input-group ${token ? 'compact' : ''}`}>
-                      <label htmlFor="join-nickname">닉네임</label>
-                      <input
-                        type="text"
-                        id="join-nickname"
-                        value={nickname}
-                        onChange={(e) => setNickname(e.target.value)}
-                        placeholder="닉네임을 입력하세요"
-                        className={`input-field ${token ? 'compact' : ''}`}
-                      />
-                    </div>
-                    
-                    <div className={`input-group ${token ? 'compact' : ''}`}>
-                      <label htmlFor="roomCode">방 코드</label>
-                      <input
-                        type="text"
-                        id="roomCode"
-                        value={roomCode}
-                        onChange={(e) => setRoomCode(e.target.value)}
-                        placeholder="방 코드를 입력하세요"
-                        className={`input-field ${token ? 'compact' : ''}`}
-                      />
-                    </div>
-                  </div>
-
-                  <button 
-                    className={`btn btn-primary btn-large ${token ? 'compact' : ''}`}
-                    onClick={handleJoinRoom}
-                    disabled={!nickname.trim() || !roomCode.trim() || isConnecting}
-                  >
-                    {isConnecting ? (
-                      <>
-                        <span className="loading-spinner"></span>
-                        연결 중...
-                      </>
-                    ) : (
-                      <>
-                        <span className="btn-icon">🎲</span>
-                        방 참가하기
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
               
               {activeTab === 'public' && (
                 <div className="public-rooms-tab">
                   <div className={`tab-header ${token ? 'compact' : ''}`}>
-                    <h3>공개방 목록</h3>
-                    <p>다른 플레이어들이 만든 공개방에 참가해보세요!</p>
+                    <h3>기존 방에 참가하기</h3>
+                    <p>다른 플레이어들이 만든 게임 방에 참가해보세요!</p>
                   </div>
                   
                   <div className={`input-section ${token ? 'compact' : ''}`}>
-                    <div className={`input-group ${token ? 'compact' : ''}`}>
+                    <div className={`input-group ${token ? 'compact tight-spacing' : ''}`}>
                       <label htmlFor="public-nickname">닉네임</label>
                       <input
                         type="text"
@@ -814,6 +753,34 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                         placeholder="닉네임을 입력하세요"
                         className={`input-field ${token ? 'compact' : ''}`}
                       />
+                    </div>
+
+                    <div className={`input-group horizontal ${token ? 'compact' : ''}`}>
+                      <label htmlFor="public-roomCode">방 코드</label>
+                      <div className="input-with-button">
+                        <input
+                          type="text"
+                          id="public-roomCode"
+                          value={roomCode}
+                          onChange={(e) => setRoomCode(e.target.value)}
+                          placeholder="방 코드를 입력하세요"
+                          className={`input-field ${token ? 'compact' : ''}`}
+                        />
+                        <button 
+                          className={`btn btn-primary btn-join ${token ? 'compact' : ''}`}
+                          onClick={handleJoinRoom}
+                          disabled={!nickname.trim() || !roomCode.trim() || isConnecting}
+                        >
+                          {isConnecting ? (
+                            <>
+                              <span className="loading-spinner"></span>
+                              연결 중...
+                            </>
+                          ) : (
+                            '참가하기'
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -870,6 +837,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
             </div>
           </div>
         )}
+        </div>
       </div>
       
       {/* 토스트 알림 */}
