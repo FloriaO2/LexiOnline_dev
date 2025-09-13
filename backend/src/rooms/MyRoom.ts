@@ -28,6 +28,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   state = new MyRoomState();
   private finalGameResult: any = null;
   private turnTimer: NodeJS.Timeout | null = null; // 타임어택 타이머
+  private gameCompleted: boolean = false; // 게임 완료 상태 추적
   
   // 방이 비어있을 때 자동 삭제 시간 (30분)
   autoDispose = false;
@@ -311,7 +312,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     this.onMessage("requestFinalResult", (client) => {
       if (this.finalGameResult) {
         console.log(`[DEBUG] 플레이어 ${client.sessionId}에게 최종 결과를 전송합니다.`);
-        client.send("finalResult", this.finalGameResult);
+        client.send("finalResult", this.finalGameResult.finalScores);
       } else {
         console.log(`[WARN] 플레이어 ${client.sessionId}가 최종 결과를 요청했지만, 아직 준비되지 않았습니다.`);
         client.send("finalResultNotReady");
@@ -573,12 +574,12 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       });
     }
 
-    // 게임 중이고 플레이어가 1명만 남았을 경우 자동 우승 처리
-    console.log(`[DEBUG] 자동 우승 조건 확인: round=${this.state.round}, players.size=${this.state.players.size}`);
-    if (this.state.round > 0 && this.state.players.size === 1) {
+    // 게임이 완료되지 않은 경우에만 자동 우승 처리
+    console.log(`[DEBUG] 자동 우승 조건 확인: round=${this.state.round}, players.size=${this.state.players.size}, gameCompleted=${this.gameCompleted}`);
+    if (this.state.round > 0 && this.state.players.size === 1 && !this.gameCompleted) {
       console.log(`[DEBUG] 게임 중 플레이어가 1명만 남음. 자동 우승 처리 시작.`);
       this.handleAutoWin();
-    } else if (this.state.round > 0 && this.state.players.size > 1) {
+    } else if (this.state.round > 0 && this.state.players.size > 1 && !this.gameCompleted) {
       // 게임 중이고 플레이어가 2명 이상 남았을 경우
       
       // 다음 라운드에서 maxNumber 조정 예정 알림
@@ -595,22 +596,27 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
         });
       }
       
-      // 나간 플레이어가 현재 턴이었을 경우 다음 플레이어로 턴 변경
-      if (wasCurrentPlayer) {
-        console.log(`[DEBUG] 현재 턴 플레이어가 나감. 다음 플레이어로 턴 변경.`);
-        this.nextPlayer();
+      // 게임이 완료되지 않은 경우에만 턴 변경 처리
+      if (!this.gameCompleted) {
+        // 나간 플레이어가 현재 턴이었을 경우 다음 플레이어로 턴 변경
+        if (wasCurrentPlayer) {
+          console.log(`[DEBUG] 현재 턴 플레이어가 나감. 다음 플레이어로 턴 변경.`);
+          this.nextPlayer();
+        } else {
+          // 현재 턴 플레이어가 아닌 경우 턴 변경 알림만 전송
+          this.broadcast("turnChanged", {
+            currentPlayerId: this.state.playerOrder[this.state.nowPlayerIndex],
+            allPlayers: Array.from(this.state.players.entries()).map(([id, p]) => ({
+              sessionId: id,
+              nickname: p.nickname || '익명',
+              score: p.score,
+              remainingTiles: p.hand ? p.hand.length : 0,
+              isCurrentPlayer: id === this.state.playerOrder[this.state.nowPlayerIndex]
+            }))
+          });
+        }
       } else {
-        // 현재 턴 플레이어가 아닌 경우 턴 변경 알림만 전송
-        this.broadcast("turnChanged", {
-          currentPlayerId: this.state.playerOrder[this.state.nowPlayerIndex],
-          allPlayers: Array.from(this.state.players.entries()).map(([id, p]) => ({
-            sessionId: id,
-            nickname: p.nickname || '익명',
-            score: p.score,
-            remainingTiles: p.hand ? p.hand.length : 0,
-            isCurrentPlayer: id === this.state.playerOrder[this.state.nowPlayerIndex]
-          }))
-        });
+        console.log(`[DEBUG] 게임이 이미 완료되어 턴 변경을 하지 않습니다.`);
       }
     }
   }
@@ -714,6 +720,9 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       dbSaveResults 
     };
     console.log(`[DEBUG] 자동 우승 - 최종 게임 결과가 생성되어 저장되었습니다.`);
+
+    // 게임 완료 상태로 설정 (더 이상 데이터 수정하지 않음)
+    this.gameCompleted = true;
 
     // 4) 클라이언트에게 자동 우승 결과 전송
     this.broadcast("autoWinResult", {
@@ -1085,6 +1094,9 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     };
     console.log(`[DEBUG] 최종 게임 결과가 생성되어 저장되었습니다.`);
 
+    // 게임 완료 상태로 설정 (더 이상 데이터 수정하지 않음)
+    this.gameCompleted = true;
+
     // 클라이언트에게 게임이 완전히 종료되었음을 알림 (결과 데이터는 포함하지 않음)
     this.broadcast("gameIsOver");
   }
@@ -1102,6 +1114,10 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     this.state.lastCards = new ArraySchema<number>();
     this.state.lastPlayerIndex = -1;
     this.state.nowPlayerIndex = 0;
+    
+    // 게임 완료 상태 초기화
+    this.gameCompleted = false;
+    this.finalGameResult = null;
 
     // 플레이어 점수 초기화 (원하면)
     for (const player of this.state.players.values()) {

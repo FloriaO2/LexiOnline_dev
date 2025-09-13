@@ -20,7 +20,9 @@ interface FinalResultScreenProps {
 
 const FinalResultScreen: React.FC<FinalResultScreenProps> = ({ finalScores, onScreenChange }) => {
   
-  const sortedScores = [...finalScores].sort((a, b) => a.rank - b.rank);
+  // finalScores가 배열이 아닌 경우 빈 배열로 처리
+  const safeFinalScores = Array.isArray(finalScores) ? finalScores : [];
+  const sortedScores = [...safeFinalScores].sort((a, b) => a.rank - b.rank);
 
   const handleBackToLobby = () => {
     ColyseusService.disconnect();

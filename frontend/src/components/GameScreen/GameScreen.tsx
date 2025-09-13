@@ -421,7 +421,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
     room.onMessage('finalResult', (message) => {
       console.log('최종 결과 수신:', message);
-      onScreenChange('finalResult', message.finalScores);
+      onScreenChange('finalResult', message);
     });
 
     // 자동 우승 결과 처리
