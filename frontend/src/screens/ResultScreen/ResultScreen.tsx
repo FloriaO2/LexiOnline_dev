@@ -227,11 +227,11 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
         alert('최종 결과가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
       });
 
-      // 컴포넌트 언마운트 시 핸들러 정리
-      return () => {
-        room.offMessage('finalResult');
-        room.offMessage('finalResultNotReady');
-      };
+      // 컴포넌트 언마운트 시 핸들러 정리는 Colyseus에서 자동으로 처리됨
+      // return () => {
+      //   // Colyseus Room은 offMessage 메서드를 제공하지 않음
+      //   // 메시지 핸들러는 컴포넌트 언마운트 시 자동으로 정리됨
+      // };
     }
   }, [onScreenChange]);
 
