@@ -1030,7 +1030,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     }));
 
     const finalScoresWithRank = calculateRanks(finalScores);
-    const finalScoresWithRating = calculateRatings(finalScoresWithRank);
+    const finalScoresWithRating = await calculateRatings(finalScoresWithRank);
 
     const dbSaveResults = [];
 

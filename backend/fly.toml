@@ -12,14 +12,14 @@ primary_region = 'nrt'
 [env]
   PORT = '8080'
   NODE_ENV = 'production'
-  # DATABASE_URL = 'your-database-url-here'
+  # 민감한 정보는 fly secrets로 설정하세요
 
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
 [[vm]]
   memory = '1gb'

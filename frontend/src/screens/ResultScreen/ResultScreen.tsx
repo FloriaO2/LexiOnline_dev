@@ -210,6 +210,31 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
   // #endregion
 
   // #region useEffects
+  // Room 메시지 핸들러 등록
+  useEffect(() => {
+    const room = ColyseusService.getRoom();
+    if (room) {
+      // 최종 결과 수신 핸들러
+      room.onMessage('finalResult', (data) => {
+        console.log('최종 결과 수신:', data);
+        onScreenChange('finalResult', data);
+      });
+
+      // 최종 결과 준비되지 않음 핸들러
+      room.onMessage('finalResultNotReady', () => {
+        console.log('최종 결과가 아직 준비되지 않았습니다.');
+        // 사용자에게 알림을 표시하거나 재시도 로직을 추가할 수 있습니다
+        alert('최종 결과가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+      });
+
+      // 컴포넌트 언마운트 시 핸들러 정리
+      return () => {
+        room.offMessage('finalResult');
+        room.offMessage('finalResultNotReady');
+      };
+    }
+  }, [onScreenChange]);
+
   useEffect(() => {
     const scores: { [playerId: string]: number } = {};
     if (initialScores) {

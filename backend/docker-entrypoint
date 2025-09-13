@@ -1,8 +1,14 @@
 #!/bin/bash -e
 
 # If running the web server then migrate existing database
-if [ "${*}" == "npm run start" ]; then
-  npx prisma migrate deploy
+if [ "${*}" == "npm run start:prod" ]; then
+  echo "Attempting to run Prisma migrations..."
+  npx prisma migrate deploy || {
+    echo "Migration failed, trying to resolve..."
+    npx prisma migrate resolve --applied 20250726092347_init || {
+      echo "Migration resolve failed, continuing anyway..."
+    }
+  }
 fi
 
 exec "${@}"

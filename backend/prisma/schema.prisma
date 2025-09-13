@@ -1,28 +1,23 @@
-// prisma/schema.prisma
-
-datasource db {
-  provider = "postgresql"     // 사용 DB 종류에 따라 'mysql' 등으로 변경하세요
-  url      = env("PRISMA_DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_DATABASE_URL")
 }
 
 model User {
   id              Int           @id @default(autoincrement())
   googleId        String        @unique
   nickname        String
-  profileImageUrl String?       // 프로필 이미지 URL (nullable)
-
-  // TrueSkill2 레이팅 값
+  profileImageUrl String?
   rating_mu       Float         @default(25.0)
   rating_sigma    Float         @default(8.333)
-
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   lastLoginAt     DateTime?
-
+  
   // 플레이 횟수
   playCount_2p    Int           @default(0)
   playCount_3p    Int           @default(0)
@@ -51,27 +46,23 @@ model User {
   fourth_5p       Int           @default(0)
   fifth_5p        Int           @default(0)
 
-  // 각 유저의 경기 기록과 연결
   gameHistories   GameHistory[]
 }
 
 model GameHistory {
-  id                 Int       @id @default(autoincrement())
-  userId             Int
-  playedAt           DateTime  @default(now())  // 경기 종료 시각
-  playerCount        Int       // 경기 참가 인원 (3~5)
-  rank               Int       // 최종 순위 (1=1등, ...)
-  score              Int       // 본인 점수
-  scoresAll          Json      // 모든 참가자 점수 배열 예: [100, 70, 50]
-
+  id                  Int      @id @default(autoincrement())
+  userId              Int
+  playedAt            DateTime @default(now())
+  playerCount         Int
+  rank                Int
+  score               Int
+  scoresAll           Json
   rating_mu_before    Float
   rating_sigma_before Float
   rating_mu_after     Float
   rating_sigma_after  Float
-
-  gameId             String?   // 같은 경기 구분용 ID (옵션)
-
-  user               User      @relation(fields: [userId], references: [id])
+  gameId              String?
+  user                User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([gameId])
