@@ -60,12 +60,14 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'create' | 'public'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'public' | 'ranking'>('create');
   const [roomType, setRoomType] = useState<'public' | 'private'>('public');
   const [roomTitle, setRoomTitle] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
   const [publicRooms, setPublicRooms] = useState<any[]>([]);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  const [ranking, setRanking] = useState<any[]>([]);
+  const [isLoadingRanking, setIsLoadingRanking] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -126,25 +128,19 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       });
   }, [token]);
 
-  // 공개방 탭이 활성화될 때 공개방 목록 로드 및 로비 방 연결 확인
+  // 공개방 탭이 활성화될 때 공개방 목록 로드
   useEffect(() => {
     if (activeTab === 'public' && token) {
       loadPublicRooms();
-      
-      // 로비 방 연결 상태 확인 및 재연결 시도
-      if (!lobbyRoom || !ColyseusService.isLobbyConnected()) {
-        console.log('[DEBUG] 공개방 탭 활성화 시 로비 방 연결 상태 확인 중...');
-        ColyseusService.connectToLobby()
-          .then(room => {
-            setLobbyRoom(room);
-            console.log('[DEBUG] 공개방 탭에서 로비 방 재연결 성공');
-          })
-          .catch(error => {
-            console.error('[DEBUG] 공개방 탭에서 로비 방 재연결 실패:', error);
-          });
-      }
     }
   }, [activeTab, token]);
+
+  // 랭킹 탭이 활성화될 때 랭킹 데이터 로드
+  useEffect(() => {
+    if (activeTab === 'ranking') {
+      loadRanking();
+    }
+  }, [activeTab]);
 
   // 로비 방 연결 및 실시간 업데이트 수신 (로그인 후에만 실행)
   useEffect(() => {
@@ -153,15 +149,12 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     
     // 토큰이 없으면 로비 방 연결하지 않음
     if (!token) {
-      console.log('[DEBUG] 토큰이 없어서 로비 방 연결 건너뜀');
       return;
     }
     
     const connectToLobby = async () => {
       try {
-        console.log('[DEBUG] 로비 방 연결 시도 중...');
         const room = await ColyseusService.connectToLobby();
-        console.log('[DEBUG] 로비 방 연결 성공:', room.sessionId);
         
         if (!isMounted) return; // 컴포넌트가 언마운트된 경우 중단
         
@@ -171,18 +164,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         room.onMessage('roomListUpdate', (message) => {
           if (!isMounted) return; // 컴포넌트가 언마운트된 경우 중단
           
-          console.log('[DEBUG] 로비 방에서 메시지 수신:', message);
-          
           if (message.type === 'roomCreated') {
-            console.log('[DEBUG] 새 방 생성 알림:', message.roomData);
             // 새 방을 목록에 추가
             addRoomToList(message.roomData);
           } else if (message.type === 'roomDeleted') {
-            console.log('[DEBUG] 방 삭제 알림:', message.roomData);
             // 방을 목록에서 제거
             removeRoomFromList(message.roomData);
           } else if (message.type === 'roomUpdated') {
-            console.log('[DEBUG] 방 업데이트 알림:', message.roomData);
             // 방 정보 업데이트 (참여자 수 등)
             updateRoomInList(message.roomData);
           }
@@ -191,19 +179,16 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         // 연결 상태 확인
         room.onLeave((code) => {
           if (!isMounted) return;
-          console.log('[DEBUG] 로비 방 연결 해제됨:', code);
           setLobbyRoom(null);
         });
 
         room.onError((code, message) => {
           if (!isMounted) return;
-          console.error('로비 방 연결 오류:', code, message);
           setLobbyRoom(null);
         });
         
       } catch (error) {
         if (!isMounted) return;
-        console.error('로비 방 연결 실패:', error);
         setLobbyRoom(null);
       }
     };
@@ -214,11 +199,10 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       
       const currentLobbyRoom = ColyseusService.getLobbyRoom();
       if (!currentLobbyRoom || !ColyseusService.isLobbyConnected()) {
-        console.log('[DEBUG] 로비 방 연결 끊어짐 감지, 재연결 시도...');
         try {
           await connectToLobby();
         } catch (error) {
-          console.error('[DEBUG] 주기적 재연결 실패:', error);
+          // 재연결 실패 시 무시
         }
       }
     };
@@ -265,10 +249,32 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       const rooms = await ColyseusService.getPublicRooms();
       setPublicRooms(rooms);
     } catch (error) {
-      console.error('공개방 목록 로드 실패:', error);
-      showToast('공개방 목록을 불러오는데 실패했습니다.', 'error');
+      console.error('방 목록 로드 실패:', error);
+      showToast('방 목록을 불러오는데 실패했습니다.', 'error');
     } finally {
       setIsLoadingRooms(false);
+    }
+  };
+
+  const loadRanking = async () => {
+    setIsLoadingRanking(true);
+    try {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const apiUrl = process.env.REACT_APP_API_URL || 
+        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      
+      const response = await fetch(`${apiUrl}/api/ranking`);
+      if (!response.ok) {
+        throw new Error('랭킹 데이터를 불러오는데 실패했습니다.');
+      }
+      
+      const data = await response.json();
+      setRanking(data.ranking);
+    } catch (error) {
+      console.error('랭킹 로드 실패:', error);
+      showToast('랭킹을 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setIsLoadingRanking(false);
     }
   };
 
@@ -364,14 +370,19 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       
       // 방 생성 후 로비 방 연결 상태 확인 및 재연결 시도
       if (!lobbyRoom || !ColyseusService.isLobbyConnected()) {
-        console.log('[DEBUG] 방 생성 후 로비 방 연결 상태 확인 중...');
         try {
           const newLobbyRoom = await ColyseusService.connectToLobby();
           setLobbyRoom(newLobbyRoom);
-          console.log('[DEBUG] 방 생성 후 로비 방 재연결 성공');
         } catch (error) {
-          console.error('[DEBUG] 방 생성 후 로비 방 재연결 실패:', error);
+          // 재연결 실패 시 무시
         }
+      }
+      
+      // 방 생성 후 공개방 목록 새로고침 (공개방인 경우에만)
+      if (roomType === 'public' && activeTab === 'public') {
+        setTimeout(() => {
+          loadPublicRooms();
+        }, 1000); // 1초 후 새로고침 (서버에서 방 생성 완료 후)
       }
       
       // 닉네임 설정 및 중복 체크
@@ -410,6 +421,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         requirePassword: false 
       });
       console.log('방 참가 성공:', room.sessionId);
+      
+      // 방 참가 후 공개방 목록 새로고침
+      if (activeTab === 'public') {
+        setTimeout(() => {
+          loadPublicRooms();
+        }, 1000); // 1초 후 새로고침 (서버에서 방 참가 완료 후)
+      }
       
       // 닉네임 설정 및 중복 체크
       room.onMessage('nicknameRejected', (message) => {
@@ -475,6 +493,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       // 성공 시 모달 닫기
       if (isPrivateRoom) {
         setPasswordModal({ isOpen: false, roomId: '', roomTitle: '' });
+      }
+      
+      // 방 참가 후 공개방 목록 새로고침 (공개방인 경우에만)
+      if (!isPrivateRoom && activeTab === 'public') {
+        setTimeout(() => {
+          loadPublicRooms();
+        }, 1000); // 1초 후 새로고침 (서버에서 방 참가 완료 후)
       }
       
       // 닉네임 설정 및 중복 체크
@@ -639,6 +664,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
               >
                 <span className={`tab-icon ${token ? 'compact' : ''}`}>🚪</span>
                 방 참가하기
+              </button>
+              <button 
+                className={`tab-button ${activeTab === 'ranking' ? 'active' : ''} ${token ? 'compact' : ''}`}
+                onClick={() => setActiveTab('ranking')}
+              >
+                <span className={`tab-icon ${token ? 'compact' : ''}`}>🏆</span>
+                랭킹
               </button>
             </div>
 
@@ -805,6 +837,76 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                             isConnecting={isConnecting}
                           />
                         ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'ranking' && (
+                <div className="ranking-tab">
+                  <div className={`tab-header ${token ? 'compact' : ''}`}>
+                    <h3>유저 랭킹</h3>
+                    <p>상위 10명의 플레이어를 확인해보세요!</p>
+                  </div>
+                  
+                  <div className="ranking-list">
+                    {isLoadingRanking ? (
+                      <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p>랭킹을 불러오는 중...</p>
+                      </div>
+                    ) : ranking.length === 0 ? (
+                      <div className="no-ranking">
+                        <p>랭킹 데이터가 없습니다.</p>
+                      </div>
+                    ) : (
+                      <div className="ranking-grid">
+                        {ranking.map((player, index) => {
+                          // 순위별 클래스 결정
+                          let rankClass = '';
+                          if (index === 0) rankClass = 'rank-1';      // 1등 - 금색
+                          else if (index === 1) rankClass = 'rank-2';  // 2등 - 은색
+                          else if (index === 2) rankClass = 'rank-3';  // 3등 - 동색
+                          else rankClass = 'rank-4-plus';              // 4등 이하 - 검정색
+                          
+                          return (
+                            <div key={player.id} className={`ranking-card ${rankClass}`}>
+                              <div className="rank-badge">
+                                {index === 0 && '🥇'}
+                                {index === 1 && '🥈'}
+                                {index === 2 && '🥉'}
+                                {index > 2 && `#${player.rank}`}
+                              </div>
+                            <div className="player-info">
+                              <div className="player-profile">
+                                {player.profileImageUrl && (
+                                  <img 
+                                    src={player.profileImageUrl} 
+                                    alt="profile" 
+                                    className="player-avatar" 
+                                  />
+                                )}
+                                <div className="player-details">
+                                  <h4 className="player-nickname">{player.nickname}</h4>
+                                  <p className="player-rating">Rating: {player.rating_mu.toFixed(2)}</p>
+                                  <p className="player-games">
+                                    <span className="game-count-label">게임 판수: </span>
+                                    <span className="game-stats">{player.totalGames}회</span>
+                                    <span className="game-count-label"> (</span>
+                                    <span className="win-count">승: {player.wins}</span>
+                                    <span className="game-count-label">, </span>
+                                    <span className="draw-count">무: {player.draws}</span>
+                                    <span className="game-count-label">, </span>
+                                    <span className="loss-count">패: {player.losses}</span>
+                                    <span className="game-count-label">)</span>
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

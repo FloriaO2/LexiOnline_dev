@@ -127,12 +127,48 @@ router.get('/userinfo', async (req: Request, res: Response) => {
       lastLoginAt: user.lastLoginAt,
       rating_mu: user.rating_mu,
       rating_sigma: user.rating_sigma,
+      totalGames: (user as any).totalGames || 0,
+      wins: (user as any).wins || 0,
+      draws: (user as any).draws || 0,
+      losses: (user as any).losses || 0,
       // 필요 시 더 추가 가능
     }});
 
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: '서버 에러' });
+  }
+});
+
+// GET /api/ranking - 유저 랭킹 조회 (rating_mu 기준 상위 10명)
+router.get('/ranking', async (req: Request, res: Response) => {
+  try {
+    // rating_mu 기준으로 상위 10명 조회
+    const topUsers = await prisma.user.findMany({
+      orderBy: {
+        rating_mu: 'desc'
+      },
+      take: 10
+    });
+
+    // 랭킹 정보와 함께 반환
+    const ranking = topUsers.map((user, index) => ({
+      rank: index + 1,
+      id: user.id,
+      nickname: user.nickname,
+      profileImageUrl: user.profileImageUrl,
+      rating_mu: user.rating_mu,
+      rating_sigma: user.rating_sigma,
+      totalGames: (user as any).totalGames || 0,
+      wins: (user as any).wins || 0,
+      draws: (user as any).draws || 0,
+      losses: (user as any).losses || 0
+    }));
+
+    res.json({ ranking });
+  } catch (err) {
+    console.error('랭킹 조회 오류:', err);
+    res.status(500).json({ message: '랭킹 조회에 실패했습니다.' });
   }
 });
 

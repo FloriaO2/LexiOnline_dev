@@ -877,6 +877,179 @@
   margin-bottom: 1.5vw;
 }
 
+/* 랭킹 탭 스타일 - 더 구체적인 선택자로 우선순위 높이기 */
+.lobby-screen .ranking-list {
+  margin-top: 1.5vw !important;
+  max-height: 47vh !important;
+  overflow-y: auto !important;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+.lobby-screen .ranking-list::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+}
+
+.lobby-screen .ranking-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1vw !important;
+  padding: 1vw 0 !important;
+}
+
+.lobby-screen .ranking-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 0.1vw solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1vw !important;
+  padding: 1.2vw !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5vw !important;
+  position: relative !important;
+}
+
+.lobby-screen .ranking-card:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-0.2vw) !important;
+}
+
+/* 1등 - 금색 (더 진하고 선명하게) */
+.lobby-screen .ranking-card.rank-1 {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.35), rgba(255, 193, 7, 0.25)) !important;
+  border-color: rgba(255, 215, 0, 0.7) !important;
+}
+
+.lobby-screen .ranking-card.rank-1:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.45), rgba(255, 193, 7, 0.35)) !important;
+  border-color: rgba(255, 215, 0, 0.9) !important;
+}
+
+/* 2등 - 은색 (더 진하고 선명하게) */
+.lobby-screen .ranking-card.rank-2 {
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.35), rgba(169, 169, 169, 0.25)) !important;
+  border-color: rgba(192, 192, 192, 0.7) !important;
+}
+
+.lobby-screen .ranking-card.rank-2:hover {
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.45), rgba(169, 169, 169, 0.35)) !important;
+  border-color: rgba(192, 192, 192, 0.9) !important;
+}
+
+/* 3등 - 동색 (더 진하고 선명하게) */
+.lobby-screen .ranking-card.rank-3 {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.35), rgba(184, 115, 51, 0.25)) !important;
+  border-color: rgba(205, 127, 50, 0.7) !important;
+}
+
+.lobby-screen .ranking-card.rank-3:hover {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.45), rgba(184, 115, 51, 0.35)) !important;
+  border-color: rgba(205, 127, 50, 0.9) !important;
+}
+
+/* 4등 이하 - 검정색 (기본 스타일) */
+.lobby-screen .ranking-card.rank-4-plus {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.lobby-screen .ranking-card.rank-4-plus:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.lobby-screen .rank-badge {
+  font-size: 2vw !important;
+  font-weight: bold !important;
+  min-width: 3vw !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.lobby-screen .player-info {
+  flex: 1 !important;
+}
+
+.lobby-screen .player-profile {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.2vw !important;
+}
+
+.lobby-screen .player-avatar {
+  width: 3.5vw !important;
+  height: 3.5vw !important;
+  border-radius: 50% !important;
+  border: 0.2vw solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0.3vw 1.2vw rgba(0, 0, 0, 0.3) !important;
+}
+
+.lobby-screen .player-details {
+  flex: 1 !important;
+}
+
+.lobby-screen .player-nickname {
+  color: #ffffff !important;
+  font-size: 1.2vw !important;
+  font-weight: 600 !important;
+  margin: 0 0 0.3vw 0 !important;
+}
+
+.lobby-screen .player-rating {
+  color: #4a9eff !important;
+  font-size: 0.8vw !important;
+  font-weight: 500 !important;
+  margin: 0 0 0.2vw 0 !important;
+}
+
+.lobby-screen .player-games {
+  color: #cccccc !important;
+  font-size: 0.85vw !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* 게임 판수 텍스트 스타일링 */
+.lobby-screen .player-games .game-count-label {
+  opacity: 1 !important;
+  color: #999999 !important;
+}
+
+.lobby-screen .player-games .game-stats {
+  font-weight: 600 !important;
+  color: #ffffff !important;
+}
+
+.lobby-screen .player-games .win-count {
+  color: #0fc652bf !important;
+  font-weight: 700 !important;
+}
+
+.lobby-screen .player-games .draw-count {
+  color: #b1b1b1bd !important;
+  font-weight: 700 !important;
+}
+
+.lobby-screen .player-games .loss-count {
+  color: #fe4b4bab !important;
+  font-weight: 700 !important;
+}
+
+.lobby-screen .no-ranking {
+  text-align: center !important;
+  padding: 3vw !important;
+  color: #b0b0b0 !important;
+}
+
+.lobby-screen .no-ranking p {
+  font-size: 2vh !important;
+  margin-bottom: 1.5vw !important;
+}
+
 .btn-secondary {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;

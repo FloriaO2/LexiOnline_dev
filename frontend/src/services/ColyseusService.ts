@@ -198,7 +198,7 @@ class ColyseusService {
       const data = await response.json();
       return data.rooms || [];
     } catch (error) {
-      console.error('공개방 목록 조회 실패:', error);
+      console.error('방 목록 조회 실패:', error);
       throw error;
     }
   }

@@ -38,30 +38,22 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   // LobbyRoom에 방 목록 업데이트 알림 전송
   private async notifyLobbyRoomListUpdate(type: 'roomCreated' | 'roomDeleted' | 'roomUpdated', roomData?: any) {
     try {
-      console.log(`[DEBUG] 로비 방 알림 전송 시도: type=${type}, roomData=`, roomData);
-      
       // LobbyRoom 찾기
       const lobbyRooms = await matchMaker.query({ name: 'lobby_room' });
-      console.log(`[DEBUG] 찾은 로비 방 수: ${lobbyRooms.length}`);
       
       if (lobbyRooms.length === 0) {
-        console.log(`[DEBUG] 로비 방이 없어서 알림 전송 건너뜀`);
         return; // 로비 방이 없으면 무시
       }
       
       // 모든 로비 방에 알림 전송
       for (const lobbyRoom of lobbyRooms) {
         try {
-          console.log(`[DEBUG] 로비 방 ${lobbyRoom.roomId}에 알림 전송 중...`);
           await (matchMaker as any).remoteRoomCall(lobbyRoom.roomId, 'notifyRoomListUpdate', [type, roomData]);
-          console.log(`[DEBUG] 로비 방 ${lobbyRoom.roomId}에 알림 전송 성공`);
         } catch (error) {
-          console.error(`[DEBUG] 로비 방 ${lobbyRoom.roomId}에 알림 전송 실패:`, error);
           // 알림 전송 실패 시 무시 (로비 방이 없을 수 있음)
         }
       }
     } catch (error) {
-      console.error(`[DEBUG] 로비 방 알림 전송 전체 실패:`, error);
       // 전체 알림 전송 실패 시 무시
     }
   }
@@ -715,6 +707,16 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
           });
           console.log(`[DEBUG] 자동 우승 - GamePlayer 생성 완료: userId=${userId}`);
           
+          // User 게임 통계 업데이트 (자동 우승은 draw로 처리)
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              totalGames: { increment: 1 },
+              draws: { increment: 1 },
+            },
+          });
+          console.log(`[DEBUG] 자동 우승 - User 게임 통계 업데이트 완료: userId=${userId}`);
+          
           dbSaveResults.push({ userId, success: true });
         }
       });
@@ -1131,12 +1133,16 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
           });
           console.log(`[DEBUG] GamePlayer 생성 완료: userId=${userId}`);
 
-          // User 레이팅 업데이트
+          // User 레이팅 및 게임 통계 업데이트
+          const isWin = rank === 1;
           await tx.user.update({
             where: { id: userId },
             data: {
               rating_mu: rating_mu_after,
               rating_sigma: rating_sigma_after,
+              totalGames: { increment: 1 },
+              wins: isWin ? { increment: 1 } : undefined,
+              losses: !isWin ? { increment: 1 } : undefined,
             },
           });
           console.log(`[DEBUG] User 레이팅 업데이트 완료: userId=${userId}`);

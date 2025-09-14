@@ -12,26 +12,11 @@ export interface User {
   updatedAt: string;
   lastLoginAt?: string;
   
-  playCount_2p: number;
-  playCount_3p: number;
-  playCount_4p: number;
-  playCount_5p: number;
-  
-  wins_2p: number;
-  second_2p: number;
-  
-  wins_3p: number;
-  second_3p: number;
-  third_3p: number;
-  wins_4p: number;
-  second_4p: number;
-  third_4p: number;
-  fourth_4p: number;
-  wins_5p: number;
-  second_5p: number;
-  third_5p: number;
-  fourth_5p: number;
-  fifth_5p: number;
+  // 게임 통계 (간단한 win/draw/lose 시스템)
+  totalGames: number;
+  wins: number;
+  draws: number;
+  losses: number;
 
   gameHistories: GameHistory[];
 }

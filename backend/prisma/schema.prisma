@@ -8,84 +8,52 @@ datasource db {
 }
 
 model User {
-  id              Int           @id @default(autoincrement())
-  googleId        String        @unique
+  id              Int          @id @default(autoincrement())
+  googleId        String       @unique
   nickname        String
   profileImageUrl String?
-  rating_mu       Float         @default(25.0)
-  rating_sigma    Float         @default(8.333)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  rating_mu       Float        @default(25.0)
+  rating_sigma    Float        @default(8.333)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   lastLoginAt     DateTime?
-  
-  // 플레이 횟수
-  playCount_2p    Int           @default(0)
-  playCount_3p    Int           @default(0)
-  playCount_4p    Int           @default(0)
-  playCount_5p    Int           @default(0)
-
-  // 2인 게임 순위 횟수
-  wins_2p         Int           @default(0)
-  second_2p       Int           @default(0)
-
-  // 3인 게임 순위 횟수
-  wins_3p         Int           @default(0)
-  second_3p       Int           @default(0)
-  third_3p        Int           @default(0)
-
-  // 4인 게임 순위 횟수
-  wins_4p         Int           @default(0)
-  second_4p       Int           @default(0)
-  third_4p        Int           @default(0)
-  fourth_4p       Int           @default(0)
-
-  // 5인 게임 순위 횟수
-  wins_5p         Int           @default(0)
-  second_5p       Int           @default(0)
-  third_5p        Int           @default(0)
-  fourth_5p       Int           @default(0)
-  fifth_5p        Int           @default(0)
-
+  // 게임 통계 (간단한 win/draw/lose 시스템)
+  totalGames      Int           @default(0)
+  wins            Int           @default(0)
+  draws           Int           @default(0)
+  losses          Int           @default(0)
   gamePlayers     GamePlayer[]
 }
 
-// 게임 정보 (게임당 하나의 레코드)
 model Game {
-  id              Int           @id @default(autoincrement())
-  gameId          String        @unique  // Colyseus room ID
-  playedAt        DateTime      @default(now())
-  playerCount     Int           // 참여자 수
-  totalRounds     Int           // 총 라운드 수
-  roomType        String?       // 방 타입 (public, private, code)
-  roomTitle       String?       // 방 제목
-  
-  // 게임 참여자들
-  players         GamePlayer[]
-  
+  id          Int          @id @default(autoincrement())
+  gameId      String       @unique
+  playedAt    DateTime     @default(now())
+  playerCount Int
+  totalRounds Int
+  roomType    String?
+  roomTitle   String?
+  players     GamePlayer[]
+
   @@index([gameId])
   @@index([playedAt])
 }
 
-// 게임 참여자 정보 (게임당 참여자 수만큼 레코드)
 model GamePlayer {
-  id                  Int      @id @default(autoincrement())
-  gameId              Int      // Game 테이블의 ID
-  userId              Int      // User 테이블의 ID
-  
-  // 게임 결과
-  rank                Int      // 순위
-  score               Int      // 최종 점수
-  rating_mu_before    Float    // 게임 전 레이팅
-  rating_sigma_before Float    // 게임 전 시그마
-  rating_mu_after     Float    // 게임 후 레이팅
-  rating_sigma_after  Float    // 게임 후 시그마
-  rating_mu_change    Float    // 레이팅 변화값
-  
-  // 관계
-  game                Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user                User     @relation(fields: [userId], references: [id])
-  
-  @@unique([gameId, userId]) // 한 게임에 같은 유저는 한 번만 참여
+  id                  Int   @id @default(autoincrement())
+  gameId              Int
+  userId              Int
+  rank                Int
+  score               Int
+  rating_mu_before    Float
+  rating_sigma_before Float
+  rating_mu_after     Float
+  rating_sigma_after  Float
+  rating_mu_change    Float
+  game                Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user                User  @relation(fields: [userId], references: [id])
+
+  @@unique([gameId, userId])
   @@index([userId])
   @@index([gameId])
   @@index([rank])
