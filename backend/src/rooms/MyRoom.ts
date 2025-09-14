@@ -714,6 +714,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
             data: {
               totalGames: { increment: 1 },
               draws: { increment: 1 },
+              participatedGameIds: { push: game.id }, // 참여한 게임 ID 추가
             },
           });
           console.log(`[DEBUG] 자동 우승 - User 게임 통계 업데이트 완료: userId=${userId}`);
@@ -1145,6 +1146,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
               totalGames: { increment: 1 },
               wins: isWin ? { increment: 1 } : undefined,
               losses: !isWin ? { increment: 1 } : undefined,
+              participatedGameIds: { push: game.id }, // 참여한 게임 ID 추가
             },
           });
           console.log(`[DEBUG] User 레이팅 업데이트 완료: userId=${userId}`);

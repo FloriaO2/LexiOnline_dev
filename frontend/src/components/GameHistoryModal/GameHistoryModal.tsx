@@ -16,6 +16,7 @@ interface GameHistory {
   gameId: string;
   playedAt: string;
   playerCount: number;
+  roomTitle?: string;
   duration: number;
   myRank: number;
   myScore: number;
@@ -209,6 +210,11 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                               플레이 시간: {formatDuration(game.duration)}
                             </div>
                           </div>
+                          {game.roomTitle && (
+                            <div className="game-room-title">
+                              {game.roomTitle}
+                            </div>
+                          )}
                           <div className="game-result">
                             <div className="my-rank">
                               {getRankIcon(game.myRank)}

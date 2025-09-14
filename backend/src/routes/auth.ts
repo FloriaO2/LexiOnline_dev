@@ -193,40 +193,51 @@ router.get('/user/games', async (req: Request, res: Response) => {
     const userId = decoded.userId;
     if (!userId) return res.status(400).json({ message: 'No userId in token' });
 
-    // 3) 유저의 게임 전적 조회 (최신순)
-    const userGames = await (prisma as any).gamePlayer.findMany({
+    // 3) 유저 정보에서 참여한 게임 ID 목록 가져오기
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { participatedGameIds: true } as any
+    });
+
+    if (!user || !(user as any).participatedGameIds || (user as any).participatedGameIds.length === 0) {
+      return res.json({
+        user: await prisma.user.findUnique({ where: { id: userId } }),
+        games: []
+      });
+    }
+
+    // 4) 최근 20게임 ID만 가져오기 (배열의 마지막 20개)
+    const recentGameIds = (user as any).participatedGameIds.slice(-20);
+
+    // 5) 해당 게임들의 상세 정보 조회
+    const userGames = await (prisma as any).game.findMany({
       where: {
-        userId: userId
+        id: { in: recentGameIds }
       },
       include: {
-        game: {
+        players: {
           include: {
-            players: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    nickname: true,
-                    profileImageUrl: true
-                  }
-                }
+            user: {
+              select: {
+                id: true,
+                nickname: true,
+                profileImageUrl: true
               }
             }
           }
         }
       },
       orderBy: {
-        game: {
-          playedAt: 'desc'
-        }
-      },
-      take: 50 // 최근 50게임만 조회
+        playedAt: 'desc'
+      }
     });
 
-    // 4) 전적 데이터 가공
-    const gameHistory = userGames.map((gamePlayer: any) => {
-      const game = gamePlayer.game;
+    // 6) 전적 데이터 가공
+    const gameHistory = userGames.map((game: any) => {
       const allPlayers = game.players.sort((a: any, b: any) => a.rank - b.rank);
+      
+      // 현재 유저의 게임 정보 찾기
+      const myGameData = allPlayers.find((player: any) => player.userId === userId);
       
       // 게임 소요 시간 계산 (실제 게임 로직에 따라 조정 필요)
       const gameDuration = Math.floor(Math.random() * 1800) + 300; // 5분~35분 랜덤 (임시)
@@ -235,12 +246,13 @@ router.get('/user/games', async (req: Request, res: Response) => {
         gameId: game.gameId,
         playedAt: game.playedAt,
         playerCount: game.playerCount,
+        roomTitle: game.roomTitle, // 방 이름 추가
         duration: gameDuration, // 초 단위
-        myRank: gamePlayer.rank,
-        myScore: gamePlayer.score,
-        myRatingChange: gamePlayer.rating_mu_change,
-        myRatingBefore: gamePlayer.rating_mu_before,
-        myRatingAfter: gamePlayer.rating_mu_after,
+        myRank: myGameData?.rank || 0,
+        myScore: myGameData?.score || 0,
+        myRatingChange: myGameData?.rating_mu_change || 0,
+        myRatingBefore: myGameData?.rating_mu_before || 0,
+        myRatingAfter: myGameData?.rating_mu_after || 0,
         players: allPlayers.map((player: any) => ({
           userId: player.userId,
           nickname: player.nickname, // 게임 당시 저장된 닉네임 사용
@@ -254,13 +266,13 @@ router.get('/user/games', async (req: Request, res: Response) => {
       };
     });
 
-    // 5) 유저 통계 정보도 함께 반환
-    const user = await prisma.user.findUnique({
+    // 7) 유저 통계 정보도 함께 반환
+    const userInfo = await prisma.user.findUnique({
       where: { id: userId }
     });
 
     res.json({
-      user: user,
+      user: userInfo,
       games: gameHistory
     });
 

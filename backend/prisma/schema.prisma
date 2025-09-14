@@ -23,6 +23,7 @@ model User {
   draws           Int           @default(0)
   losses          Int           @default(0)
   gamePlayers     GamePlayer[]
+  participatedGameIds Int[]     @default([]) // 참여한 게임 ID 목록
 }
 
 model Game {
