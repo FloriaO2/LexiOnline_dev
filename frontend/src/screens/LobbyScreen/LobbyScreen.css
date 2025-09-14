@@ -519,6 +519,42 @@
   font-weight: 500;
 }
 
+/* 랭킹 탭 내 로딩 컨테이너는 높이 제한 */
+.lobby-screen .ranking-list .loading-container {
+  height: 20vh !important;
+  min-height: 10vh !important;
+  padding: 2vw !important;
+  font-size: 1.2vw !important;
+}
+
+.lobby-screen .ranking-list .loading-container .loading-spinner {
+  margin-bottom: 1.5vw !important;
+}
+
+.lobby-screen .ranking-list .loading-container p {
+  font-size: 1vw !important;
+  margin: 0 !important;
+  opacity: 0.8 !important;
+}
+
+/* 공개방 탭 내 로딩 컨테이너도 동일하게 적용 */
+.lobby-screen .public-rooms-list .loading-container {
+  height: 20vh !important;
+  min-height: 10vh !important;
+  padding: 2vw !important;
+  font-size: 1vw !important;
+}
+
+.lobby-screen .public-rooms-list .loading-container .loading-spinner {
+  margin-bottom: 1.5vw !important;
+}
+
+.lobby-screen .public-rooms-list .loading-container p {
+  font-size: 1vw !important;
+  margin: 0 !important;
+  opacity: 0.8 !important;
+}
+
 .loading-container p {
   margin: 0;
   opacity: 0.8;
