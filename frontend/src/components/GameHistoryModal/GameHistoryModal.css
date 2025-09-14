@@ -196,6 +196,20 @@
   border: 0.14vw solid rgba(255, 255, 255, 0.3);
 }
 
+.game-history-user-profile-image-default {
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.67vw;
+  font-weight: 600;
+}
+
+.game-history-modal.nested .game-history-user-profile-image-default {
+  font-size: 1.39vw;
+}
+
 .game-history-user-info h3 {
   color: white;
   margin: 0 0 0.35vw 0;

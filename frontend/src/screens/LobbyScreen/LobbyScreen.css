@@ -191,19 +191,27 @@
 .btn-history {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border: none;
+  border: 0.1vw solid rgba(255, 255, 255, 0.3);
   border-radius: 1vw;
-  padding: 0.8vw 1.6vw;
+  padding: 0.8vw 1.2vw;
   font-size: 0.95vw;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-history.compact {
-  padding: 0.6vw 1.2vw;
+  padding: 0.6vw 0.9vw;
   font-size: 0.85vw;
   border-radius: 0.8vw;
+  border: 0.08vw solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.75vw;
 }
 
 .btn-history:hover {

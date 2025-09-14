@@ -1030,7 +1030,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
           onClose={() => setSelectedUserForHistory(null)}
           token={token}
           targetUserId={selectedUserForHistory}
-          isNested={true}
+          isFromRanking={true}
         />
       )}
 

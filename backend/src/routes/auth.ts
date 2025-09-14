@@ -331,12 +331,12 @@ router.put('/user/privacy-settings', async (req: Request, res: Response) => {
       data: { 
         allowGameHistoryView,
         updatedAt: new Date()
-      }
+      } as any
     });
 
     res.json({ 
       message: 'Privacy settings updated successfully',
-      allowGameHistoryView: updatedUser.allowGameHistoryView 
+      allowGameHistoryView: (updatedUser as any).allowGameHistoryView 
     });
 
   } catch (err) {
@@ -379,20 +379,109 @@ router.get('/user/games/:userId', async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // 4) 전적 공개 설정 확인 (본인이 아닌 경우에만)
+    // 4) 요청자 정보 조회
     const requestorUserId = decoded.userId;
+    const requestor = await prisma.user.findUnique({
+      where: { id: requestorUserId }
+    });
+
+    if (!requestor) {
+      return res.status(404).json({ message: 'Requestor not found' });
+    }
+
+    // 5) 전적 공개 설정 확인 (본인이 아닌 경우에만)
     if (requestorUserId !== targetUserId && !(targetUser as any).allowGameHistoryView) {
-      return res.json({
-        user: {
-          id: targetUser.id,
-          nickname: targetUser.nickname,
-          profileImageUrl: targetUser.profileImageUrl,
-          rating_mu: targetUser.rating_mu,
-          allowGameHistoryView: false
-        },
-        games: [],
-        message: '전적 공개를 허용하지 않았습니다.'
-      });
+      // 랭킹탭에서 들어온 경우인지 확인
+      const isFromRanking = req.query.fromRanking === 'true';
+      
+      // 랭킹탭에서 들어온 경우 무조건 실제 유저 정보 반환
+      if (isFromRanking) {
+        return res.json({
+          user: {
+            id: targetUser.id,
+            nickname: targetUser.nickname, // 실제 닉네임
+            profileImageUrl: targetUser.profileImageUrl, // 실제 프로필 이미지
+            rating_mu: targetUser.rating_mu, // 실제 레이팅
+            totalGames: (targetUser as any).totalGames || 0,
+            wins: (targetUser as any).wins || 0,
+            draws: (targetUser as any).draws || 0,
+            losses: (targetUser as any).losses || 0,
+            allowGameHistoryView: false
+          },
+          games: [],
+          message: '전적 공개를 허용하지 않았습니다.'
+        });
+      }
+      
+      // 요청자와 대상 유저가 함께 플레이한 게임이 있는지 확인
+      const requestorGameIds = (requestor as any).participatedGameIds || [];
+      const targetGameIds = (targetUser as any).participatedGameIds || [];
+      const sharedGameIds = requestorGameIds.filter((id: number) => targetGameIds.includes(id));
+      
+      // 함께 플레이한 게임이 있는 경우 (내 전적에서 다른 플레이어를 클릭한 경우)
+      if (sharedGameIds.length > 0) {
+        // 함께 플레이했던 게임에서의 닉네임 찾기
+        let gameNickname = targetUser.nickname; // 기본값은 현재 닉네임
+        
+        try {
+          // 요청자와 대상 유저가 함께 플레이한 게임 찾기
+          const sharedGame = await (prisma as any).game.findFirst({
+            where: {
+              id: { in: sharedGameIds }
+            },
+            include: {
+              players: {
+                where: {
+                  userId: targetUserId
+                },
+                select: {
+                  nickname: true
+                }
+              }
+            },
+            orderBy: {
+              playedAt: 'desc'
+            }
+          });
+          
+          if (sharedGame && sharedGame.players.length > 0) {
+            gameNickname = sharedGame.players[0].nickname;
+          }
+        } catch (err) {
+          console.error('게임 닉네임 조회 오류:', err);
+          // 오류가 발생해도 기본 닉네임 사용
+        }
+        
+        return res.json({
+          user: {
+            id: targetUser.id,
+            nickname: gameNickname, // 함께 플레이했던 게임에서의 닉네임
+            profileImageUrl: null, // 프로필 이미지는 null로 설정
+            rating_mu: null, // 레이팅은 null로 설정
+            allowGameHistoryView: false
+          },
+          games: [],
+          message: '전적 공개를 허용하지 않았습니다.'
+        });
+      } else {
+        // 함께 플레이한 게임이 없는 경우 (랭킹탭에서 들어온 경우)
+        // 실제 유저 정보를 반환하되 게임 기록은 비공개
+        return res.json({
+          user: {
+            id: targetUser.id,
+            nickname: targetUser.nickname, // 실제 닉네임
+            profileImageUrl: targetUser.profileImageUrl, // 실제 프로필 이미지
+            rating_mu: targetUser.rating_mu, // 실제 레이팅
+            totalGames: (targetUser as any).totalGames || 0,
+            wins: (targetUser as any).wins || 0,
+            draws: (targetUser as any).draws || 0,
+            losses: (targetUser as any).losses || 0,
+            allowGameHistoryView: false
+          },
+          games: [],
+          message: '전적 공개를 허용하지 않았습니다.'
+        });
+      }
     }
 
     // 4) 대상 유저의 참여한 게임 ID 목록 가져오기

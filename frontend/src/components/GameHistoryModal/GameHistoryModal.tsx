@@ -45,9 +45,10 @@ interface GameHistoryModalProps {
   targetUserId?: number; // 다른 유저의 전적을 볼 때 사용
   onPlayerClick?: (userId: number) => void; // 플레이어 클릭 시 호출되는 콜백
   isNested?: boolean; // 중첩된 모달인지 여부 (크기 조정용)
+  isFromRanking?: boolean; // 랭킹탭에서 들어온 경우인지 여부
 }
 
-const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, token, targetUserId, onPlayerClick, isNested = false }) => {
+const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, token, targetUserId, onPlayerClick, isNested = false, isFromRanking = false }) => {
   const [user, setUser] = useState<User | null>(null);
   const [games, setGames] = useState<GameHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +76,12 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
         (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
       
       // targetUserId가 있으면 특정 유저의 전적을 조회, 없으면 내 전적을 조회
-      const endpoint = targetUserId ? `/api/user/games/${targetUserId}` : '/api/user/games';
+      let endpoint = targetUserId ? `/api/user/games/${targetUserId}` : '/api/user/games';
+      
+      // 랭킹탭에서 들어온 경우 쿼리 파라미터 추가
+      if (targetUserId && isFromRanking) {
+        endpoint += '?fromRanking=true';
+      }
       
       const response = await fetch(`${apiUrl}${endpoint}`, {
         headers: { 
@@ -182,34 +188,46 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
               {user && (
                 <div className="game-history-user-stats-section">
                   <div className="game-history-user-profile">
-                    {user.profileImageUrl && (
+                    {user.profileImageUrl ? (
                       <img 
                         src={user.profileImageUrl} 
                         alt="profile" 
                         className="game-history-user-profile-image" 
                       />
+                    ) : (
+                      <div className="game-history-user-profile-image game-history-user-profile-image-default"></div>
                     )}
                     <div className="game-history-user-info">
                       <h3 className="game-history-user-nickname">{user.nickname}</h3>
-                      <p className="game-history-user-rating">Rating: {user.rating_mu.toFixed(2)}</p>
+                      <p className="game-history-user-rating">
+                        Rating: {user.rating_mu ? user.rating_mu.toFixed(2) : '?'}
+                      </p>
                     </div>
                   </div>
                   <div className="user-record">
                     <div className="record-item">
                       <span className="record-label">총 게임</span>
-                      <span className="record-value">{privacyMessage ? '?회' : `${user.totalGames}회`}</span>
+                      <span className="record-value">
+                        {privacyMessage && !isFromRanking ? '?회' : `${user.totalGames}회`}
+                      </span>
                     </div>
                     <div className="record-item">
                       <span className="record-label">승</span>
-                      <span className="record-value wins">{privacyMessage ? '?승' : `${user.wins}승`}</span>
+                      <span className="record-value wins">
+                        {privacyMessage && !isFromRanking ? '?승' : `${user.wins}승`}
+                      </span>
                     </div>
                     <div className="record-item">
                       <span className="record-label">무</span>
-                      <span className="record-value draws">{privacyMessage ? '?무' : `${user.draws}무`}</span>
+                      <span className="record-value draws">
+                        {privacyMessage && !isFromRanking ? '?무' : `${user.draws}무`}
+                      </span>
                     </div>
                     <div className="record-item">
                       <span className="record-label">패</span>
-                      <span className="record-value losses">{privacyMessage ? '?패' : `${user.losses}패`}</span>
+                      <span className="record-value losses">
+                        {privacyMessage && !isFromRanking ? '?패' : `${user.losses}패`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -323,6 +341,7 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
           token={token}
           targetUserId={nestedModalUserId}
           isNested={true}
+          isFromRanking={false} // 중첩된 모달은 항상 내 전적에서 클릭한 경우
         />
       )}
     </div>
