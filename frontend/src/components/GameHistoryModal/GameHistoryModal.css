@@ -33,7 +33,7 @@
 }
 
 .game-history-modal.nested {
-  max-width: 34.72vw;
+  max-width: 39vw;
   max-height: 87vh;
   box-shadow: 0 1.04vw 2.08vw rgba(0, 0, 0, 0.4);
   border: 0.14vw solid rgba(255, 255, 255, 0.2);
@@ -264,21 +264,18 @@
 }
 
 .record-value.wins {
-  color: #4ecdc4;
+  color: #0fc652bf;
   font-weight: 700;
-  text-shadow: 0 0 0.69vw rgba(78, 205, 196, 0.5);
 }
 
 .record-value.draws {
-  color: #ffe66d;
+  color: #00000086;
   font-weight: 700;
-  text-shadow: 0 0 0.69vw rgba(255, 230, 109, 0.5);
 }
 
 .record-value.losses {
-  color: #ff6b6b;
+  color: #fe4b4bab;
   font-weight: 700;
-  text-shadow: 0 0 0.69vw rgba(255, 107, 107, 0.5);
 }
 
 /* 게임 섹션 */
@@ -489,7 +486,7 @@
   }
 }
 
-.players-list h4 {
+.game-history-players-list h4 {
   color: #ffffff;
   margin: 0 0 1.39vw 0;
   font-size: 1.25vw;
@@ -497,8 +494,8 @@
   text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.3);
 }
 
-.game-history-modal.nested .players-list h4 {
-  margin: 0 0 0.83vw 0;
+.game-history-modal.nested .game-history-players-list h4 {
+  margin: 0 0 1vw 0;
 }
 
 .player-item {

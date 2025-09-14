@@ -89,6 +89,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   });
   const [lobbyRoom, setLobbyRoom] = useState<any>(null);
   const [isGameHistoryModalOpen, setIsGameHistoryModalOpen] = useState(false);
+  const [selectedUserForHistory, setSelectedUserForHistory] = useState<number | null>(null);
 
 
   useEffect(() => {
@@ -882,7 +883,12 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                           else rankClass = 'rank-4-plus';              // 4등 이하 - 검정색
                           
                           return (
-                            <div key={player.id} className={`ranking-card ${rankClass}`}>
+                            <div 
+                              key={player.id} 
+                              className={`ranking-card ${rankClass} clickable`}
+                              onClick={() => setSelectedUserForHistory(player.id)}
+                              title="클릭하여 전적 보기"
+                            >
                               <div className="rank-badge">
                                 {index === 0 && '🥇'}
                                 {index === 1 && '🥈'}
@@ -977,6 +983,17 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         onClose={() => setIsGameHistoryModalOpen(false)}
         token={token}
       />
+
+      {/* 랭킹 유저 전적 보기 모달 */}
+      {selectedUserForHistory && (
+        <GameHistoryModal
+          isOpen={true}
+          onClose={() => setSelectedUserForHistory(null)}
+          token={token}
+          targetUserId={selectedUserForHistory}
+          isNested={true}
+        />
+      )}
     </div>
   );
 };

@@ -252,7 +252,7 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                         {/* 자세한 전적 박스 (아코디언) */}
                         {expandedGameId === game.gameId && (
                           <div className="game-details">
-                            <div className="players-list">
+                            <div className="game-history-players-list">
                               <h4>참가자 정보</h4>
                               {game.players.map((player) => {
                                 const currentModalOwnerId = getCurrentModalOwnerId();
