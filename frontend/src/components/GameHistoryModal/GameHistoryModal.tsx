@@ -197,19 +197,19 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                   <div className="user-record">
                     <div className="record-item">
                       <span className="record-label">총 게임</span>
-                      <span className="record-value">{user.totalGames}회</span>
+                      <span className="record-value">{privacyMessage ? '?회' : `${user.totalGames}회`}</span>
                     </div>
                     <div className="record-item">
                       <span className="record-label">승</span>
-                      <span className="record-value wins">{user.wins}승</span>
+                      <span className="record-value wins">{privacyMessage ? '?승' : `${user.wins}승`}</span>
                     </div>
                     <div className="record-item">
                       <span className="record-label">무</span>
-                      <span className="record-value draws">{user.draws}무</span>
+                      <span className="record-value draws">{privacyMessage ? '?무' : `${user.draws}무`}</span>
                     </div>
                     <div className="record-item">
                       <span className="record-label">패</span>
-                      <span className="record-value losses">{user.losses}패</span>
+                      <span className="record-value losses">{privacyMessage ? '?패' : `${user.losses}패`}</span>
                     </div>
                   </div>
                 </div>
