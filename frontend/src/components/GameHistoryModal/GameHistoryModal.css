@@ -11,48 +11,68 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 1.39vw;
+}
+
+.game-history-modal-overlay.nested {
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1001;
 }
 
 .game-history-modal {
   background: #1a1a2e;
-  border-radius: 20px;
+  border-radius: 1.39vw;
   width: 100%;
-  max-width: 800px;
+  max-width: 55.56vw;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1.39vw 2.78vw rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 0.07vw solid rgba(255, 255, 255, 0.1);
+}
+
+.game-history-modal.nested {
+  max-width: 34.72vw;
+  max-height: 60vh;
+  box-shadow: 0 1.04vw 2.08vw rgba(0, 0, 0, 0.4);
+  border: 0.14vw solid rgba(255, 255, 255, 0.2);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
+  padding: 1.39vw 2.08vw;
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(0.69vw);
+  border-bottom: 0.07vw solid rgba(255, 255, 255, 0.1);
+}
+
+.game-history-modal.nested .modal-header {
+  padding: 1.04vw 1.39vw;
 }
 
 .modal-header h2 {
   color: white;
   margin: 0;
-  font-size: 24px;
+  font-size: 1.67vw;
   font-weight: 600;
+}
+
+.game-history-modal.nested .modal-header h2 {
+  font-size: 1.39vw;
 }
 
 .close-button {
   background: none;
   border: none;
   color: white;
-  font-size: 28px;
+  font-size: 1.94vw;
   cursor: pointer;
   padding: 0;
-  width: 40px;
-  height: 40px;
+  width: 2.78vw;
+  height: 2.78vw;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,28 +87,46 @@
 .modal-content {
   flex: 1;
   overflow-y: auto;
-  padding: 30px;
+  padding: 2.08vw;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.game-history-modal.nested .modal-content {
+  padding: 1.39vw;
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* 로딩 및 에러 상태 */
-.loading-container,
-.error-container {
+.game-history-loading-container,
+.game-history-error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 2.78vw 1.39vw;
   text-align: center;
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top: 4px solid white;
+.game-history-loading-container p {
+  color: white;
+  font-size: 1.25vw;
+  font-weight: 500;
+  margin: 0;
+}
+
+.game-history-loading-spinner {
+  width: 2.78vw;
+  height: 2.78vw;
+  border: 0.28vw solid rgba(255, 255, 255, 0.3);
+  border-top: 0.28vw solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+  margin-bottom: 1.39vw;
 }
 
 @keyframes spin {
@@ -96,147 +134,192 @@
   100% { transform: rotate(360deg); }
 }
 
-.error-message {
+.game-history-error-message {
   color: #ff6b6b;
-  margin-bottom: 20px;
-  font-size: 16px;
+  margin-bottom: 1.39vw;
+  font-size: 1.11vw;
 }
 
-.retry-button {
+.game-history-retry-button {
   background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 0.07vw solid rgba(255, 255, 255, 0.3);
   color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 0.69vw 1.39vw;
+  border-radius: 0.56vw;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.retry-button:hover {
+.game-history-retry-button:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
 /* 유저 통계 섹션 */
 .game-history-user-stats-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 15px;
-  padding: 25px;
-  margin-bottom: 30px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+  border-radius: 1.04vw;
+  padding: 1.74vw;
+  margin-bottom: 2.08vw;
+  backdrop-filter: blur(0.69vw);
+  border: 0.07vw solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0.56vw 1.74vw rgba(102, 126, 234, 0.2);
+}
+
+.game-history-modal.nested .game-history-user-stats-section {
+  padding: 1.39vw;
+  margin-bottom: 1.39vw;
+  border-radius: 0.83vw;
 }
 
 .game-history-user-profile {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.39vw;
+}
+
+.game-history-modal.nested .game-history-user-profile {
+  margin-bottom: 1.04vw;
 }
 
 .game-history-user-profile-image {
-  width: 60px;
-  height: 60px;
+  width: 4.17vw;
+  height: 4.17vw;
   border-radius: 50%;
-  margin-right: 15px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  margin-right: 1.04vw;
+  border: 0.21vw solid rgba(255, 255, 255, 0.3);
+}
+
+.game-history-modal.nested .game-history-user-profile-image {
+  width: 3.47vw;
+  height: 3.47vw;
+  margin-right: 0.83vw;
+  border: 0.14vw solid rgba(255, 255, 255, 0.3);
 }
 
 .game-history-user-info h3 {
   color: white;
-  margin: 0 0 5px 0;
-  font-size: 20px;
+  margin: 0 0 0.35vw 0;
+  font-size: 1.39vw;
   font-weight: 600;
+}
+
+.game-history-modal.nested .game-history-user-info h3 {
+  font-size: 1.25vw;
 }
 
 .game-history-user-info p {
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
-  font-size: 14px;
+  font-size: 0.97vw;
 }
 
 .user-record {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(8.33vw, 1fr));
+  gap: 1.04vw;
+}
+
+.game-history-modal.nested .user-record {
+  gap: 0.56vw;
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .record-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15px;
+  padding: 1.04vw;
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(5px);
+  border-radius: 0.69vw;
+  border: 0.07vw solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(0.35vw);
+}
+
+.game-history-modal.nested .record-item {
+  padding: 0.69vw 0.56vw;
+  border-radius: 0.56vw;
 }
 
 .record-label {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
-  margin-bottom: 5px;
+  font-size: 0.83vw;
+  margin-bottom: 0.35vw;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.035vw;
+}
+
+.game-history-modal.nested .record-label {
+  font-size: 0.69vw;
+  margin-bottom: 0.21vw;
 }
 
 .record-value {
   color: white;
-  font-size: 16px;
+  font-size: 1.11vw;
   font-weight: 600;
+}
+
+.game-history-modal.nested .record-value {
+  font-size: 0.97vw;
 }
 
 .record-value.wins {
   color: #4ecdc4;
   font-weight: 700;
-  text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+  text-shadow: 0 0 0.69vw rgba(78, 205, 196, 0.5);
 }
 
 .record-value.draws {
   color: #ffe66d;
   font-weight: 700;
-  text-shadow: 0 0 10px rgba(255, 230, 109, 0.5);
+  text-shadow: 0 0 0.69vw rgba(255, 230, 109, 0.5);
 }
 
 .record-value.losses {
   color: #ff6b6b;
   font-weight: 700;
-  text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+  text-shadow: 0 0 0.69vw rgba(255, 107, 107, 0.5);
 }
 
 /* 게임 섹션 */
 .games-section h3 {
   color: #ffffff;
-  margin: 0 0 20px 0;
-  font-size: 22px;
+  margin: 0 0 1.39vw 0;
+  font-size: 1.53vw;
   font-weight: 700;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.3);
+}
+
+.game-history-modal.nested .games-section h3 {
+  font-size: 1.25vw;
+  margin: 0 0 1.04vw 0;
 }
 
 .no-games {
   text-align: center;
-  padding: 40px;
+  padding: 2.78vw;
   color: #e0e0e0;
-  font-size: 16px;
+  font-size: 1.11vw;
   font-weight: 500;
 }
 
 .games-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 1.04vw;
 }
 
 .game-item {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  border-radius: 0.83vw;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 0.07vw solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
 }
 
 .game-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-0.14vw);
+  box-shadow: 0 0.56vw 1.74vw rgba(0, 0, 0, 0.15);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -245,11 +328,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 25px;
+  padding: 1.39vw 1.74vw;
   cursor: pointer;
   transition: background-color 0.2s;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 1.04vw;
+}
+
+.game-history-modal.nested .game-summary {
+  padding: 1.04vw 1.25vw;
+  gap: 0.69vw;
+  flex-wrap: nowrap;
 }
 
 .game-summary:hover {
@@ -259,90 +348,130 @@
 .game-basic-info {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.35vw;
+}
+
+.game-history-modal.nested .game-basic-info {
+  gap: 0.21vw;
+  min-width: 8.33vw;
 }
 
 .game-time {
   color: #ffffff;
-  font-size: 16px;
+  font-size: 1.11vw;
   font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.3);
+}
+
+.game-history-modal.nested .game-time {
+  font-size: 0.97vw;
 }
 
 .game-duration {
   color: #e0e0e0;
-  font-size: 14px;
+  font-size: 0.97vw;
   font-weight: 500;
+}
+
+.game-history-modal.nested .game-duration {
+  font-size: 0.83vw;
 }
 
 .game-room-title {
   color: #ffffff;
-  font-size: 18px;
+  font-size: 1.25vw;
   font-weight: 700;
   text-align: center;
   flex: 1;
-  min-width: 200px;
+  min-width: 13.89vw;
+}
+
+.game-history-modal.nested .game-room-title {
+  font-size: 1.11vw;
+  min-width: 10.42vw;
+  flex: 1;
 }
 
 .game-result {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 1.04vw;
+}
+
+.game-history-modal.nested .game-result {
+  gap: 0.3vw;
+  min-width: 6.94vw;
+  margin-right: 0.7vw;
 }
 
 .my-rank {
-  font-size: 24px;
-  min-width: 40px;
+  font-size: 1.67vw;
+  min-width: 2.78vw;
   text-align: center;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 0.14vw 0.28vw rgba(0, 0, 0, 0.3));
+}
+
+.game-history-modal.nested .my-rank {
+  font-size: 1.39vw;
+  min-width: 2.43vw;
 }
 
 .game-history-rating-change {
-  font-size: 18px;
+  font-size: 1.11vw;
   font-weight: 700;
-  min-width: 60px;
+  min-width: 4.17vw;
   text-align: center;
-  padding: 5px 10px;
-  border-radius: 8px;
+  padding: 0.35vw 0.69vw;
+  border-radius: 0.56vw;
   color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.5);
+}
+
+.game-history-modal.nested .game-history-rating-change {
+  font-size: 1.11vw;
+  min-width: 3.47vw;
+  padding: 0.28vw 0.56vw;
 }
 
 .game-history-rating-change.positive {
   color: #ffffff;
   background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
-  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0.28vw 1.04vw rgba(78, 205, 196, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.6);
 }
 
 .game-history-rating-change.negative {
   color: #ffffff;
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0.28vw 1.04vw rgba(255, 107, 107, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.6);
 }
 
 .game-history-rating-change.neutral {
   color: #ffffff;
   background: linear-gradient(135deg, #ffe66d 0%, #feca57 100%);
-  box-shadow: 0 4px 15px rgba(255, 230, 109, 0.3);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0.28vw 1.04vw rgba(255, 230, 109, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.6);
 }
 
 .expand-icon {
   color: #ffffff;
-  font-size: 16px;
+  font-size: 1.11vw;
   font-weight: 600;
   transition: transform 0.2s;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.3);
 }
 
 /* 자세한 전적 박스 (아코디언) */
 .game-details {
   background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 25px;
+  border-top: 0.07vw solid rgba(255, 255, 255, 0.1);
+  padding: 1.74vw;
   animation: expandDown 0.3s ease-out;
+}
+
+.game-history-modal.nested .game-details {
+  padding: 1.25vw 1.74vw 1.74vw 1.74vw;
 }
 
 @keyframes expandDown {
@@ -354,126 +483,147 @@
   }
   to {
     opacity: 1;
-    max-height: 500px;
-    padding-top: 25px;
-    padding-bottom: 25px;
+    max-height: 34.72vw;
+    padding-top: 1.74vw;
+    padding-bottom: 1.74vw;
   }
 }
 
 .players-list h4 {
   color: #ffffff;
-  margin: 0 0 20px 0;
-  font-size: 18px;
+  margin: 0 0 1.39vw 0;
+  font-size: 1.25vw;
   font-weight: 700;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.3);
+}
+
+.game-history-modal.nested .players-list h4 {
+  margin: 0 0 0.83vw 0;
 }
 
 .player-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
+  padding: 1.04vw;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.69vw;
+  margin-bottom: 0.69vw;
+  border: 0.07vw solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
 }
 
 .player-item:last-child {
   margin-bottom: 0;
 }
 
+.player-item.clickable {
+  cursor: pointer;
+}
+
+.player-item.clickable:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border: 0.07vw solid rgba(255, 255, 255, 0.2);
+  transform: translateY(-0.07vw);
+  box-shadow: 0 0.28vw 0.83vw rgba(0, 0, 0, 0.2);
+}
+
+.player-item.modal-owner {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  border: 0.07vw solid rgba(102, 126, 234, 0.4);
+}
+
 .player-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.83vw;
 }
 
 .player-avatar {
-  width: 40px;
-  height: 40px;
+  width: 2.78vw;
+  height: 2.78vw;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 0.14vw solid rgba(255, 255, 255, 0.3);
 }
 
 .player-rank-icon {
-  font-size: 24px;
+  font-size: 1.67vw;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 2.78vw;
+  height: 2.78vw;
 }
 
 .player-nickname {
   color: #ffffff;
-  font-size: 16px;
+  font-size: 1.11vw;
   font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.3);
 }
 
 .player-stats {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 1.04vw;
 }
 
 .player-rank {
-  font-size: 18px;
-  min-width: 30px;
+  font-size: 1.25vw;
+  min-width: 2.08vw;
   text-align: center;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 0.14vw 0.28vw rgba(0, 0, 0, 0.3));
 }
 
 .player-score {
   color: #e0e0e0;
-  font-size: 14px;
+  font-size: 0.97vw;
   font-weight: 500;
-  min-width: 50px;
+  min-width: 3.47vw;
   text-align: center;
 }
 
 .game-history-player-rating-change {
-  font-size: 14px;
+  font-size: 0.97vw;
   font-weight: 700;
-  min-width: 60px;
+  min-width: 4.17vw;
   text-align: center;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 0.21vw 0.56vw;
+  border-radius: 0.42vw;
   color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.5);
 }
 
 .game-history-player-rating-change.positive {
   color: #ffffff;
   background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
-  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0.14vw 0.56vw rgba(78, 205, 196, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.6);
 }
 
 .game-history-player-rating-change.negative {
   color: #ffffff;
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0.14vw 0.56vw rgba(255, 107, 107, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.6);
 }
 
 .game-history-player-rating-change.neutral {
   color: #ffffff;
   background: linear-gradient(135deg, #ffe66d 0%, #feca57 100%);
-  box-shadow: 0 2px 8px rgba(255, 230, 109, 0.3);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0.14vw 0.56vw rgba(255, 230, 109, 0.3);
+  text-shadow: 0 0.07vw 0.21vw rgba(0, 0, 0, 0.6);
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .game-history-modal {
-    margin: 10px;
+    margin: 0.69vw;
     max-height: 95vh;
   }
 
   .modal-content {
-    padding: 20px;
+    padding: 1.39vw;
   }
 
   .user-record {
@@ -481,49 +631,45 @@
   }
 
   .game-summary {
-    padding: 15px 20px;
+    padding: 1.04vw 1.39vw;
   }
 
   .game-basic-info {
-    gap: 3px;
+    gap: 0.21vw;
   }
 
   .game-time {
-    font-size: 14px;
+    font-size: 0.97vw;
   }
 
   .game-duration {
-    font-size: 12px;
+    font-size: 0.83vw;
   }
 
   .my-rank {
-    font-size: 20px;
-  }
-
-  .game-history-rating-change {
-    font-size: 16px;
+    font-size: 1.39vw;
   }
 
   .player-item {
-    padding: 12px;
+    padding: 0.83vw;
   }
 
   .player-avatar {
-    width: 35px;
-    height: 35px;
+    width: 2.43vw;
+    height: 2.43vw;
   }
 
   .player-rank-icon {
-    width: 35px;
-    height: 35px;
-    font-size: 20px;
+    width: 2.43vw;
+    height: 2.43vw;
+    font-size: 1.39vw;
   }
 
   .player-nickname {
-    font-size: 14px;
+    font-size: 0.97vw;
   }
 
   .player-stats {
-    gap: 10px;
+    gap: 0.69vw;
   }
 }

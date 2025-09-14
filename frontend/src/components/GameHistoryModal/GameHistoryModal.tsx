@@ -27,6 +27,7 @@ interface GameHistory {
 }
 
 interface User {
+  id: number;
   nickname: string;
   profileImageUrl?: string;
   totalGames: number;
@@ -40,20 +41,26 @@ interface GameHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   token: string | null;
+  targetUserId?: number; // 다른 유저의 전적을 볼 때 사용
+  onPlayerClick?: (userId: number) => void; // 플레이어 클릭 시 호출되는 콜백
+  isNested?: boolean; // 중첩된 모달인지 여부 (크기 조정용)
 }
 
-const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, token }) => {
+const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, token, targetUserId, onPlayerClick, isNested = false }) => {
   const [user, setUser] = useState<User | null>(null);
   const [games, setGames] = useState<GameHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
+  
+  // 중첩된 모달 상태 (다른 유저의 전적을 볼 때)
+  const [nestedModalUserId, setNestedModalUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen && token) {
       loadGameHistory();
     }
-  }, [isOpen, token]);
+  }, [isOpen, token, targetUserId]);
 
   const loadGameHistory = async () => {
     setIsLoading(true);
@@ -64,7 +71,10 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
       const apiUrl = process.env.REACT_APP_API_URL || 
         (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
       
-      const response = await fetch(`${apiUrl}/api/user/games`, {
+      // targetUserId가 있으면 특정 유저의 전적을 조회, 없으면 내 전적을 조회
+      const endpoint = targetUserId ? `/api/user/games/${targetUserId}` : '/api/user/games';
+      
+      const response = await fetch(`${apiUrl}${endpoint}`, {
         headers: { 
           Authorization: `Bearer ${token}` 
         },
@@ -124,26 +134,37 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
     return 'neutral';
   };
 
+  // 현재 팝업 주인의 userId (targetUserId가 있으면 해당 유저, 없으면 내 계정)
+  const getCurrentModalOwnerId = () => {
+    if (targetUserId) {
+      return targetUserId;
+    }
+    // 내 계정의 경우, user 정보에서 id를 가져옴
+    return user?.id;
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="game-history-modal-overlay" onClick={onClose}>
-      <div className="game-history-modal" onClick={(e) => e.stopPropagation()}>
+    <div className={`game-history-modal-overlay ${isNested ? 'nested' : ''}`} onClick={onClose}>
+      <div className={`game-history-modal ${isNested ? 'nested' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>전적 보기</h2>
+          <h2>
+            {targetUserId ? `${user?.nickname || '유저'}의 전적 보기` : '내 전적 보기'}
+          </h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
         <div className="modal-content">
           {isLoading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
+            <div className="game-history-loading-container">
+              <div className="game-history-loading-spinner"></div>
               <p>전적을 불러오는 중...</p>
             </div>
           ) : error ? (
-            <div className="error-container">
-              <p className="error-message">{error}</p>
-              <button className="retry-button" onClick={loadGameHistory}>
+            <div className="game-history-error-container">
+              <p className="game-history-error-message">{error}</p>
+              <button className="game-history-retry-button" onClick={loadGameHistory}>
                 다시 시도
               </button>
             </div>
@@ -207,7 +228,7 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                               {formatDateTime(game.playedAt)}
                             </div>
                             <div className="game-duration">
-                              플레이 시간: {formatDuration(game.duration)}
+                              플레이 시간 {formatDuration(game.duration)}
                             </div>
                           </div>
                           {game.roomTitle && (
@@ -233,8 +254,21 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                           <div className="game-details">
                             <div className="players-list">
                               <h4>참가자 정보</h4>
-                              {game.players.map((player) => (
-                                <div key={player.userId} className="player-item">
+                              {game.players.map((player) => {
+                                const currentModalOwnerId = getCurrentModalOwnerId();
+                                const isModalOwner = player.userId === currentModalOwnerId;
+                                const canClick = !isNested && !isModalOwner;
+                                
+                                return (
+                                  <div 
+                                    key={player.userId} 
+                                    className={`player-item ${canClick ? 'clickable' : ''} ${isModalOwner ? 'modal-owner' : ''}`}
+                                    onClick={() => {
+                                      if (canClick) {
+                                        setNestedModalUserId(player.userId);
+                                      }
+                                    }}
+                                  >
                                   <div className="player-profile">
                                     <span className="player-rank-icon">
                                       {getRankIcon(player.rank)}
@@ -250,7 +284,8 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                                     </span>
                                   </div>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -263,6 +298,17 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
           )}
         </div>
       </div>
+      
+      {/* 중첩된 모달 (다른 유저의 전적) */}
+      {nestedModalUserId && (
+        <GameHistoryModal
+          isOpen={true}
+          onClose={() => setNestedModalUserId(null)}
+          token={token}
+          targetUserId={nestedModalUserId}
+          isNested={true}
+        />
+      )}
     </div>
   );
 };

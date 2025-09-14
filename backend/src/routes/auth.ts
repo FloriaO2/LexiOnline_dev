@@ -282,4 +282,122 @@ router.get('/user/games', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/user/games/:userId - 특정 유저의 전적 조회
+router.get('/user/games/:userId', async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const targetUserId = parseInt(userId);
+
+    if (isNaN(targetUserId)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    // 1) Authorization 헤더에서 토큰 빼오기 (요청자 인증용)
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Malformed token' });
+
+    // 2) JWT 토큰 검증 (요청자 인증)
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // 3) 대상 유저가 존재하는지 확인
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId }
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // 4) 대상 유저의 참여한 게임 ID 목록 가져오기
+    const user = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { participatedGameIds: true } as any
+    });
+
+    if (!user || !(user as any).participatedGameIds || (user as any).participatedGameIds.length === 0) {
+      return res.json({
+        user: targetUser,
+        games: []
+      });
+    }
+
+    // 5) 최근 20게임 ID만 가져오기
+    const recentGameIds = (user as any).participatedGameIds.slice(-20);
+
+    // 6) 해당 게임들의 상세 정보 조회
+    const userGames = await (prisma as any).game.findMany({
+      where: {
+        id: { in: recentGameIds }
+      },
+      include: {
+        players: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                nickname: true,
+                profileImageUrl: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        playedAt: 'desc'
+      }
+    });
+
+    // 7) 전적 데이터 가공
+    const gameHistory = userGames.map((game: any) => {
+      const allPlayers = game.players.sort((a: any, b: any) => a.rank - b.rank);
+      
+      // 대상 유저의 게임 정보 찾기
+      const targetUserGameData = allPlayers.find((player: any) => player.userId === targetUserId);
+      
+      // 게임 소요 시간 계산 (실제 게임 로직에 따라 조정 필요)
+      const gameDuration = Math.floor(Math.random() * 1800) + 300; // 5분~35분 랜덤 (임시)
+      
+      return {
+        gameId: game.gameId,
+        playedAt: game.playedAt,
+        playerCount: game.playerCount,
+        roomTitle: game.roomTitle,
+        duration: gameDuration,
+        myRank: targetUserGameData?.rank || 0,
+        myScore: targetUserGameData?.score || 0,
+        myRatingChange: targetUserGameData?.rating_mu_change || 0,
+        myRatingBefore: targetUserGameData?.rating_mu_before || 0,
+        myRatingAfter: targetUserGameData?.rating_mu_after || 0,
+        players: allPlayers.map((player: any) => ({
+          userId: player.userId,
+          nickname: player.nickname,
+          profileImageUrl: player.user.profileImageUrl,
+          rank: player.rank,
+          score: player.score,
+          ratingChange: player.rating_mu_change,
+          ratingBefore: player.rating_mu_before,
+          ratingAfter: player.rating_mu_after
+        }))
+      };
+    });
+
+    res.json({
+      user: targetUser,
+      games: gameHistory
+    });
+
+  } catch (err) {
+    console.error('유저 전적 조회 오류:', err);
+    res.status(500).json({ message: '유저 전적 조회에 실패했습니다.' });
+  }
+});
+
 export default router;
