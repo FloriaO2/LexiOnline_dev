@@ -474,6 +474,8 @@
   justify-content: center;
   gap: 0.6vw;
   text-decoration: none;
+  line-height: 1;
+  box-sizing: border-box;
 }
 
 .btn:disabled {
@@ -507,12 +509,14 @@
   padding: 1.5vw 3.2vw;
   font-size: 1.1vw;
   width: 100%;
+  height: 4.5vw;
   transition: all 0.3s ease;
 }
 
 .btn-large.compact {
   padding: 1.2vw 2.8vw;
   font-size: 1vw;
+  height: 3.8vw;
 }
 
 .btn-icon {
@@ -520,13 +524,17 @@
 }
 
 /* 로딩 스피너 */
-.loading-spinner {
-  width: 1.6vw;
-  height: 1.6vw;
+.lobby-screen .btn .loading-spinner {
+  width: 1.2vw !important;
+  height: 1.2vw !important;
   border: 0.15vw solid rgba(255, 255, 255, 0.3);
   border-top: 0.15vw solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin: 0 !important;
+  transform: translateY(0) !important;
 }
 
 .loading-spinner-large {

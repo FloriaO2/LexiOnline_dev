@@ -43,6 +43,7 @@ model GamePlayer {
   id                  Int   @id @default(autoincrement())
   gameId              Int
   userId              Int
+  nickname            String  // 게임 당시 플레이어의 닉네임
   rank                Int
   score               Int
   rating_mu_before    Float

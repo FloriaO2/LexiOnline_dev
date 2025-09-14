@@ -696,6 +696,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
             data: {
               gameId: game.id,
               userId,
+              nickname: playerData.nickname, // 게임 당시 닉네임 저장
               rank,
               score,
               rating_mu_before,
@@ -1122,6 +1123,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
             data: {
               gameId: game.id,
               userId,
+              nickname: playerData.nickname, // 게임 당시 닉네임 저장
               rank,
               score,
               rating_mu_before,

@@ -230,19 +230,12 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                               {game.players.map((player) => (
                                 <div key={player.userId} className="player-item">
                                   <div className="player-profile">
-                                    {player.profileImageUrl && (
-                                      <img 
-                                        src={player.profileImageUrl} 
-                                        alt="profile" 
-                                        className="player-avatar" 
-                                      />
-                                    )}
+                                    <span className="player-rank-icon">
+                                      {getRankIcon(player.rank)}
+                                    </span>
                                     <span className="player-nickname">{player.nickname}</span>
                                   </div>
                                   <div className="player-stats">
-                                    <span className="player-rank">
-                                      {getRankIcon(player.rank)}
-                                    </span>
                                     <span className="player-score">
                                       {player.score}점
                                     </span>

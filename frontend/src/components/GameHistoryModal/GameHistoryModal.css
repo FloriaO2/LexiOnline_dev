@@ -385,6 +385,15 @@
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
+.player-rank-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
 .player-nickname {
   color: #ffffff;
   font-size: 16px;
@@ -491,6 +500,12 @@
   .player-avatar {
     width: 35px;
     height: 35px;
+  }
+
+  .player-rank-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 20px;
   }
 
   .player-nickname {

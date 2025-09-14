@@ -243,7 +243,7 @@ router.get('/user/games', async (req: Request, res: Response) => {
         myRatingAfter: gamePlayer.rating_mu_after,
         players: allPlayers.map((player: any) => ({
           userId: player.userId,
-          nickname: player.user.nickname,
+          nickname: player.nickname, // 게임 당시 저장된 닉네임 사용
           profileImageUrl: player.user.profileImageUrl,
           rank: player.rank,
           score: player.score,
