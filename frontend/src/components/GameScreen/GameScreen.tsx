@@ -727,6 +727,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       }
     });
 
+    /*
     room.onMessage('submitRejected', (message) => {
       console.log('카드 제출 거부:', message);
       showToast('카드 제출이 거부되었습니다: ' + message.reason, 'error');
@@ -747,6 +748,39 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     room.onMessage('invalidPlayer', (message) => {
       console.log('플레이어 정보 오류:', message);
       showToast('플레이어 정보가 유효하지 않습니다: ' + message.reason, 'error');
+    });
+
+    room.onMessage('gameStarted', (message) => {
+      console.log('게임 시작:', message);
+      setIsGameStarted(true);
+      // 게임 시작 시에도 모드는 자동으로 변경하지 않음 (사용자가 직접 변경해야 함)
+      // const myPlayer = room.state.players.get(room.sessionId);
+      // if (myPlayer) {
+      //   setGameMode(myPlayer.easyMode ? 'easyMode' : 'normal');
+      // }
+    });
+    */
+
+    room.onMessage('submitRejected', (message) => {
+      console.log('카드 제출 거부:', message);
+      showToast('제출할 수 없는 카드 조합입니다.');
+      setIsSubmitting(false);
+    });
+
+    room.onMessage('noCard', (message) => {
+      console.log('카드 없음 오류:', message);
+      showToast('보유하지 않은 카드는 제출할 수 없습니다.');
+      setIsSubmitting(false);
+    });
+
+    room.onMessage('passRejected', (message) => {
+      console.log('패스 거부:', message);
+      showToast('패스가 거부되었습니다.');
+    });
+
+    room.onMessage('invalidPlayer', (message) => {
+      console.log('플레이어 정보 오류:', message);
+      showToast('유효하지 않은 플레이어 정보입니다.');
     });
 
     room.onMessage('gameStarted', (message) => {

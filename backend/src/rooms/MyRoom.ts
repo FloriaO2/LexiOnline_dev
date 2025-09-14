@@ -669,49 +669,61 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
     const dbSaveResults = [];
 
-    // 2) 로그인 유저에 대해서만 DB 저장 (레이팅 변동 없음)
-    for (const playerData of finalScoresWithRating) {
-      const { userId, score, rank, rating_mu_before, rating_sigma_before, rating_mu_after, rating_sigma_after } = playerData;
-      
-      if (!userId) {
-        dbSaveResults.push({ userId: null, success: false, reason: 'Not a logged-in user' });
-        continue;
-      }
+    // 2) 새로운 DB 구조로 저장: Game + GamePlayer (자동 우승, 레이팅 변동 없음)
+    console.log(`[DEBUG] 자동 우승 - 새로운 DB 구조로 저장 시작`);
+    
+    try {
+      await prisma.$transaction(async (tx: any) => {
+        // 1) Game 테이블에 게임 정보 저장
+        console.log(`[DEBUG] 자동 우승 - Game 테이블에 게임 정보 저장 시작`);
+        const game = await tx.game.create({
+          data: {
+            gameId: this.roomId,
+            playerCount: finalScores.length,
+            totalRounds: this.state.totalRounds,
+            roomType: this.state.roomType,
+            roomTitle: this.state.roomTitle,
+          },
+        });
+        console.log(`[DEBUG] 자동 우승 - Game 생성 완료: gameId=${game.id}`);
 
-      console.log(`[DEBUG] 자동 우승 - 유저 ${userId}의 DB 저장을 시도합니다.`);
-      try {
-        await prisma.$transaction(async (tx: any) => {
-          await tx.gameHistory.create({
+        // 2) 각 플레이어의 GamePlayer 레코드 생성 (레이팅 변동 없음)
+        for (const playerData of finalScoresWithRating) {
+          const { userId, score, rank, rating_mu_before, rating_sigma_before, rating_mu_after, rating_sigma_after } = playerData;
+          
+          if (!userId) {
+            console.log(`[DEBUG] 자동 우승 - userId가 null이므로 DB 저장 건너뜀: ${playerData.nickname}`);
+            dbSaveResults.push({ userId: null, success: false, reason: 'Not a logged-in user' });
+            continue;
+          }
+
+          console.log(`[DEBUG] 자동 우승 - GamePlayer 생성 시작: userId=${userId}`);
+          
+          // GamePlayer 레코드 생성 (레이팅 변동 없음)
+          await tx.gamePlayer.create({
             data: {
+              gameId: game.id,
               userId,
-              playerCount: finalScores.length,
               rank,
               score,
-              scoresAll: finalScores.map(f => f.score),
               rating_mu_before,
               rating_sigma_before,
               rating_mu_after,
               rating_sigma_after,
-              gameId: this.roomId,
+              rating_mu_change: 0, // 자동 우승의 경우 레이팅 변화값 0
             },
           });
-
-          // 자동 우승의 경우 레이팅 업데이트는 하지 않음 (변동 없음)
-          // await tx.user.update({
-          //   where: { id: userId },
-          //   data: {
-          //     rating_mu: rating_mu_after,
-          //     rating_sigma: rating_sigma_after,
-          //   },
-          // });
-        });
-        console.log(`[DEBUG] 자동 우승 - 유저 ${userId}의 게임 결과 DB 저장 성공 (레이팅 변동 없음)`);
-        dbSaveResults.push({ userId, success: true });
-      } catch (err) {
-        console.error(`[ERROR] 자동 우승 - 유저 ${userId}의 DB 저장 트랜잭션 실패:`, err);
-        const reason = err instanceof Error ? err.message : 'An unknown error occurred';
-        dbSaveResults.push({ userId, success: false, reason });
-      }
+          console.log(`[DEBUG] 자동 우승 - GamePlayer 생성 완료: userId=${userId}`);
+          
+          dbSaveResults.push({ userId, success: true });
+        }
+      });
+      
+      console.log(`[DEBUG] 자동 우승 - 모든 DB 저장 작업 완료`);
+    } catch (err) {
+      console.error(`[ERROR] 자동 우승 - DB 저장 트랜잭션 실패:`, err);
+      const reason = err instanceof Error ? err.message : 'An unknown error occurred';
+      dbSaveResults.push({ success: false, reason });
     }
 
     // 3) 최종 결과를 state에 저장
@@ -1015,12 +1027,14 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     this.broadcast("roundEnded", comprehensiveResult);
 
     // 7. 게임 종료 여부를 확인하고 후속 조치를 취합니다.
+    console.log(`[DEBUG] 게임 종료 조건 확인: round=${this.state.round}, totalRounds=${this.state.totalRounds}, isGameEnd=${comprehensiveResult.isGameEnd}`);
     if (comprehensiveResult.isGameEnd) {
       // 마지막 라운드이므로, 백그라운드에서 DB 저장을 시작합니다.
       console.log(`[DEBUG] 마지막 라운드 종료. endGame()을 호출하여 DB 저장을 시작합니다.`);
       this.endGame().catch(e => console.error("[ERROR] endGame 실행 중 오류 발생:", e));
     } else {
       // 게임이 계속되면 다음 라운드 준비
+      console.log(`[DEBUG] 게임 계속. 다음 라운드로 진행: ${this.state.round} → ${this.state.round + 1}`);
       this.state.round++;
       this.broadcast("waitingForNextRound");
     }
@@ -1028,6 +1042,8 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
   async endGame() {
     console.log(`[DEBUG] endGame() 실행 시작`);
+    console.log(`[DEBUG] 현재 플레이어 수: ${this.state.players.size}`);
+    
     // 1) 최종 점수 수집
     const finalScores = Array.from(this.state.players.entries()).map(([sessionId, player]) => ({
       playerId: sessionId,
@@ -1038,38 +1054,84 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       rating_sigma_before: player.ratingSigma
     }));
 
+    console.log(`[DEBUG] 최종 점수 수집 완료:`, finalScores);
+
     const finalScoresWithRank = calculateRanks(finalScores);
+    console.log(`[DEBUG] 순위 계산 완료:`, finalScoresWithRank);
+    
     const finalScoresWithRating = calculateRatings(finalScoresWithRank);
+    console.log(`[DEBUG] 레이팅 계산 완료:`, finalScoresWithRating);
+
+    // 레이팅 변화값 계산 및 모든 플레이어 정보 생성
+    const finalScoresWithChange = finalScoresWithRating.map(player => ({
+      ...player,
+      rating_mu_change: player.rating_mu_after - player.rating_mu_before
+    }));
+
+    // 모든 플레이어 정보 생성 (전적 열람용)
+    const playerInfos = finalScoresWithChange.map(player => ({
+      userId: player.userId,
+      nickname: player.nickname,
+      score: player.score,
+      rank: player.rank,
+      rating_mu_before: player.rating_mu_before,
+      rating_mu_after: player.rating_mu_after,
+      rating_mu_change: player.rating_mu_change
+    }));
 
     const dbSaveResults = [];
 
-    // 4) 로그인 유저에 대해서만 DB 저장
-    for (const playerData of finalScoresWithRating) {
-      const { userId, score, rank, rating_mu_before, rating_sigma_before, rating_mu_after, rating_sigma_after } = playerData;
-      
-      if (!userId) {
-        dbSaveResults.push({ userId: null, success: false, reason: 'Not a logged-in user' });
-        continue;
-      }
+    console.log(`[DEBUG] DB 저장 시작. 총 ${finalScoresWithChange.length}명의 플레이어 처리 예정`);
 
-      console.log(`[DEBUG] 유저 ${userId}의 DB 저장을 시도합니다.`);
-      try {
-        await prisma.$transaction(async (tx: any) => {
-          await tx.gameHistory.create({
+    // 4) 새로운 DB 구조로 저장: Game + GamePlayer
+    console.log(`[DEBUG] 새로운 DB 구조로 저장 시작`);
+    
+    try {
+      await prisma.$transaction(async (tx: any) => {
+        // 1) Game 테이블에 게임 정보 저장
+        console.log(`[DEBUG] Game 테이블에 게임 정보 저장 시작`);
+        const game = await tx.game.create({
+          data: {
+            gameId: this.roomId,
+            playerCount: finalScores.length,
+            totalRounds: this.state.totalRounds,
+            roomType: this.state.roomType,
+            roomTitle: this.state.roomTitle,
+          },
+        });
+        console.log(`[DEBUG] Game 생성 완료: gameId=${game.id}`);
+
+        // 2) 각 플레이어의 GamePlayer 레코드 생성 및 User 레이팅 업데이트
+        for (const playerData of finalScoresWithChange) {
+          const { userId, score, rank, rating_mu_before, rating_sigma_before, rating_mu_after, rating_sigma_after, rating_mu_change } = playerData;
+          
+          console.log(`[DEBUG] 플레이어 처리 중: userId=${userId}, nickname=${playerData.nickname}, rank=${rank}, score=${score}`);
+          
+          if (!userId) {
+            console.log(`[DEBUG] userId가 null이므로 DB 저장 건너뜀: ${playerData.nickname}`);
+            dbSaveResults.push({ userId: null, success: false, reason: 'Not a logged-in user' });
+            continue;
+          }
+
+          console.log(`[DEBUG] GamePlayer 생성 및 User 레이팅 업데이트 시작`);
+          
+          // GamePlayer 레코드 생성
+          await tx.gamePlayer.create({
             data: {
+              gameId: game.id,
               userId,
-              playerCount: finalScores.length,
               rank,
               score,
-              scoresAll: finalScores.map(f => f.score),
               rating_mu_before,
               rating_sigma_before,
               rating_mu_after,
               rating_sigma_after,
-              gameId: this.roomId,
+              rating_mu_change,
             },
           });
+          console.log(`[DEBUG] GamePlayer 생성 완료: userId=${userId}`);
 
+          // User 레이팅 업데이트
           await tx.user.update({
             where: { id: userId },
             data: {
@@ -1077,14 +1139,17 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
               rating_sigma: rating_sigma_after,
             },
           });
-        });
-        console.log(`[DEBUG] 유저 ${userId}의 게임 결과 및 레이팅 DB 저장 성공`);
-        dbSaveResults.push({ userId, success: true });
-      } catch (err) {
-        console.error(`[ERROR] 유저 ${userId}의 DB 저장 트랜잭션 실패:`, err);
-        const reason = err instanceof Error ? err.message : 'An unknown error occurred';
-        dbSaveResults.push({ userId, success: false, reason });
-      }
+          console.log(`[DEBUG] User 레이팅 업데이트 완료: userId=${userId}`);
+          
+          dbSaveResults.push({ userId, success: true });
+        }
+      });
+      
+      console.log(`[DEBUG] 모든 DB 저장 작업 완료`);
+    } catch (err) {
+      console.error(`[ERROR] DB 저장 트랜잭션 실패:`, err);
+      const reason = err instanceof Error ? err.message : 'An unknown error occurred';
+      dbSaveResults.push({ success: false, reason });
     }
 
     // 최종 결과를 state에 저장하여, 나중에 클라이언트가 요청할 수 있도록 함
@@ -1093,12 +1158,16 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       dbSaveResults 
     };
     console.log(`[DEBUG] 최종 게임 결과가 생성되어 저장되었습니다.`);
+    console.log(`[DEBUG] DB 저장 결과:`, dbSaveResults);
 
     // 게임 완료 상태로 설정 (더 이상 데이터 수정하지 않음)
     this.gameCompleted = true;
+    console.log(`[DEBUG] 게임 완료 상태로 설정됨`);
 
     // 클라이언트에게 게임이 완전히 종료되었음을 알림 (결과 데이터는 포함하지 않음)
     this.broadcast("gameIsOver");
+    console.log(`[DEBUG] gameIsOver 브로드캐스트 전송 완료`);
+    console.log(`[DEBUG] endGame() 실행 완료`);
   }
 
 

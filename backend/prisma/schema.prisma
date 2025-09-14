@@ -46,24 +46,47 @@ model User {
   fourth_5p       Int           @default(0)
   fifth_5p        Int           @default(0)
 
-  gameHistories   GameHistory[]
+  gamePlayers     GamePlayer[]
 }
 
-model GameHistory {
-  id                  Int      @id @default(autoincrement())
-  userId              Int
-  playedAt            DateTime @default(now())
-  playerCount         Int
-  rank                Int
-  score               Int
-  scoresAll           Json
-  rating_mu_before    Float
-  rating_sigma_before Float
-  rating_mu_after     Float
-  rating_sigma_after  Float
-  gameId              String?
-  user                User     @relation(fields: [userId], references: [id])
+// 게임 정보 (게임당 하나의 레코드)
+model Game {
+  id              Int           @id @default(autoincrement())
+  gameId          String        @unique  // Colyseus room ID
+  playedAt        DateTime      @default(now())
+  playerCount     Int           // 참여자 수
+  totalRounds     Int           // 총 라운드 수
+  roomType        String?       // 방 타입 (public, private, code)
+  roomTitle       String?       // 방 제목
+  
+  // 게임 참여자들
+  players         GamePlayer[]
+  
+  @@index([gameId])
+  @@index([playedAt])
+}
 
+// 게임 참여자 정보 (게임당 참여자 수만큼 레코드)
+model GamePlayer {
+  id                  Int      @id @default(autoincrement())
+  gameId              Int      // Game 테이블의 ID
+  userId              Int      // User 테이블의 ID
+  
+  // 게임 결과
+  rank                Int      // 순위
+  score               Int      // 최종 점수
+  rating_mu_before    Float    // 게임 전 레이팅
+  rating_sigma_before Float    // 게임 전 시그마
+  rating_mu_after     Float    // 게임 후 레이팅
+  rating_sigma_after  Float    // 게임 후 시그마
+  rating_mu_change    Float    // 레이팅 변화값
+  
+  // 관계
+  game                Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [id])
+  
+  @@unique([gameId, userId]) // 한 게임에 같은 유저는 한 번만 참여
   @@index([userId])
   @@index([gameId])
+  @@index([rank])
 }

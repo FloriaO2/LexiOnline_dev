@@ -8,6 +8,7 @@ export interface RatingData {
   rank: number;
   rating_mu_before: number;
   rating_sigma_before: number;
+  nickname?: string; // 추가된 필드
 }
 
 export interface RatingResult extends RatingData {
