@@ -106,18 +106,25 @@
   gap: 1.7vw;
 }
 
-.user-profile {
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+}
+
+.lobby-screen .user-section .user-profile {
   display: flex;
   align-items: center;
   gap: 1.2vw;
   transition: all 0.3s ease;
+  margin-bottom: 0;
 }
 
-.user-profile.compact {
+.lobby-screen .user-section .user-profile.compact {
   gap: 0.8vw;
 }
 
-.profile-image {
+.lobby-screen .user-section .profile-image {
   width: 4vw;
   height: 4vw;
   border-radius: 50%;
@@ -126,33 +133,33 @@
   transition: all 0.3s ease;
 }
 
-.profile-image.compact {
+.lobby-screen .user-section .profile-image.compact {
   width: 3vw;
   height: 3vw;
   border: 0.2vw solid rgba(255, 255, 255, 0.2);
 }
 
-.user-info h3 {
+.lobby-screen .user-section .user-info h3 {
   margin: 0 0 0.4vw 0;
   color: #ffffff;
   font-size: 1.1vw;
   transition: all 0.3s ease;
 }
 
-.user-info.compact h3 {
+.lobby-screen .user-section .user-info.compact h3 {
   margin: 0 0 0.3vw 0;
   font-size: 1vw;
   text-align: left;
 }
 
-.user-info p {
+.lobby-screen .user-section .user-info p {
   margin: 0;
   color: #cccccc;
   font-size: 0.95vw;
   transition: all 0.3s ease;
 }
 
-.user-info.compact p {
+.lobby-screen .user-section .user-info.compact p {
   font-size: 0.85vw;
   text-align: left;
 }
@@ -178,6 +185,31 @@
   background: #c82333;
   transform: translateY(-0.15vw);
   box-shadow: 0 0.4vw 1.2vw rgba(220, 53, 69, 0.3);
+}
+
+/* 전적 보기 버튼 */
+.btn-history {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 1vw;
+  padding: 0.8vw 1.6vw;
+  font-size: 0.95vw;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-history.compact {
+  padding: 0.6vw 1.2vw;
+  font-size: 0.85vw;
+  border-radius: 0.8vw;
+}
+
+.btn-history:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-0.15vw);
+  box-shadow: 0 0.4vw 1.2vw rgba(102, 126, 234, 0.3);
 }
 
 /* 로그인 섹션 */

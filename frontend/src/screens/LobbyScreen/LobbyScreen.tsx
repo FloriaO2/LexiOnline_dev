@@ -7,6 +7,7 @@ import { GameHistory } from '../../shared/models/GameHistory'
 import ColyseusService from '../../services/ColyseusService';
 import Toast from '../../components/Toast/Toast';
 import PasswordModal from '../../components/PasswordModal/PasswordModal';
+import GameHistoryModal from '../../components/GameHistoryModal/GameHistoryModal';
 
 interface LobbyScreenProps {
   onScreenChange: (screen: 'lobby' | 'waiting' | 'game' | 'result') => void;
@@ -87,6 +88,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     roomTitle: ''
   });
   const [lobbyRoom, setLobbyRoom] = useState<any>(null);
+  const [isGameHistoryModalOpen, setIsGameHistoryModalOpen] = useState(false);
 
 
   useEffect(() => {
@@ -623,9 +625,18 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                   <p>rating: {user.rating_mu ? user.rating_mu.toFixed(2) : '0'}</p>
                 </div>
               </div>
-              <button className={`btn btn-logout compact`} onClick={handleLogout}>
-                로그아웃
-              </button>
+              <div className="user-actions">
+                <button 
+                  className={`btn btn-history compact`} 
+                  onClick={() => setIsGameHistoryModalOpen(true)}
+                  title="전적 보기"
+                >
+                  전적 보기
+                </button>
+                <button className={`btn btn-logout compact`} onClick={handleLogout}>
+                  로그아웃
+                </button>
+              </div>
             </div>
           ) : (
             <div className="login-section">
@@ -958,6 +969,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         onClose={handlePasswordCancel}
         onConfirm={handlePasswordConfirm}
         roomTitle={passwordModal.roomTitle}
+      />
+
+      {/* 전적 보기 모달 */}
+      <GameHistoryModal
+        isOpen={isGameHistoryModalOpen}
+        onClose={() => setIsGameHistoryModalOpen(false)}
+        token={token}
       />
     </div>
   );

@@ -172,4 +172,102 @@ router.get('/ranking', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/user/games - 유저 전적 조회
+router.get('/user/games', async (req: Request, res: Response) => {
+  try {
+    // 1) Authorization 헤더에서 토큰 빼오기
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+
+    const token = authHeader.split(' ')[1]; // Bearer 토큰 분리
+    if (!token) return res.status(401).json({ message: 'Malformed token' });
+
+    // 2) JWT 토큰 검증
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const userId = decoded.userId;
+    if (!userId) return res.status(400).json({ message: 'No userId in token' });
+
+    // 3) 유저의 게임 전적 조회 (최신순)
+    const userGames = await (prisma as any).gamePlayer.findMany({
+      where: {
+        userId: userId
+      },
+      include: {
+        game: {
+          include: {
+            players: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    nickname: true,
+                    profileImageUrl: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        game: {
+          playedAt: 'desc'
+        }
+      },
+      take: 50 // 최근 50게임만 조회
+    });
+
+    // 4) 전적 데이터 가공
+    const gameHistory = userGames.map((gamePlayer: any) => {
+      const game = gamePlayer.game;
+      const allPlayers = game.players.sort((a: any, b: any) => a.rank - b.rank);
+      
+      // 게임 소요 시간 계산 (실제 게임 로직에 따라 조정 필요)
+      const gameDuration = Math.floor(Math.random() * 1800) + 300; // 5분~35분 랜덤 (임시)
+      
+      return {
+        gameId: game.gameId,
+        playedAt: game.playedAt,
+        playerCount: game.playerCount,
+        duration: gameDuration, // 초 단위
+        myRank: gamePlayer.rank,
+        myScore: gamePlayer.score,
+        myRatingChange: gamePlayer.rating_mu_change,
+        myRatingBefore: gamePlayer.rating_mu_before,
+        myRatingAfter: gamePlayer.rating_mu_after,
+        players: allPlayers.map((player: any) => ({
+          userId: player.userId,
+          nickname: player.user.nickname,
+          profileImageUrl: player.user.profileImageUrl,
+          rank: player.rank,
+          score: player.score,
+          ratingChange: player.rating_mu_change,
+          ratingBefore: player.rating_mu_before,
+          ratingAfter: player.rating_mu_after
+        }))
+      };
+    });
+
+    // 5) 유저 통계 정보도 함께 반환
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    res.json({
+      user: user,
+      games: gameHistory
+    });
+
+  } catch (err) {
+    console.error('전적 조회 오류:', err);
+    res.status(500).json({ message: '전적 조회에 실패했습니다.' });
+  }
+});
+
 export default router;
