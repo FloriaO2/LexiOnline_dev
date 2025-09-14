@@ -35,6 +35,7 @@ interface User {
   draws: number;
   losses: number;
   rating_mu: number;
+  allowGameHistoryView?: boolean; // 전적 공개 허용 여부
 }
 
 interface GameHistoryModalProps {
@@ -52,6 +53,7 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
+  const [privacyMessage, setPrivacyMessage] = useState<string | null>(null);
   
   // 중첩된 모달 상태 (다른 유저의 전적을 볼 때)
   const [nestedModalUserId, setNestedModalUserId] = useState<number | null>(null);
@@ -65,6 +67,7 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
   const loadGameHistory = async () => {
     setIsLoading(true);
     setError(null);
+    setPrivacyMessage(null);
     
     try {
       const isProduction = process.env.NODE_ENV === 'production';
@@ -87,6 +90,11 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
       const data = await response.json();
       setUser(data.user);
       setGames(data.games);
+      
+      // 전적 공개가 비활성화된 경우 메시지 설정
+      if (data.message && data.message === '전적 공개를 허용하지 않았습니다.') {
+        setPrivacyMessage(data.message);
+      }
     } catch (err) {
       console.error('전적 로드 실패:', err);
       setError(err instanceof Error ? err.message : '전적을 불러오는데 실패했습니다.');
@@ -210,7 +218,15 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
               {/* 게임 목록 섹션 */}
               <div className="games-section">
                 <h3>게임 기록</h3>
-                {games.length === 0 ? (
+                {privacyMessage ? (
+                  <div className="privacy-restricted">
+                    <div className="privacy-icon">🔒</div>
+                    <p className="privacy-message">{privacyMessage}</p>
+                    <p className="privacy-description">
+                      이 유저는 전적 공개를 허용하지 않았습니다.
+                    </p>
+                  </div>
+                ) : games.length === 0 ? (
                   <div className="no-games">
                     <p>아직 게임 기록이 없습니다.</p>
                   </div>

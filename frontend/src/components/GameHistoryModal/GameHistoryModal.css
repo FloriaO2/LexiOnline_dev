@@ -670,3 +670,95 @@
     gap: 0.69vw;
   }
 }
+
+/* 프라이버시 제한 메시지 */
+.privacy-restricted {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3vw 2vw;
+  text-align: center;
+  background: rgba(255, 193, 7, 0.1);
+  border: 0.07vw solid rgba(255, 193, 7, 0.3);
+  border-radius: 0.69vw;
+  margin: 1vw 0;
+}
+
+.privacy-icon {
+  font-size: 3vw;
+  margin-bottom: 1vw;
+  opacity: 0.8;
+}
+
+.privacy-message {
+  font-size: 1.25vw;
+  color: #ffc107;
+  margin: 0 0 0.5vw 0;
+  font-weight: 600;
+}
+
+.privacy-description {
+  font-size: 1vw;
+  color: #cccccc;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* 중첩된 모달에서의 프라이버시 메시지 */
+.game-history-modal.nested .privacy-restricted {
+  padding: 2.5vw 1.5vw;
+}
+
+.game-history-modal.nested .privacy-icon {
+  font-size: 2.5vw;
+  margin-bottom: 0.8vw;
+}
+
+.game-history-modal.nested .privacy-message {
+  font-size: 1.1vw;
+  margin-bottom: 0.4vw;
+}
+
+.game-history-modal.nested .privacy-description {
+  font-size: 0.9vw;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .privacy-restricted {
+    padding: 4vw 3vw;
+  }
+
+  .privacy-icon {
+    font-size: 8vw;
+    margin-bottom: 2vw;
+  }
+
+  .privacy-message {
+    font-size: 4vw;
+    margin-bottom: 1vw;
+  }
+
+  .privacy-description {
+    font-size: 3vw;
+  }
+
+  .game-history-modal.nested .privacy-restricted {
+    padding: 3vw 2vw;
+  }
+
+  .game-history-modal.nested .privacy-icon {
+    font-size: 6vw;
+    margin-bottom: 1.5vw;
+  }
+
+  .game-history-modal.nested .privacy-message {
+    font-size: 3vw;
+    margin-bottom: 0.8vw;
+  }
+
+  .game-history-modal.nested .privacy-description {
+    font-size: 2.5vw;
+  }
+}

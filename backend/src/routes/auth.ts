@@ -131,6 +131,7 @@ router.get('/userinfo', async (req: Request, res: Response) => {
       wins: (user as any).wins || 0,
       draws: (user as any).draws || 0,
       losses: (user as any).losses || 0,
+      allowGameHistoryView: (user as any).allowGameHistoryView !== undefined ? (user as any).allowGameHistoryView : true,
       // 필요 시 더 추가 가능
     }});
 
@@ -282,6 +283,53 @@ router.get('/user/games', async (req: Request, res: Response) => {
   }
 });
 
+// PUT /api/user/privacy-settings - 전적 공개 설정 변경
+router.put('/user/privacy-settings', async (req: Request, res: Response) => {
+  try {
+    // 1) Authorization 헤더에서 토큰 빼오기
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+
+    const token = authHeader.split(' ')[1]; // Bearer 토큰 분리
+    if (!token) return res.status(401).json({ message: 'Malformed token' });
+
+    // 2) JWT 토큰 검증
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const userId = decoded.userId;
+    if (!userId) return res.status(400).json({ message: 'No userId in token' });
+
+    // 3) 요청 본문에서 설정값 가져오기
+    const { allowGameHistoryView } = req.body;
+    if (typeof allowGameHistoryView !== 'boolean') {
+      return res.status(400).json({ message: 'allowGameHistoryView must be a boolean' });
+    }
+
+    // 4) 유저 설정 업데이트
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { 
+        allowGameHistoryView,
+        updatedAt: new Date()
+      }
+    });
+
+    res.json({ 
+      message: 'Privacy settings updated successfully',
+      allowGameHistoryView: updatedUser.allowGameHistoryView 
+    });
+
+  } catch (err) {
+    console.error('프라이버시 설정 업데이트 오류:', err);
+    res.status(500).json({ message: '프라이버시 설정 업데이트에 실패했습니다.' });
+  }
+});
+
 // GET /api/user/games/:userId - 특정 유저의 전적 조회
 router.get('/user/games/:userId', async (req: Request, res: Response) => {
   try {
@@ -307,13 +355,29 @@ router.get('/user/games/:userId', async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
 
-    // 3) 대상 유저가 존재하는지 확인
+    // 3) 대상 유저가 존재하는지 확인 및 전적 공개 설정 확인
     const targetUser = await prisma.user.findUnique({
       where: { id: targetUserId }
     });
 
     if (!targetUser) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // 4) 전적 공개 설정 확인 (본인이 아닌 경우에만)
+    const requestorUserId = decoded.userId;
+    if (requestorUserId !== targetUserId && !(targetUser as any).allowGameHistoryView) {
+      return res.json({
+        user: {
+          id: targetUser.id,
+          nickname: targetUser.nickname,
+          profileImageUrl: targetUser.profileImageUrl,
+          rating_mu: targetUser.rating_mu,
+          allowGameHistoryView: false
+        },
+        games: [],
+        message: '전적 공개를 허용하지 않았습니다.'
+      });
     }
 
     // 4) 대상 유저의 참여한 게임 ID 목록 가져오기

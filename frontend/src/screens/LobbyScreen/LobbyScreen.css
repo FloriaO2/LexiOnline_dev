@@ -212,6 +212,30 @@
   box-shadow: 0 0.4vw 1.2vw rgba(102, 126, 234, 0.3);
 }
 
+.btn-settings {
+  background: transparent !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 0.5vw;
+  padding: 0.2vw 0.3vw !important;
+  font-size: 1.7vw !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  min-width: auto !important;
+  max-width: none !important;
+  flex: none !important;
+  box-shadow: none !important;
+}
+
+.btn-settings:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-0.1vw);
+}
+
 /* 로그인 섹션 */
 .login-section {
   display: flex;
@@ -1197,5 +1221,207 @@
   
   .login-card p {
     font-size: 1.4vw;
+  }
+}
+
+/* 프라이버시 설정 모달 */
+.privacy-settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.privacy-settings-modal {
+  background: rgb(21, 20, 22);
+  border-radius: 1.5vw;
+  padding: 2vw;
+  box-shadow: 0 1.5vw 3vw rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(0.8vw);
+  max-width: 40vw;
+  width: 90%;
+  border: 0.08vw solid rgba(255, 255, 255, 0.1);
+}
+
+.privacy-settings-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5vw;
+  padding-bottom: 1vw;
+  border-bottom: 0.08vw solid rgba(255, 255, 255, 0.1);
+}
+
+.privacy-settings-modal .modal-header h2 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 1.5vw;
+}
+
+.privacy-settings-modal .close-button {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 2vw;
+  cursor: pointer;
+  padding: 0.5vw;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.privacy-settings-modal .close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.privacy-settings-modal .modal-content {
+  color: #ffffff;
+}
+
+.privacy-setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5vw 0;
+  border-bottom: 0.08vw solid rgba(255, 255, 255, 0.05);
+}
+
+.privacy-setting-item:last-of-type {
+  border-bottom: none;
+}
+
+.setting-info h3 {
+  margin: 0 0 0.5vw 0;
+  color: #ffffff;
+  font-size: 1.2vw;
+}
+
+.setting-info p {
+  margin: 0;
+  color: #cccccc;
+  font-size: 0.9vw;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 4vw;
+  height: 2vw;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #555;
+  transition: 0.3s;
+  border-radius: 2vw;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 1.5vw;
+  width: 1.5vw;
+  left: 0.25vw;
+  bottom: 0.25vw;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #4CAF50;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(2vw);
+}
+
+.toggle-label {
+  color: #ffffff;
+  font-size: 1vw;
+  font-weight: 500;
+}
+
+.privacy-note {
+  margin-top: 1.5vw;
+  padding: 1vw;
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 0.08vw solid rgba(255, 193, 7, 0.3);
+  border-radius: 0.5vw;
+}
+
+.privacy-note p {
+  margin: 0;
+  color: #ffc107;
+  font-size: 0.9vw;
+}
+
+/* 프라이버시 설정 모달 반응형 */
+@media (max-width: 768px) {
+  .privacy-settings-modal {
+    max-width: 90vw;
+    padding: 4vw;
+  }
+
+  .privacy-settings-modal .modal-header h2 {
+    font-size: 5vw;
+  }
+
+  .privacy-settings-modal .close-button {
+    font-size: 6vw;
+  }
+
+  .setting-info h3 {
+    font-size: 4vw;
+  }
+
+  .setting-info p {
+    font-size: 3vw;
+  }
+
+  .toggle-switch {
+    width: 12vw;
+    height: 6vw;
+  }
+
+  .toggle-slider:before {
+    height: 4.5vw;
+    width: 4.5vw;
+    left: 0.75vw;
+    bottom: 0.75vw;
+  }
+
+  .toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(6vw);
+  }
+
+  .toggle-label {
+    font-size: 3vw;
+  }
+
+  .privacy-note p {
+    font-size: 3vw;
   }
 } 

@@ -17,6 +17,7 @@ export interface User {
   wins: number;
   draws: number;
   losses: number;
+  allowGameHistoryView: boolean; // 전적 공개 허용 여부
 
   gameHistories: GameHistory[];
 }

@@ -90,6 +90,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   const [lobbyRoom, setLobbyRoom] = useState<any>(null);
   const [isGameHistoryModalOpen, setIsGameHistoryModalOpen] = useState(false);
   const [selectedUserForHistory, setSelectedUserForHistory] = useState<number | null>(null);
+  const [isPrivacySettingsModalOpen, setIsPrivacySettingsModalOpen] = useState(false);
 
 
   useEffect(() => {
@@ -592,6 +593,37 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     setNickname('');
   };
 
+  const handlePrivacySettingChange = async (allowGameHistoryView: boolean) => {
+    try {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const apiUrl = process.env.REACT_APP_API_URL || 
+        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      
+      const response = await fetch(`${apiUrl}/api/user/privacy-settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ allowGameHistoryView })
+      });
+
+      if (!response.ok) {
+        throw new Error('설정 변경에 실패했습니다.');
+      }
+
+      // 사용자 정보 업데이트
+      setUser(prev => prev ? { ...prev, allowGameHistoryView } : null);
+      showToast(
+        allowGameHistoryView ? '전적 공개가 허용되었습니다.' : '전적 공개가 비활성화되었습니다.',
+        allowGameHistoryView ? 'success' : 'error'
+      );
+    } catch (error) {
+      console.error('프라이버시 설정 변경 실패:', error);
+      showToast('설정 변경에 실패했습니다.', 'error');
+    }
+  };
+
   // 로딩 중일 때는 로딩 화면만 표시
   if (isLoading) {
     return (
@@ -633,6 +665,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                   title="전적 보기"
                 >
                   전적 보기
+                </button>
+                <button 
+                  className={`btn btn-settings compact`} 
+                  onClick={() => setIsPrivacySettingsModalOpen(true)}
+                  title="프라이버시 설정"
+                >
+                  ⚙️
                 </button>
                 <button className={`btn btn-logout compact`} onClick={handleLogout}>
                   로그아웃
@@ -993,6 +1032,42 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
           targetUserId={selectedUserForHistory}
           isNested={true}
         />
+      )}
+
+      {/* 프라이버시 설정 모달 */}
+      {isPrivacySettingsModalOpen && (
+        <div className="privacy-settings-modal-overlay" onClick={() => setIsPrivacySettingsModalOpen(false)}>
+          <div className="privacy-settings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>프라이버시 설정</h2>
+              <button className="close-button" onClick={() => setIsPrivacySettingsModalOpen(false)}>×</button>
+            </div>
+            <div className="modal-content">
+              <div className="privacy-setting-item">
+                <div className="setting-info">
+                  <h3>전적 공개 설정</h3>
+                  <p>다른 유저들이 내 게임 전적을 볼 수 있는지 설정합니다.</p>
+                </div>
+                <div className="setting-control">
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={user?.allowGameHistoryView ?? true}
+                      onChange={(e) => handlePrivacySettingChange(e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                  <span className="toggle-label">
+                    {user?.allowGameHistoryView ? '공개' : '비공개'}
+                  </span>
+                </div>
+              </div>
+              <div className="privacy-note">
+                <p>⚠️ 비공개로 설정하면 다른 유저들이 당신의 게임 기록을 볼 수 없습니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

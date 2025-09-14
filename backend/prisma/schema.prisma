@@ -24,6 +24,7 @@ model User {
   losses          Int           @default(0)
   gamePlayers     GamePlayer[]
   participatedGameIds Int[]     @default([]) // 참여한 게임 ID 목록
+  allowGameHistoryView Boolean  @default(true) // 전적 공개 허용 여부
 }
 
 model Game {
