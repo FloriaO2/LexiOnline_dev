@@ -152,19 +152,34 @@ router.get('/ranking', async (req: Request, res: Response) => {
       take: 10
     });
 
-    // 랭킹 정보와 함께 반환
-    const ranking = topUsers.map((user, index) => ({
-      rank: index + 1,
-      id: user.id,
-      nickname: user.nickname,
-      profileImageUrl: user.profileImageUrl,
-      rating_mu: user.rating_mu,
-      rating_sigma: user.rating_sigma,
-      totalGames: (user as any).totalGames || 0,
-      wins: (user as any).wins || 0,
-      draws: (user as any).draws || 0,
-      losses: (user as any).losses || 0
-    }));
+    // 동점자를 고려한 랭킹 계산
+    const ranking = topUsers.map((user, index) => {
+      let rank = index + 1;
+      
+      // 동점자인지 확인 (이전 유저와 rating_mu가 같은 경우)
+      if (index > 0 && user.rating_mu === topUsers[index - 1].rating_mu) {
+        // 이전 유저의 랭크를 찾아서 동일하게 설정
+        for (let i = index - 1; i >= 0; i--) {
+          if (topUsers[i].rating_mu !== user.rating_mu) {
+            break;
+          }
+          rank = i + 1;
+        }
+      }
+      
+      return {
+        rank,
+        id: user.id,
+        nickname: user.nickname,
+        profileImageUrl: user.profileImageUrl,
+        rating_mu: user.rating_mu,
+        rating_sigma: user.rating_sigma,
+        totalGames: (user as any).totalGames || 0,
+        wins: (user as any).wins || 0,
+        draws: (user as any).draws || 0,
+        losses: (user as any).losses || 0
+      };
+    });
 
     res.json({ ranking });
   } catch (err) {
