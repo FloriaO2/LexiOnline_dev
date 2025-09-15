@@ -154,6 +154,24 @@ router.get('/ranking', async (req: Request, res: Response) => {
 
     // 동점자를 고려한 랭킹 계산
     const ranking = topUsers.map((user, index) => {
+      const totalGames = (user as any).totalGames || 0;
+      
+      // 게임 기록이 없는 경우 순위를 "-"로 설정
+      if (totalGames === 0) {
+        return {
+          rank: "-",
+          id: user.id,
+          nickname: user.nickname,
+          profileImageUrl: user.profileImageUrl,
+          rating_mu: user.rating_mu,
+          rating_sigma: user.rating_sigma,
+          totalGames: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0
+        };
+      }
+      
       let rank = index + 1;
       
       // 동점자인지 확인 (이전 유저와 rating_mu가 같은 경우)
@@ -174,7 +192,7 @@ router.get('/ranking', async (req: Request, res: Response) => {
         profileImageUrl: user.profileImageUrl,
         rating_mu: user.rating_mu,
         rating_sigma: user.rating_sigma,
-        totalGames: (user as any).totalGames || 0,
+        totalGames,
         wins: (user as any).wins || 0,
         draws: (user as any).draws || 0,
         losses: (user as any).losses || 0
@@ -185,6 +203,98 @@ router.get('/ranking', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('랭킹 조회 오류:', err);
     res.status(500).json({ message: '랭킹 조회에 실패했습니다.' });
+  }
+});
+
+// GET /api/user/ranking - 특정 사용자의 순위 조회
+router.get('/user/ranking', async (req: Request, res: Response) => {
+  try {
+    // Authorization 헤더에서 토큰 빼오기
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Malformed token' });
+
+    // JWT 토큰 검증
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const googleId = decoded.googleId;
+    if (!googleId) return res.status(400).json({ message: 'No googleId in token' });
+
+    // 사용자 정보 조회
+    const user = await prisma.user.findUnique({ where: { googleId } });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const totalGames = (user as any).totalGames || 0;
+    
+    // 게임 기록이 없는 경우 순위를 "-"로 설정
+    if (totalGames === 0) {
+      return res.json({ 
+        rank: "-",
+        totalUsers: 0,
+        user: {
+          id: user.id,
+          nickname: user.nickname,
+          profileImageUrl: user.profileImageUrl,
+          rating_mu: user.rating_mu,
+          rating_sigma: user.rating_sigma,
+          totalGames: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0
+        }
+      });
+    }
+
+    // 전체 사용자 수 조회 (순위 계산용)
+    const totalUsers = await prisma.user.count();
+    
+    // 현재 사용자보다 높은 rating_mu를 가진 사용자 수 계산
+    const higherRatedUsers = await prisma.user.count({
+      where: {
+        rating_mu: {
+          gt: user.rating_mu
+        }
+      }
+    });
+
+    // 동일한 rating_mu를 가진 사용자들 중에서 더 높은 순위인지 확인
+    const sameRatingUsers = await prisma.user.findMany({
+      where: {
+        rating_mu: user.rating_mu
+      },
+      orderBy: {
+        id: 'asc' // ID 기준으로 정렬하여 일관된 순위 계산
+      }
+    });
+
+    const userIndexInSameRating = sameRatingUsers.findIndex(u => u.id === user.id);
+    const rank = higherRatedUsers + userIndexInSameRating + 1;
+
+    res.json({ 
+      rank,
+      totalUsers,
+      user: {
+        id: user.id,
+        nickname: user.nickname,
+        profileImageUrl: user.profileImageUrl,
+        rating_mu: user.rating_mu,
+        rating_sigma: user.rating_sigma,
+        totalGames: (user as any).totalGames || 0,
+        wins: (user as any).wins || 0,
+        draws: (user as any).draws || 0,
+        losses: (user as any).losses || 0
+      }
+    });
+  } catch (err) {
+    console.error('사용자 순위 조회 오류:', err);
+    res.status(500).json({ message: '사용자 순위 조회에 실패했습니다.' });
   }
 });
 

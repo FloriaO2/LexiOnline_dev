@@ -95,6 +95,12 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   // 프로필 이미지 로딩 실패 상태 관리
   const [profileImageError, setProfileImageError] = useState(false);
   const [rankingImageErrors, setRankingImageErrors] = useState<Set<number>>(new Set());
+  
+  // 본인의 랭킹 정보
+  const [myRanking, setMyRanking] = useState<{
+    rank: number | string;
+    player: any;
+  } | null>(null);
 
 
   useEffect(() => {
@@ -280,11 +286,52 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       const data = await response.json();
       setRanking(data.ranking);
       setRankingImageErrors(new Set()); // 랭킹 데이터 로드 시 이미지 에러 상태 초기화
+      
+      // 본인의 순위 찾기
+      if (user && data.ranking) {
+        const myRankIndex = data.ranking.findIndex((player: any) => player.id === user.id);
+        if (myRankIndex !== -1) {
+          setMyRanking({
+            rank: myRankIndex + 1,
+            player: data.ranking[myRankIndex]
+          });
+        } else {
+          // 10등 밖에 있는 경우, 개별 순위 조회
+          loadMyRanking();
+        }
+      }
     } catch (error) {
       console.error('랭킹 로드 실패:', error);
       showToast('랭킹을 불러오는데 실패했습니다.', 'error');
     } finally {
       setIsLoadingRanking(false);
+    }
+  };
+
+  const loadMyRanking = async () => {
+    if (!token) return;
+    
+    try {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const apiUrl = process.env.REACT_APP_API_URL || 
+        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      
+      const response = await fetch(`${apiUrl}/api/user/ranking`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error('본인 순위 조회에 실패했습니다.');
+      }
+      
+      const data = await response.json();
+      setMyRanking({
+        rank: data.rank,
+        player: data.user
+      });
+    } catch (error) {
+      console.error('본인 순위 조회 실패:', error);
+      setMyRanking(null);
     }
   };
 
@@ -939,18 +986,28 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                           else if (index === 2) rankClass = 'rank-3';  // 3등 - 동색
                           else rankClass = 'rank-4-plus';              // 4등 이하 - 검정색
                           
+                          // 본인인지 확인
+                          const isMe = user && player.id === user.id;
+                          const meClass = isMe ? 'my-ranking' : '';
+                          
                           return (
                             <div 
                               key={player.id} 
-                              className={`ranking-card ${rankClass} clickable`}
+                              className={`ranking-card ${rankClass} ${meClass} clickable`}
                               onClick={() => setSelectedUserForHistory(player.id)}
                               title="클릭하여 전적 보기"
                             >
-                              <div className="rank-badge">
-                                {index === 0 && '🥇'}
-                                {index === 1 && '🥈'}
-                                {index === 2 && '🥉'}
-                                {index > 2 && `#${player.rank}`}
+                              <div className={`rank-badge ${player.rank === "-" ? "no-games" : ""}`}>
+                                {player.rank === "-" ? (
+                                  "-"
+                                ) : (
+                                  <>
+                                    {index === 0 && '🥇'}
+                                    {index === 1 && '🥈'}
+                                    {index === 2 && '🥉'}
+                                    {index > 2 && `#${player.rank}`}
+                                  </>
+                                )}
                               </div>
                             <div className="player-info">
                               <div className="player-profile">
@@ -989,6 +1046,57 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                           </div>
                           );
                         })}
+                      </div>
+                    )}
+                    
+                    {/* 10등 밖의 본인 순위 표시 */}
+                    {myRanking && (myRanking.rank === "-" || (typeof myRanking.rank === "number" && myRanking.rank > 10)) && (
+                      <div className="my-ranking-outside">
+                        <div className="outside-ranking-header">
+                          <h4>나의 순위</h4>
+                          <span className="outside-rank-badge">
+                            {myRanking.rank === "-" ? "-" : `# ${myRanking.rank}`}
+                          </span>
+                        </div>
+                        <div className="ranking-card outside-rank clickable" onClick={() => setSelectedUserForHistory(myRanking.player.id)}>
+                          <div className={`rank-badge ${myRanking.rank === "-" ? "no-games" : ""}`}>
+                            {myRanking.rank === "-" ? "-" : `#${myRanking.rank}`}
+                          </div>
+                          <div className="player-info">
+                            <div className="player-profile">
+                              {myRanking.player.profileImageUrl && !rankingImageErrors.has(myRanking.player.id) ? (
+                                <img 
+                                  src={myRanking.player.profileImageUrl} 
+                                  alt="profile" 
+                                  className="player-avatar"
+                                  onError={() => {
+                                    console.log(`본인 이미지 로딩 실패, 기본 아바타로 대체`);
+                                    setRankingImageErrors(prev => new Set(prev).add(myRanking.player.id));
+                                  }}
+                                />
+                              ) : (
+                                <div className="player-avatar default-avatar">
+                                  👤
+                                </div>
+                              )}
+                              <div className="player-details">
+                                <h4 className="player-nickname">{myRanking.player.nickname}</h4>
+                                <p className="player-rating">Rating: {myRanking.player.rating_mu.toFixed(2)}</p>
+                                <p className="player-games">
+                                  <span className="game-count-label">게임 판수: </span>
+                                  <span className="game-stats">{myRanking.player.totalGames}회</span>
+                                  <span className="game-count-label"> (</span>
+                                  <span className="win-count">승: {myRanking.player.wins}</span>
+                                  <span className="game-count-label">, </span>
+                                  <span className="draw-count">무: {myRanking.player.draws}</span>
+                                  <span className="game-count-label">, </span>
+                                  <span className="loss-count">패: {myRanking.player.losses}</span>
+                                  <span className="game-count-label">)</span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
