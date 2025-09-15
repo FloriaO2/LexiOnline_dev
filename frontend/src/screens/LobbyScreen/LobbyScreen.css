@@ -139,6 +139,21 @@
   border: 0.2vw solid rgba(255, 255, 255, 0.2);
 }
 
+/* 기본 아바타 스타일 */
+.lobby-screen .user-section .default-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 1.5vw;
+  font-weight: bold;
+}
+
+.lobby-screen .user-section .default-avatar.compact {
+  font-size: 1.2vw;
+}
+
 .lobby-screen .user-section .user-info h3 {
   margin: 0 0 0.4vw 0;
   color: #ffffff;
@@ -1113,6 +1128,17 @@
   border-radius: 50% !important;
   border: 0.2vw solid rgba(255, 255, 255, 0.2) !important;
   box-shadow: 0 0.3vw 1.2vw rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 랭킹 탭 기본 아바타 스타일 */
+.lobby-screen .player-avatar.default-avatar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  font-size: 1.8vw !important;
+  font-weight: bold !important;
 }
 
 .lobby-screen .player-details {

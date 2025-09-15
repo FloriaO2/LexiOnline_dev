@@ -91,6 +91,10 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   const [isGameHistoryModalOpen, setIsGameHistoryModalOpen] = useState(false);
   const [selectedUserForHistory, setSelectedUserForHistory] = useState<number | null>(null);
   const [isPrivacySettingsModalOpen, setIsPrivacySettingsModalOpen] = useState(false);
+  
+  // 프로필 이미지 로딩 실패 상태 관리
+  const [profileImageError, setProfileImageError] = useState(false);
+  const [rankingImageErrors, setRankingImageErrors] = useState<Set<number>>(new Set());
 
 
   useEffect(() => {
@@ -117,6 +121,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       .then(data => {
         console.log('User data received:', data);
         setUser(data.user);
+        setProfileImageError(false); // 사용자 정보 로드 시 이미지 에러 상태 초기화
         if (data.user.nickname) {
           setNickname(data.user.nickname);
           sessionStorage.setItem('current_nickname', data.user.nickname);
@@ -274,6 +279,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       
       const data = await response.json();
       setRanking(data.ranking);
+      setRankingImageErrors(new Set()); // 랭킹 데이터 로드 시 이미지 에러 상태 초기화
     } catch (error) {
       console.error('랭킹 로드 실패:', error);
       showToast('랭킹을 불러오는데 실패했습니다.', 'error');
@@ -650,8 +656,20 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
           {token && user ? (
             <div className={`user-section compact`}>
               <div className={`user-profile compact`}>
-                {user.profileImageUrl && (
-                  <img src={user.profileImageUrl} alt="profile" className={`profile-image compact`} />
+                {user.profileImageUrl && !profileImageError ? (
+                  <img 
+                    src={user.profileImageUrl} 
+                    alt="profile" 
+                    className={`profile-image compact`}
+                    onError={() => {
+                      console.log('프로필 이미지 로딩 실패, 기본 아바타로 대체');
+                      setProfileImageError(true);
+                    }}
+                  />
+                ) : (
+                  <div className={`profile-image compact default-avatar`}>
+                    👤
+                  </div>
                 )}
                 <div className={`user-info compact`}>
                   <h3>{user.nickname || '익명'}</h3>
@@ -936,12 +954,20 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                               </div>
                             <div className="player-info">
                               <div className="player-profile">
-                                {player.profileImageUrl && (
+                                {player.profileImageUrl && !rankingImageErrors.has(player.id) ? (
                                   <img 
                                     src={player.profileImageUrl} 
                                     alt="profile" 
-                                    className="player-avatar" 
+                                    className="player-avatar"
+                                    onError={() => {
+                                      console.log(`랭킹 플레이어 ${player.id} 이미지 로딩 실패, 기본 아바타로 대체`);
+                                      setRankingImageErrors(prev => new Set(prev).add(player.id));
+                                    }}
                                   />
+                                ) : (
+                                  <div className="player-avatar default-avatar">
+                                    👤
+                                  </div>
                                 )}
                                 <div className="player-details">
                                   <h4 className="player-nickname">{player.nickname}</h4>
