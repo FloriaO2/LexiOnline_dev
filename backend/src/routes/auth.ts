@@ -422,8 +422,8 @@ router.get('/user/games', async (req: Request, res: Response) => {
       // 현재 유저의 게임 정보 찾기
       const myGameData = allPlayers.find((player: any) => player.userId === userId);
       
-      // 게임 소요 시간 계산 (실제 게임 로직에 따라 조정 필요)
-      const gameDuration = Math.floor(Math.random() * 1800) + 300; // 5분~35분 랜덤 (임시)
+      // 실제 게임 소요 시간 사용 (데이터베이스에 저장된 값)
+      const gameDuration = game.duration || 0; // 초 단위
       
       return {
         gameId: game.gameId,
@@ -731,8 +731,8 @@ router.get('/user/games/:userId', async (req: Request, res: Response) => {
       // 대상 유저의 게임 정보 찾기
       const targetUserGameData = allPlayers.find((player: any) => player.userId === targetUserId);
       
-      // 게임 소요 시간 계산 (실제 게임 로직에 따라 조정 필요)
-      const gameDuration = Math.floor(Math.random() * 1800) + 300; // 5분~35분 랜덤 (임시)
+      // 실제 게임 소요 시간 사용 (데이터베이스에 저장된 값)
+      const gameDuration = game.duration || 0; // 초 단위
       
       return {
         gameId: game.gameId,

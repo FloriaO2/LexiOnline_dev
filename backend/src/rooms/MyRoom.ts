@@ -29,6 +29,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
   private finalGameResult: any = null;
   private turnTimer: NodeJS.Timeout | null = null; // 타임어택 타이머
   private gameCompleted: boolean = false; // 게임 완료 상태 추적
+  private gameStartTime: Date | null = null; // 게임 시작 시간
   
   // 방이 비어있을 때 자동 삭제 시간 (30분)
   autoDispose = false;
@@ -674,12 +675,21 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
         }
 
         // 2) Game 테이블에 모든 정보를 한 번에 저장
+        const gameEndTime = new Date();
+        const gameDuration = this.gameStartTime ? 
+          Math.floor((gameEndTime.getTime() - this.gameStartTime.getTime()) / 1000) : 0;
+        
+        console.log(`[DEBUG] 자동 우승 - 게임 시간 계산: 시작=${this.gameStartTime?.toISOString()}, 종료=${gameEndTime.toISOString()}, 소요시간=${gameDuration}초`);
+        
         const gameData: any = {
           gameId: this.roomId,
           playerCount: finalScores.length,
           totalRounds: this.state.totalRounds,
           roomType: this.state.roomType,
           roomTitle: this.state.roomTitle,
+          startedAt: this.gameStartTime,
+          endedAt: gameEndTime,
+          duration: gameDuration,
         };
 
         // 플레이어 정보를 Game 생성 데이터에 포함
@@ -774,6 +784,10 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
     // 초기화 작업 예: 턴순, 라운드 등
     this.state.round = 1;
+
+    // 게임 시작 시간 기록
+    this.gameStartTime = new Date();
+    console.log(`[DEBUG] 게임 시작 시간 기록: ${this.gameStartTime.toISOString()}`);
 
     // 게임이 시작되면 방을 잠금
     this.lock();
@@ -1116,12 +1130,21 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
         }
 
         // 2) Game 테이블에 모든 정보를 한 번에 저장 (모든 플레이어 포함)
+        const gameEndTime = new Date();
+        const gameDuration = this.gameStartTime ? 
+          Math.floor((gameEndTime.getTime() - this.gameStartTime.getTime()) / 1000) : 0;
+        
+        console.log(`[DEBUG] 게임 시간 계산: 시작=${this.gameStartTime?.toISOString()}, 종료=${gameEndTime.toISOString()}, 소요시간=${gameDuration}초`);
+        
         const gameData: any = {
           gameId: this.roomId,
           playerCount: finalScores.length,
           totalRounds: this.state.totalRounds,
           roomType: this.state.roomType,
           roomTitle: this.state.roomTitle,
+          startedAt: this.gameStartTime,
+          endedAt: gameEndTime,
+          duration: gameDuration,
         };
 
         // 유효한 플레이어들만 Game 테이블에 저장 (순서대로)
@@ -1219,6 +1242,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     // 게임 완료 상태 초기화
     this.gameCompleted = false;
     this.finalGameResult = null;
+  
 
     // 플레이어 점수 초기화 (원하면)
     for (const player of this.state.players.values()) {

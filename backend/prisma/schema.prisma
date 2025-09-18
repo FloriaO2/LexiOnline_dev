@@ -30,6 +30,9 @@ model Game {
   id          Int          @id @default(autoincrement())
   gameId      String       @unique
   playedAt    DateTime     @default(now())
+  startedAt   DateTime?    // 게임 실제 시작 시간
+  endedAt     DateTime?    // 게임 종료 시간
+  duration    Int?         // 게임 소요 시간 (초)
   playerCount Int
   totalRounds Int
   roomType    String?
