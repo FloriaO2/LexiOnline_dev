@@ -8,8 +8,6 @@ interface Player {
   rank: number;
   score: number;
   ratingChange: number;
-  ratingBefore: number;
-  ratingAfter: number;
 }
 
 interface GameHistory {
@@ -21,8 +19,6 @@ interface GameHistory {
   myRank: number;
   myScore: number;
   myRatingChange: number;
-  myRatingBefore: number;
-  myRatingAfter: number;
   players: Player[];
 }
 
@@ -31,9 +27,9 @@ interface User {
   nickname: string;
   profileImageUrl?: string;
   totalGames: number;
-  wins: number;
-  draws: number;
-  losses: number;
+  result_wins: number;
+  result_draws: number;
+  result_losses: number;
   rating_mu: number;
   allowGameHistoryView?: boolean; // 전적 공개 허용 여부
 }
@@ -214,19 +210,19 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                     <div className="record-item">
                       <span className="record-label">승</span>
                       <span className="record-value wins">
-                        {privacyMessage && !isFromRanking ? '?승' : `${user.wins}승`}
+                        {privacyMessage && !isFromRanking ? '?승' : `${user.result_wins}승`}
                       </span>
                     </div>
                     <div className="record-item">
                       <span className="record-label">무</span>
                       <span className="record-value draws">
-                        {privacyMessage && !isFromRanking ? '?무' : `${user.draws}무`}
+                        {privacyMessage && !isFromRanking ? '?무' : `${user.result_draws}무`}
                       </span>
                     </div>
                     <div className="record-item">
                       <span className="record-label">패</span>
                       <span className="record-value losses">
-                        {privacyMessage && !isFromRanking ? '?패' : `${user.losses}패`}
+                        {privacyMessage && !isFromRanking ? '?패' : `${user.result_losses}패`}
                       </span>
                     </div>
                   </div>
@@ -307,6 +303,17 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                                     <span className="player-rank-icon">
                                       {getRankIcon(player.rank)}
                                     </span>
+                                    {player.profileImageUrl ? (
+                                      <img 
+                                        src={player.profileImageUrl} 
+                                        alt="profile" 
+                                        className="player-profile-image" 
+                                      />
+                                    ) : (
+                                      <div className="player-profile-placeholder">
+                                        {player.nickname.charAt(0)}
+                                      </div>
+                                    )}
                                     <span className="player-nickname">{player.nickname}</span>
                                   </div>
                                   <div className="player-stats">

@@ -19,10 +19,9 @@ model User {
   lastLoginAt     DateTime?
   // 게임 통계 (간단한 win/draw/lose 시스템)
   totalGames      Int           @default(0)
-  wins            Int           @default(0)
-  draws           Int           @default(0)
-  losses          Int           @default(0)
-  gamePlayers     GamePlayer[]
+  result_wins     Int           @default(0)
+  result_draws    Int           @default(0)
+  result_losses   Int           @default(0)
   participatedGameIds Int[]     @default([]) // 참여한 게임 ID 목록
   allowGameHistoryView Boolean  @default(true) // 전적 공개 허용 여부
 }
@@ -35,29 +34,44 @@ model Game {
   totalRounds Int
   roomType    String?
   roomTitle   String?
-  players     GamePlayer[]
+  
+  // Player 1 정보
+  player1_userId          Int
+  player1_nickname        String
+  player1_rank            Int
+  player1_score           Int
+  player1_rating_mu_change Float
+  
+  // Player 2 정보
+  player2_userId          Int
+  player2_nickname        String
+  player2_rank            Int
+  player2_score           Int
+  player2_rating_mu_change Float
+  
+  // Player 3 정보 (옵션)
+  player3_userId          Int?
+  player3_nickname        String?
+  player3_rank            Int?
+  player3_score           Int?
+  player3_rating_mu_change Float?
+  
+  // Player 4 정보 (옵션)
+  player4_userId          Int?
+  player4_nickname        String?
+  player4_rank            Int?
+  player4_score           Int?
+  player4_rating_mu_change Float?
+  
+  // Player 5 정보 (옵션)
+  player5_userId          Int?
+  player5_nickname        String?
+  player5_rank            Int?
+  player5_score           Int?
+  player5_rating_mu_change Float?
 
   @@index([gameId])
   @@index([playedAt])
-}
-
-model GamePlayer {
-  id                  Int   @id @default(autoincrement())
-  gameId              Int
-  userId              Int
-  nickname            String  // 게임 당시 플레이어의 닉네임
-  rank                Int
-  score               Int
-  rating_mu_before    Float
-  rating_sigma_before Float
-  rating_mu_after     Float
-  rating_sigma_after  Float
-  rating_mu_change    Float
-  game                Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user                User  @relation(fields: [userId], references: [id])
-
-  @@unique([gameId, userId])
-  @@index([userId])
-  @@index([gameId])
-  @@index([rank])
+  @@index([player1_userId])
+  @@index([player2_userId])
 }

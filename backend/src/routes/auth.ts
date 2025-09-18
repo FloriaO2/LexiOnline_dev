@@ -128,9 +128,9 @@ router.get('/userinfo', async (req: Request, res: Response) => {
       rating_mu: user.rating_mu,
       rating_sigma: user.rating_sigma,
       totalGames: (user as any).totalGames || 0,
-      wins: (user as any).wins || 0,
-      draws: (user as any).draws || 0,
-      losses: (user as any).losses || 0,
+      result_wins: (user as any).result_wins || 0,
+      result_draws: (user as any).result_draws || 0,
+      result_losses: (user as any).result_losses || 0,
       allowGameHistoryView: (user as any).allowGameHistoryView !== undefined ? (user as any).allowGameHistoryView : true,
       // 필요 시 더 추가 가능
     }});
@@ -141,44 +141,45 @@ router.get('/userinfo', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/ranking - 유저 랭킹 조회 (rating_mu 기준 상위 10명)
+// GET /api/ranking - 유저 랭킹 조회 (게임 경험자 우선, rating_mu 기준)
 router.get('/ranking', async (req: Request, res: Response) => {
   try {
-    // rating_mu 기준으로 상위 10명 조회
-    const topUsers = await prisma.user.findMany({
+    // 1) 게임 경험이 있는 유저들을 rating_mu 기준으로 조회
+    const experiencedUsers = await prisma.user.findMany({
+      where: {
+        totalGames: {
+          gt: 0
+        }
+      },
       orderBy: {
         rating_mu: 'desc'
       },
       take: 10
     });
 
-    // 동점자를 고려한 랭킹 계산
-    const ranking = topUsers.map((user, index) => {
+    // 2) 게임 경험이 없는 유저들을 추가로 조회 (남은 슬롯만큼)
+    const remainingSlots = Math.max(0, 10 - experiencedUsers.length);
+    const newUsers = remainingSlots > 0 ? await prisma.user.findMany({
+      where: {
+        totalGames: 0
+      },
+      orderBy: {
+        createdAt: 'asc' // 가입 순서대로
+      },
+      take: remainingSlots
+    }) : [];
+
+    // 3) 게임 경험자들의 랭킹 계산
+    const experiencedRanking = experiencedUsers.map((user, index) => {
       const totalGames = (user as any).totalGames || 0;
-      
-      // 게임 기록이 없는 경우 순위를 "-"로 설정
-      if (totalGames === 0) {
-        return {
-          rank: "-",
-          id: user.id,
-          nickname: user.nickname,
-          profileImageUrl: user.profileImageUrl,
-          rating_mu: user.rating_mu,
-          rating_sigma: user.rating_sigma,
-          totalGames: 0,
-          wins: 0,
-          draws: 0,
-          losses: 0
-        };
-      }
       
       let rank = index + 1;
       
       // 동점자인지 확인 (이전 유저와 rating_mu가 같은 경우)
-      if (index > 0 && user.rating_mu === topUsers[index - 1].rating_mu) {
+      if (index > 0 && user.rating_mu === experiencedUsers[index - 1].rating_mu) {
         // 이전 유저의 랭크를 찾아서 동일하게 설정
         for (let i = index - 1; i >= 0; i--) {
-          if (topUsers[i].rating_mu !== user.rating_mu) {
+          if (experiencedUsers[i].rating_mu !== user.rating_mu) {
             break;
           }
           rank = i + 1;
@@ -193,11 +194,28 @@ router.get('/ranking', async (req: Request, res: Response) => {
         rating_mu: user.rating_mu,
         rating_sigma: user.rating_sigma,
         totalGames,
-        wins: (user as any).wins || 0,
-        draws: (user as any).draws || 0,
-        losses: (user as any).losses || 0
+        result_wins: (user as any).result_wins || 0,
+        result_draws: (user as any).result_draws || 0,
+        result_losses: (user as any).result_losses || 0
       };
     });
+
+    // 4) 게임 경험이 없는 유저들은 순위 "-"로 설정
+    const newUserRanking = newUsers.map((user) => ({
+      rank: "-",
+      id: user.id,
+      nickname: user.nickname,
+      profileImageUrl: user.profileImageUrl,
+      rating_mu: user.rating_mu,
+      rating_sigma: user.rating_sigma,
+      totalGames: 0,
+      result_wins: 0,
+      result_draws: 0,
+      result_losses: 0
+    }));
+
+    // 5) 게임 경험자 + 신규 유저 순서로 결합
+    const ranking = [...experiencedRanking, ...newUserRanking];
 
     res.json({ ranking });
   } catch (err) {
@@ -287,9 +305,9 @@ router.get('/user/ranking', async (req: Request, res: Response) => {
         rating_mu: user.rating_mu,
         rating_sigma: user.rating_sigma,
         totalGames: (user as any).totalGames || 0,
-        wins: (user as any).wins || 0,
-        draws: (user as any).draws || 0,
-        losses: (user as any).losses || 0
+        result_wins: (user as any).result_wins || 0,
+        result_draws: (user as any).result_draws || 0,
+        result_losses: (user as any).result_losses || 0
       }
     });
   } catch (err) {
@@ -335,32 +353,71 @@ router.get('/user/games', async (req: Request, res: Response) => {
     // 4) 최근 20게임 ID만 가져오기 (배열의 마지막 20개)
     const recentGameIds = (user as any).participatedGameIds.slice(-20);
 
-    // 5) 해당 게임들의 상세 정보 조회
+    // 5) 해당 게임들의 상세 정보 조회 (새로운 Game 구조 사용)
     const userGames = await (prisma as any).game.findMany({
       where: {
         id: { in: recentGameIds }
-      },
-      include: {
-        players: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                nickname: true,
-                profileImageUrl: true
-              }
-            }
-          }
-        }
       },
       orderBy: {
         playedAt: 'desc'
       }
     });
 
-    // 6) 전적 데이터 가공
+    // 6) 모든 게임에서 등장하는 유저 ID 수집
+    const allUserIds = new Set<number>();
+    userGames.forEach((game: any) => {
+      for (let i = 1; i <= 5; i++) {
+        const userIdField = `player${i}_userId`;
+        if (game[userIdField]) {
+          allUserIds.add(game[userIdField]);
+        }
+      }
+    });
+
+    // 7) 한 번에 모든 유저의 프로필 이미지 조회 (배치 쿼리)
+    const userProfiles = await prisma.user.findMany({
+      where: {
+        id: { in: Array.from(allUserIds) }
+      },
+      select: {
+        id: true,
+        profileImageUrl: true
+      }
+    });
+
+    // 8) userId -> profileImageUrl 매핑 생성
+    const profileMap = new Map<number, string | null>();
+    userProfiles.forEach(user => {
+      profileMap.set(user.id, user.profileImageUrl);
+    });
+
+    // 9) 전적 데이터 가공 (새로운 Game 구조 사용)
     const gameHistory = userGames.map((game: any) => {
-      const allPlayers = game.players.sort((a: any, b: any) => a.rank - b.rank);
+      // 게임에서 플레이어 정보 추출
+      const players = [];
+      
+      // player1부터 player5까지 확인
+      for (let i = 1; i <= 5; i++) {
+        const userIdField = `player${i}_userId`;
+        const nicknameField = `player${i}_nickname`;
+        const rankField = `player${i}_rank`;
+        const scoreField = `player${i}_score`;
+        const ratingChangeField = `player${i}_rating_mu_change`;
+        
+        if (game[userIdField]) {
+          players.push({
+            userId: game[userIdField],
+            nickname: game[nicknameField],
+            rank: game[rankField],
+            score: game[scoreField],
+            ratingChange: game[ratingChangeField],
+            profileImageUrl: profileMap.get(game[userIdField]) || null // 미리 조회한 프로필 이미지 사용
+          });
+        }
+      }
+      
+      // 순위별로 정렬
+      const allPlayers = players.sort((a, b) => a.rank - b.rank);
       
       // 현재 유저의 게임 정보 찾기
       const myGameData = allPlayers.find((player: any) => player.userId === userId);
@@ -376,18 +433,14 @@ router.get('/user/games', async (req: Request, res: Response) => {
         duration: gameDuration, // 초 단위
         myRank: myGameData?.rank || 0,
         myScore: myGameData?.score || 0,
-        myRatingChange: myGameData?.rating_mu_change || 0,
-        myRatingBefore: myGameData?.rating_mu_before || 0,
-        myRatingAfter: myGameData?.rating_mu_after || 0,
+        myRatingChange: myGameData?.ratingChange || 0,
         players: allPlayers.map((player: any) => ({
           userId: player.userId,
           nickname: player.nickname, // 게임 당시 저장된 닉네임 사용
-          profileImageUrl: player.user.profileImageUrl,
+          profileImageUrl: player.profileImageUrl, // 배치 조회한 프로필 이미지 사용
           rank: player.rank,
           score: player.score,
-          ratingChange: player.rating_mu_change,
-          ratingBefore: player.rating_mu_before,
-          ratingAfter: player.rating_mu_after
+          ratingChange: player.ratingChange
         }))
       };
     });
@@ -513,9 +566,9 @@ router.get('/user/games/:userId', async (req: Request, res: Response) => {
             profileImageUrl: targetUser.profileImageUrl, // 실제 프로필 이미지
             rating_mu: targetUser.rating_mu, // 실제 레이팅
             totalGames: (targetUser as any).totalGames || 0,
-            wins: (targetUser as any).wins || 0,
-            draws: (targetUser as any).draws || 0,
-            losses: (targetUser as any).losses || 0,
+            result_wins: (targetUser as any).result_wins || 0,
+            result_draws: (targetUser as any).result_draws || 0,
+            result_losses: (targetUser as any).result_losses || 0,
             allowGameHistoryView: false
           },
           games: [],
@@ -534,28 +587,27 @@ router.get('/user/games/:userId', async (req: Request, res: Response) => {
         let gameNickname = targetUser.nickname; // 기본값은 현재 닉네임
         
         try {
-          // 요청자와 대상 유저가 함께 플레이한 게임 찾기
+          // 요청자와 대상 유저가 함께 플레이한 게임 찾기 (새로운 구조 사용)
           const sharedGame = await (prisma as any).game.findFirst({
             where: {
               id: { in: sharedGameIds }
-            },
-            include: {
-              players: {
-                where: {
-                  userId: targetUserId
-                },
-                select: {
-                  nickname: true
-                }
-              }
             },
             orderBy: {
               playedAt: 'desc'
             }
           });
           
-          if (sharedGame && sharedGame.players.length > 0) {
-            gameNickname = sharedGame.players[0].nickname;
+          if (sharedGame) {
+            // player1부터 player5까지 확인하여 대상 유저의 닉네임 찾기
+            for (let i = 1; i <= 5; i++) {
+              const userIdField = `player${i}_userId`;
+              const nicknameField = `player${i}_nickname`;
+              
+              if (sharedGame[userIdField] === targetUserId) {
+                gameNickname = sharedGame[nicknameField];
+                break;
+              }
+            }
           }
         } catch (err) {
           console.error('게임 닉네임 조회 오류:', err);
@@ -583,9 +635,9 @@ router.get('/user/games/:userId', async (req: Request, res: Response) => {
             profileImageUrl: targetUser.profileImageUrl, // 실제 프로필 이미지
             rating_mu: targetUser.rating_mu, // 실제 레이팅
             totalGames: (targetUser as any).totalGames || 0,
-            wins: (targetUser as any).wins || 0,
-            draws: (targetUser as any).draws || 0,
-            losses: (targetUser as any).losses || 0,
+            result_wins: (targetUser as any).result_wins || 0,
+            result_draws: (targetUser as any).result_draws || 0,
+            result_losses: (targetUser as any).result_losses || 0,
             allowGameHistoryView: false
           },
           games: [],
@@ -610,32 +662,71 @@ router.get('/user/games/:userId', async (req: Request, res: Response) => {
     // 5) 최근 20게임 ID만 가져오기
     const recentGameIds = (user as any).participatedGameIds.slice(-20);
 
-    // 6) 해당 게임들의 상세 정보 조회
+    // 6) 해당 게임들의 상세 정보 조회 (새로운 Game 구조 사용)
     const userGames = await (prisma as any).game.findMany({
       where: {
         id: { in: recentGameIds }
-      },
-      include: {
-        players: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                nickname: true,
-                profileImageUrl: true
-              }
-            }
-          }
-        }
       },
       orderBy: {
         playedAt: 'desc'
       }
     });
 
-    // 7) 전적 데이터 가공
+    // 7) 모든 게임에서 등장하는 유저 ID 수집
+    const allUserIds = new Set<number>();
+    userGames.forEach((game: any) => {
+      for (let i = 1; i <= 5; i++) {
+        const userIdField = `player${i}_userId`;
+        if (game[userIdField]) {
+          allUserIds.add(game[userIdField]);
+        }
+      }
+    });
+
+    // 8) 한 번에 모든 유저의 프로필 이미지 조회 (배치 쿼리)
+    const userProfiles = await prisma.user.findMany({
+      where: {
+        id: { in: Array.from(allUserIds) }
+      },
+      select: {
+        id: true,
+        profileImageUrl: true
+      }
+    });
+
+    // 9) userId -> profileImageUrl 매핑 생성
+    const profileMap = new Map<number, string | null>();
+    userProfiles.forEach(user => {
+      profileMap.set(user.id, user.profileImageUrl);
+    });
+
+    // 10) 전적 데이터 가공 (새로운 Game 구조 사용)
     const gameHistory = userGames.map((game: any) => {
-      const allPlayers = game.players.sort((a: any, b: any) => a.rank - b.rank);
+      // 게임에서 플레이어 정보 추출
+      const players = [];
+      
+      // player1부터 player5까지 확인
+      for (let i = 1; i <= 5; i++) {
+        const userIdField = `player${i}_userId`;
+        const nicknameField = `player${i}_nickname`;
+        const rankField = `player${i}_rank`;
+        const scoreField = `player${i}_score`;
+        const ratingChangeField = `player${i}_rating_mu_change`;
+        
+        if (game[userIdField]) {
+          players.push({
+            userId: game[userIdField],
+            nickname: game[nicknameField],
+            rank: game[rankField],
+            score: game[scoreField],
+            ratingChange: game[ratingChangeField],
+            profileImageUrl: profileMap.get(game[userIdField]) || null // 미리 조회한 프로필 이미지 사용
+          });
+        }
+      }
+      
+      // 순위별로 정렬
+      const allPlayers = players.sort((a, b) => a.rank - b.rank);
       
       // 대상 유저의 게임 정보 찾기
       const targetUserGameData = allPlayers.find((player: any) => player.userId === targetUserId);
@@ -651,18 +742,14 @@ router.get('/user/games/:userId', async (req: Request, res: Response) => {
         duration: gameDuration,
         myRank: targetUserGameData?.rank || 0,
         myScore: targetUserGameData?.score || 0,
-        myRatingChange: targetUserGameData?.rating_mu_change || 0,
-        myRatingBefore: targetUserGameData?.rating_mu_before || 0,
-        myRatingAfter: targetUserGameData?.rating_mu_after || 0,
+        myRatingChange: targetUserGameData?.ratingChange || 0,
         players: allPlayers.map((player: any) => ({
           userId: player.userId,
-          nickname: player.nickname,
-          profileImageUrl: player.user.profileImageUrl,
+          nickname: player.nickname, // 게임 당시 저장된 닉네임 사용
+          profileImageUrl: player.profileImageUrl, // 배치 조회한 프로필 이미지 사용
           rank: player.rank,
           score: player.score,
-          ratingChange: player.rating_mu_change,
-          ratingBefore: player.rating_mu_before,
-          ratingAfter: player.rating_mu_after
+          ratingChange: player.ratingChange
         }))
       };
     });

@@ -666,22 +666,43 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     
     try {
       await prisma.$transaction(async (tx: any) => {
-        // 1) Game 테이블에 게임 정보 저장
+        // 1) 플레이어 정보 준비
+        const playerDataArray = finalScoresWithRating.filter(p => p.userId !== null);
+        
+        if (playerDataArray.length < 1) {
+          throw new Error(`자동 우승: 로그인한 플레이어가 최소 1명 필요합니다. 현재: ${playerDataArray.length}명`);
+        }
+
+        // 2) Game 테이블에 모든 정보를 한 번에 저장
+        const gameData: any = {
+          gameId: this.roomId,
+          playerCount: finalScores.length,
+          totalRounds: this.state.totalRounds,
+          roomType: this.state.roomType,
+          roomTitle: this.state.roomTitle,
+        };
+
+        // 플레이어 정보를 Game 생성 데이터에 포함
+        playerDataArray.forEach((playerData, index) => {
+          const playerNum = index + 1;
+          if (playerNum <= 5) { // 최대 5명까지 지원
+            gameData[`player${playerNum}_userId`] = playerData.userId;
+            gameData[`player${playerNum}_nickname`] = playerData.nickname;
+            gameData[`player${playerNum}_rank`] = playerData.rank;
+            gameData[`player${playerNum}_score`] = playerData.score;
+            gameData[`player${playerNum}_rating_mu_change`] = 0; // 자동 우승의 경우 레이팅 변화값 0
+          }
+        });
+
         console.log(`[DEBUG] 자동 우승 - Game 테이블에 게임 정보 저장 시작`);
         const game = await tx.game.create({
-          data: {
-            gameId: this.roomId,
-            playerCount: finalScores.length,
-            totalRounds: this.state.totalRounds,
-            roomType: this.state.roomType,
-            roomTitle: this.state.roomTitle,
-          },
+          data: gameData,
         });
         console.log(`[DEBUG] 자동 우승 - Game 생성 완료: gameId=${game.id}`);
 
-        // 2) 각 플레이어의 GamePlayer 레코드 생성 (레이팅 변동 없음)
+        // 3) 각 플레이어의 User 게임 통계 업데이트
         for (const playerData of finalScoresWithRating) {
-          const { userId, score, rank, rating_mu_before, rating_sigma_before, rating_mu_after, rating_sigma_after } = playerData;
+          const { userId } = playerData;
           
           if (!userId) {
             console.log(`[DEBUG] 자동 우승 - userId가 null이므로 DB 저장 건너뜀: ${playerData.nickname}`);
@@ -689,31 +710,14 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
             continue;
           }
 
-          console.log(`[DEBUG] 자동 우승 - GamePlayer 생성 시작: userId=${userId}`);
-          
-          // GamePlayer 레코드 생성 (레이팅 변동 없음)
-          await tx.gamePlayer.create({
-            data: {
-              gameId: game.id,
-              userId,
-              nickname: playerData.nickname, // 게임 당시 닉네임 저장
-              rank,
-              score,
-              rating_mu_before,
-              rating_sigma_before,
-              rating_mu_after,
-              rating_sigma_after,
-              rating_mu_change: 0, // 자동 우승의 경우 레이팅 변화값 0
-            },
-          });
-          console.log(`[DEBUG] 자동 우승 - GamePlayer 생성 완료: userId=${userId}`);
+          console.log(`[DEBUG] 자동 우승 - User 게임 통계 업데이트 시작: userId=${userId}`);
           
           // User 게임 통계 업데이트 (자동 우승은 draw로 처리)
           await tx.user.update({
             where: { id: userId },
             data: {
               totalGames: { increment: 1 },
-              draws: { increment: 1 },
+              result_draws: { increment: 1 },
               participatedGameIds: { push: game.id }, // 참여한 게임 ID 추가
             },
           });
@@ -1048,7 +1052,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     console.log(`[DEBUG] endGame() 실행 시작`);
     console.log(`[DEBUG] 현재 플레이어 수: ${this.state.players.size}`);
     
-    // 1) 최종 점수 수집
+    // 1) 최종 점수 수집 (게임 종료 시점의 모든 플레이어 정보를 캡처)
     const finalScores = Array.from(this.state.players.entries()).map(([sessionId, player]) => ({
       playerId: sessionId,
       userId: player.userId,
@@ -1057,6 +1061,8 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       rating_mu_before: player.ratingMu,
       rating_sigma_before: player.ratingSigma
     }));
+    
+    console.log(`[DEBUG] 게임 종료 시점 플레이어 정보 캡처 완료:`, finalScores.map(p => `${p.nickname}(userId: ${p.userId})`));
 
     console.log(`[DEBUG] 최종 점수 수집 완료:`, finalScores);
 
@@ -1092,49 +1098,59 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     
     try {
       await prisma.$transaction(async (tx: any) => {
-        // 1) Game 테이블에 게임 정보 저장
+        // 1) 모든 플레이어 정보 준비 (게임 종료 시점에 캡처된 정보 사용)
+        const allPlayersData = finalScoresWithChange;
+        const validPlayersData = finalScoresWithChange.filter(p => p.userId !== null);
+        const invalidPlayers = allPlayersData.filter(p => p.userId === null);
+        
+        console.log(`[DEBUG] 전체 플레이어: ${allPlayersData.length}명, 유효한 플레이어: ${validPlayersData.length}명, 무효한 플레이어: ${invalidPlayers.length}명`);
+        
+        if (invalidPlayers.length > 0) {
+          console.warn(`[WARNING] userId가 null인 플레이어들이 있습니다:`, invalidPlayers.map(p => p.nickname));
+          console.warn(`[WARNING] 이는 게임 중 연결이 끊어진 플레이어들로 보입니다.`);
+        }
+
+        // 최소 1명의 유효한 플레이어만 있으면 게임 기록 저장
+        if (validPlayersData.length < 1) {
+          throw new Error(`유효한 플레이어가 최소 1명 필요합니다. 현재: ${validPlayersData.length}명`);
+        }
+
+        // 2) Game 테이블에 모든 정보를 한 번에 저장 (모든 플레이어 포함)
+        const gameData: any = {
+          gameId: this.roomId,
+          playerCount: finalScores.length,
+          totalRounds: this.state.totalRounds,
+          roomType: this.state.roomType,
+          roomTitle: this.state.roomTitle,
+        };
+
+        // 유효한 플레이어들만 Game 테이블에 저장 (순서대로)
+        validPlayersData.forEach((playerData, index) => {
+          const playerNum = index + 1;
+          if (playerNum <= 5) { // 최대 5명까지 지원
+            gameData[`player${playerNum}_userId`] = playerData.userId;
+            gameData[`player${playerNum}_nickname`] = playerData.nickname;
+            gameData[`player${playerNum}_rank`] = playerData.rank;
+            gameData[`player${playerNum}_score`] = playerData.score;
+            gameData[`player${playerNum}_rating_mu_change`] = playerData.rating_mu_change;
+          }
+        });
+        
+        console.log(`[DEBUG] 게임에 저장될 플레이어 수: ${Math.min(validPlayersData.length, 5)}명`);
+
         console.log(`[DEBUG] Game 테이블에 게임 정보 저장 시작`);
         const game = await tx.game.create({
-          data: {
-            gameId: this.roomId,
-            playerCount: finalScores.length,
-            totalRounds: this.state.totalRounds,
-            roomType: this.state.roomType,
-            roomTitle: this.state.roomTitle,
-          },
+          data: gameData,
         });
         console.log(`[DEBUG] Game 생성 완료: gameId=${game.id}`);
 
-        // 2) 각 플레이어의 GamePlayer 레코드 생성 및 User 레이팅 업데이트
-        for (const playerData of finalScoresWithChange) {
+        // 3) 모든 유효한 플레이어들의 User 레이팅 및 게임 통계 업데이트
+        for (const playerData of validPlayersData) {
           const { userId, score, rank, rating_mu_before, rating_sigma_before, rating_mu_after, rating_sigma_after, rating_mu_change } = playerData;
           
           console.log(`[DEBUG] 플레이어 처리 중: userId=${userId}, nickname=${playerData.nickname}, rank=${rank}, score=${score}`);
-          
-          if (!userId) {
-            console.log(`[DEBUG] userId가 null이므로 DB 저장 건너뜀: ${playerData.nickname}`);
-            dbSaveResults.push({ userId: null, success: false, reason: 'Not a logged-in user' });
-            continue;
-          }
 
-          console.log(`[DEBUG] GamePlayer 생성 및 User 레이팅 업데이트 시작`);
-          
-          // GamePlayer 레코드 생성
-          await tx.gamePlayer.create({
-            data: {
-              gameId: game.id,
-              userId,
-              nickname: playerData.nickname, // 게임 당시 닉네임 저장
-              rank,
-              score,
-              rating_mu_before,
-              rating_sigma_before,
-              rating_mu_after,
-              rating_sigma_after,
-              rating_mu_change,
-            },
-          });
-          console.log(`[DEBUG] GamePlayer 생성 완료: userId=${userId}`);
+          console.log(`[DEBUG] User 레이팅 및 게임 통계 업데이트 시작`);
 
           // User 레이팅 및 게임 통계 업데이트
           const isWin = rank === 1;
@@ -1144,14 +1160,20 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
               rating_mu: rating_mu_after,
               rating_sigma: rating_sigma_after,
               totalGames: { increment: 1 },
-              wins: isWin ? { increment: 1 } : undefined,
-              losses: !isWin ? { increment: 1 } : undefined,
+              result_wins: isWin ? { increment: 1 } : undefined,
+              result_losses: !isWin ? { increment: 1 } : undefined,
               participatedGameIds: { push: game.id }, // 참여한 게임 ID 추가
             },
           });
           console.log(`[DEBUG] User 레이팅 업데이트 완료: userId=${userId}`);
           
           dbSaveResults.push({ userId, success: true });
+        }
+
+        // 4) 무효한 플레이어들에 대한 로그 (연결이 끊어진 플레이어들)
+        for (const playerData of invalidPlayers) {
+          console.log(`[DEBUG] 연결이 끊어진 플레이어는 개인 통계 업데이트 불가: ${playerData.nickname} (게임 기록에는 저장되지 않음)`);
+          dbSaveResults.push({ userId: null, success: false, reason: 'Player disconnected before game end' });
         }
       });
       

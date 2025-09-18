@@ -997,7 +997,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                               onClick={() => setSelectedUserForHistory(player.id)}
                               title="클릭하여 전적 보기"
                             >
-                              <div className={`rank-badge ${player.rank === "-" ? "no-games" : ""}`}>
+                              <div className={`rank-badge ${player.rank === "-" ? "no-rank" : ""}`}>
                                 {player.rank === "-" ? (
                                   "-"
                                 ) : (
@@ -1033,11 +1033,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                                     <span className="game-count-label">게임 판수: </span>
                                     <span className="game-stats">{player.totalGames}회</span>
                                     <span className="game-count-label"> (</span>
-                                    <span className="win-count">승: {player.wins}</span>
+                                    <span className="win-count">승: {player.result_wins}</span>
                                     <span className="game-count-label">, </span>
-                                    <span className="draw-count">무: {player.draws}</span>
+                                    <span className="draw-count">무: {player.result_draws}</span>
                                     <span className="game-count-label">, </span>
-                                    <span className="loss-count">패: {player.losses}</span>
+                                    <span className="loss-count">패: {player.result_losses}</span>
                                     <span className="game-count-label">)</span>
                                   </p>
                                 </div>
@@ -1059,7 +1059,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                           </span>
                         </div>
                         <div className="ranking-card outside-rank clickable" onClick={() => setSelectedUserForHistory(myRanking.player.id)}>
-                          <div className={`rank-badge ${myRanking.rank === "-" ? "no-games" : ""}`}>
+                          <div className={`rank-badge ${myRanking.rank === "-" ? "no-rank" : ""}`}>
                             {myRanking.rank === "-" ? "-" : `#${myRanking.rank}`}
                           </div>
                           <div className="player-info">
@@ -1086,11 +1086,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                                   <span className="game-count-label">게임 판수: </span>
                                   <span className="game-stats">{myRanking.player.totalGames}회</span>
                                   <span className="game-count-label"> (</span>
-                                  <span className="win-count">승: {myRanking.player.wins}</span>
+                                  <span className="win-count">승: {myRanking.player.result_wins}</span>
                                   <span className="game-count-label">, </span>
-                                  <span className="draw-count">무: {myRanking.player.draws}</span>
+                                  <span className="draw-count">무: {myRanking.player.result_draws}</span>
                                   <span className="game-count-label">, </span>
-                                  <span className="loss-count">패: {myRanking.player.losses}</span>
+                                  <span className="loss-count">패: {myRanking.player.result_losses}</span>
                                   <span className="game-count-label">)</span>
                                 </p>
                               </div>

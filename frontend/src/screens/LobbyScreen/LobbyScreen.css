@@ -1193,13 +1193,13 @@
 }
 
 /* 게임 기록이 없는 사용자 스타일 */
-.lobby-screen .ranking-card .rank-badge.no-games {
+.lobby-screen .ranking-card .rank-badge.no-rank {
   color: #888888 !important;
   font-style: italic !important;
   font-size: 1.8vw !important;
 }
 
-.lobby-screen .ranking-card.outside-rank .rank-badge.no-games {
+.lobby-screen .ranking-card.outside-rank .rank-badge.no-rank {
   color: #CCCCCC !important;
   font-style: italic !important;
   font-size: 1.8vw !important;

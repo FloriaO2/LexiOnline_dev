@@ -14,9 +14,9 @@ export interface User {
   
   // 게임 통계 (간단한 win/draw/lose 시스템)
   totalGames: number;
-  wins: number;
-  draws: number;
-  losses: number;
+  result_wins: number;
+  result_draws: number;
+  result_losses: number;
 
   gameHistories: GameHistory[];
 }
