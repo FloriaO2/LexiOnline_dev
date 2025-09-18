@@ -791,6 +791,11 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
 
     // 게임이 시작되면 방을 잠금
     this.lock();
+
+    // 게임 시작 시 로비에서 방 숨기기 (방 목록에서 제거)
+    this.notifyLobbyRoomListUpdate("roomDeleted", {
+      roomId: this.roomId
+    });
   }
 
   startRound() {
