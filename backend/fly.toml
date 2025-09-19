@@ -11,6 +11,7 @@ primary_region = 'nrt'
 
 [env]
   PORT = '8080'
+  HOST = '0.0.0.0'
   NODE_ENV = 'production'
   # 민감한 정보는 fly secrets로 설정하세요
 
