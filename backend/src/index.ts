@@ -22,7 +22,7 @@ async function main() {
     console.log("✅ Prisma connected successfully.");
     
     // Express + Colyseus with explicit host binding
-    const port = Number(process.env.PORT) || 8080;
+    const port = Number(process.env.PORT) || 2567; // 프론트엔드와 일치하도록 2567로 변경
     const host = '0.0.0.0'; // 명시적으로 0.0.0.0에 바인딩
     
     // listen 함수 - 환경변수로 호스트 설정
