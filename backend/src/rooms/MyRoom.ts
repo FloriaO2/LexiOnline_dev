@@ -1088,7 +1088,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
     const finalScoresWithRank = calculateRanks(finalScores);
     console.log(`[DEBUG] 순위 계산 완료:`, finalScoresWithRank);
     
-    const finalScoresWithRating = calculateRatings(finalScoresWithRank);
+    const finalScoresWithRating = await calculateRatings(finalScoresWithRank);
     console.log(`[DEBUG] 레이팅 계산 완료:`, finalScoresWithRating);
 
     // 레이팅 변화값 계산 및 모든 플레이어 정보 생성

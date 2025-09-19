@@ -21,9 +21,13 @@ async function main() {
     await prisma.$connect();
     console.log("✅ Prisma connected successfully.");
     
-    // Express + Colyseus
-    const gameServer = await listen(app); // 이 app에는 Express가 탑재된 상태
-    console.log("🚀 Colyseus server is listening...");
+    // Express + Colyseus with explicit host binding
+    const port = Number(process.env.PORT) || 8080;
+    const host = '0.0.0.0'; // 명시적으로 0.0.0.0에 바인딩
+    
+    // listen 함수 - 환경변수로 호스트 설정
+    const gameServer = await listen(app, port);
+    console.log(`🚀 Colyseus server is listening on ${host}:${port}...`);
     
     // 빈 방 정리 스케줄러 시작
     const cleanupScheduler = new CleanupScheduler(gameServer);

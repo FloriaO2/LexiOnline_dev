@@ -416,7 +416,6 @@ export function handleEasyMode(room: IMyRoom, client: Client, data: any) {
 }
 
 // parseCard 임포트용 타입 선언 (실제 import는 MyRoom.ts에서 진행)
-declare function parseCard(card: number, maxNumber: number): { type: number; number: number };
 
 // 카드 위치 결정 함수 (프론트엔드와 동일한 로직)
 function findCardPosition(
