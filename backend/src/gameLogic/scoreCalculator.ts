@@ -11,8 +11,9 @@ import { PlayerState } from "../rooms/schema/PlayerState";
 function getTwosCount(player: PlayerState, maxNumber: number): number {
   let count = 0;
   player.hand.forEach(card => {
-    // 카드 값이 2인 경우: card % maxNumber === 1
-    if (card % maxNumber === 1) {
+    // 카드 값이 2인 경우: value === 1 (실제 2, 사용자 공식: 2-1=1)
+    const value = card % maxNumber;
+    if (value === 1) {
       count++;
     }
   });

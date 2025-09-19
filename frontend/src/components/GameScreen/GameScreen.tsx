@@ -763,7 +763,53 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
     room.onMessage('submitRejected', (message) => {
       console.log('카드 제출 거부:', message);
-      showToast('제출할 수 없는 카드 조합입니다.');
+      
+      // 거부 사유에 따른 맞춤형 메시지
+      let toastMessage = '';
+      switch (message.reason) {
+        case 'Not your turn.':
+          toastMessage = '당신의 차례가 아닙니다.';
+          break;
+        case 'Submit any card or pass.':
+          toastMessage = '카드를 선택하거나 패스하세요.';
+          break;
+        case 'You cannot submit 4 cards.':
+          toastMessage = '4장은 제출할 수 없습니다.';
+          break;
+        case 'You cannot submit more than 5 cards.':
+          toastMessage = '5장을 초과하여 제출할 수 없습니다.';
+          break;
+        case 'Wrong cards: cannot submit 5 cards without made type.':
+          toastMessage = '5장의 카드로 구성된 조합이 필요합니다.';
+          break;
+        case 'Wrong cards: different type.':
+          toastMessage = '이전과 같은 장수의 카드를 내야 합니다.';
+          break;
+        case 'Wrong cards: invalid combo.':
+          toastMessage = '유효하지 않은 조합입니다.';
+          break;
+        case 'Wrong cards: not made cards.':
+          toastMessage = '성립하지 않는 조합입니다.';
+          break;
+        case 'Wrong cards: order is lower.':
+          toastMessage = '이전보다 높은 순위의 조합을 내야 합니다.';
+          break;
+        default:
+          // 새로운 패턴: "Wrong cards: need X, got Y." 처리
+          if (message.reason.includes('need') && message.reason.includes('got')) {
+            const match = message.reason.match(/need (.+?), got (.+?)\./);
+            if (match) {
+              const [, needed, got] = match;
+              toastMessage = `${needed}이 필요한데 ${got}을 제출했습니다.`;
+            } else {
+              toastMessage = '카드 개수가 맞지 않습니다.';
+            }
+          } else {
+            toastMessage = `제출 실패: ${message.reason}`;
+          }
+      }
+      
+      showToast(toastMessage, 'error');
       setIsSubmitting(false);
     });
 
@@ -864,18 +910,21 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     return colors[colorIndex] || 'black';
   };
 
-  // 카드 번호를 값으로 변환 (실제 카드 값)
+  // 카드 번호를 값으로 변환 (실제 카드 값) - 백엔드와 동일한 로직
   const getCardValueFromNumber = (cardNumber: number, maxNumber: number): number => {
     const safeMaxNumber = maxNumber && maxNumber > 0 ? maxNumber : 13;
-    return (cardNumber % safeMaxNumber) + 1;
+    const rawValue = cardNumber % safeMaxNumber;
+    
+    // 백엔드와 동일한 value → 실제 숫자 변환 로직 (사용자 공식: value + 1)
+    return rawValue + 1;
   };
 
   // 카드의 실제 순서 값을 계산하는 함수 (백엔드의 getValue와 일치)
   const getCardOrderValue = (cardNumber: number): number => {
     const room = ColyseusService.getRoom();
     const maxNumber = room?.state?.maxNumber || 13;
-    const { type, number } = parseCard(cardNumber, maxNumber);
-    return getValue(number, type, maxNumber);
+    const { type, value } = parseCard(cardNumber, maxNumber);
+    return getValue(value, type, maxNumber);
   };
 
 
@@ -883,8 +932,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   // 백엔드의 parseCard 함수와 동일한 로직
   const parseCard = (card: number, maxNumber: number) => {
     const type = Math.floor(card / maxNumber);
-    const number = (card + maxNumber - 2) % maxNumber;
-    return { type, number };
+    const value = card % maxNumber;
+    return { type, value };
   };
 
   // 백엔드의 getOrderIndex 함수와 동일한 로직
@@ -908,8 +957,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   const getSimpleComboValue = (cardNumber: number): number => {
     const room = ColyseusService.getRoom();
     const maxNumber = room?.state?.maxNumber || 13;
-    const { type, number } = parseCard(cardNumber, maxNumber);
-    return number * maxNumber + type;
+    const { type, value } = parseCard(cardNumber, maxNumber);
+    return value * maxNumber + type;
   };
 
   // lastType을 한국어로 변환하는 함수
@@ -989,20 +1038,32 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   }
 
   // 백엔드의 isStraightWithException 함수와 동일한 로직
-  const isStraightWithException = (numbers: number[], maxNumber: number): boolean => {
-    const remappedNumbers = numbers.map(n => (n + 2) % maxNumber).sort((a, b) => a - b);
+  const isStraightWithException = (values: number[], maxNumber: number): boolean => {
+    console.log(`[DEBUG] 프론트엔드 스트레이트 검사: values=[${values.join(', ')}], maxNumber=${maxNumber}`);
 
+    // value를 실제 숫자로 변환: 사용자 공식 value + 1
+    const actualNumbers = values.map(v => v + 1).sort((a, b) => a - b);
+    
+    console.log(`[DEBUG] 프론트엔드 실제 숫자로 변환: [${actualNumbers.join(', ')}]`);
+
+    // Check for normal consecutive straight
     let isConsecutive = true;
-    for (let i = 0; i < remappedNumbers.length - 1; i++) {
-      if (remappedNumbers[i+1] - remappedNumbers[i] !== 1) {
+    for (let i = 0; i < actualNumbers.length - 1; i++) {
+      if (actualNumbers[i+1] - actualNumbers[i] !== 1) {
         isConsecutive = false;
         break;
       }
     }
     if (isConsecutive) return true;
 
-    const mountainStraight = [0, maxNumber - 4, maxNumber - 3, maxNumber - 2, maxNumber - 1].sort((a,b) => a-b);
-    const isMountain = remappedNumbers.length === mountainStraight.length && remappedNumbers.every((val, index) => val === mountainStraight[index]);
+
+    // Check for mountain straight: 10-11-12-1-2 (실제 숫자 기준)
+    // value 기준으로는: 9, 10, 11, 0, 1
+    const sortedValues = [...values].sort((a, b) => a - b);
+    const isMountain = values.length === 5 && 
+      sortedValues.includes(0) && sortedValues.includes(1) && // 1, 2
+      sortedValues.includes(maxNumber - 3) && sortedValues.includes(maxNumber - 2) && sortedValues.includes(maxNumber - 1); // 10, 11, 12
+    
     if (isMountain) return true;
 
     return false;
@@ -1014,15 +1075,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     if (![1, 2, 3].includes(len)) return { type: MADE_NONE, value: 0, valid: false };
 
     const parsed = cards.map(card => {
-      const { type, number } = parseCard(card, maxNumber);
-      return { type, number, value: number * maxNumber + type };
+      const { type, value } = parseCard(card, maxNumber);
+      return { type, value, compareValue: value * maxNumber + type };
     });
 
-    const firstNumber = parsed[0].number;
-    if (!parsed.every(c => c.number === firstNumber)) return { type: MADE_NONE, value: 0, valid: false };
+    const firstValue = parsed[0].value;
+    if (!parsed.every(c => c.value === firstValue)) return { type: MADE_NONE, value: 0, valid: false };
 
     const maxType = Math.max(...parsed.map(c => c.type));
-    return { type: len, value: firstNumber * maxNumber + maxType, valid: true };
+    return { type: len, value: firstValue * maxNumber + maxType, valid: true };
   }
 
   // 백엔드의 evaluateMade 함수와 동일한 로직
@@ -1030,54 +1091,54 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     if (cards.length !== 5) return { type: MADE_NONE, value: 0, valid: false };
 
     const parsed = cards.map(card => parseCard(card, maxNumber));
-    const numbers = parsed.map(c => c.number).sort((a, b) => a - b);
+    const values = parsed.map(c => c.value).sort((a, b) => a - b);
     const types = parsed.map(c => c.type);
 
-    const numCount = new Map<number, number>();
+    const valueCount = new Map<number, number>();
     const typeCount = new Map<number, number>();
-    numbers.forEach(n => numCount.set(n, (numCount.get(n) || 0) + 1));
+    values.forEach(v => valueCount.set(v, (valueCount.get(v) || 0) + 1));
     types.forEach(t => typeCount.set(t, (typeCount.get(t) || 0) + 1));
 
     const isFlush = typeCount.size === 1;
-    const isStraight = isStraightWithException(numbers, maxNumber);
+    const isStraight = isStraightWithException(values, maxNumber);
 
     let four = false, three = false, two = false;
-    for (const count of Array.from(numCount.values())) {
+    for (const count of Array.from(valueCount.values())) {
       if (count === 4) four = true;
       else if (count === 3) three = true;
       else if (count === 2) two = true;
     }
 
-    let bestIndex = -1, bestType = -1, bestNumber = -1;
-    for (let i = 0; i < numbers.length; i++) {
-      const idx = getOrderIndex(numbers[i], maxNumber);
+    let bestIndex = -1, bestType = -1, bestValue = -1;
+    for (let i = 0; i < values.length; i++) {
+      const idx = getOrderIndex(values[i], maxNumber);
       if (idx > bestIndex || (idx === bestIndex && types[i] > bestType)) {
         bestIndex = idx;
         bestType = types[i];
-        bestNumber = numbers[i];
+        bestValue = values[i];
       }
     }
 
     if (isFlush && isStraight) {
-      return { type: MADE_STRAIGHTFLUSH, value: getValue(bestNumber, bestType, maxNumber), valid: true };
+      return { type: MADE_STRAIGHTFLUSH, value: getValue(bestValue, bestType, maxNumber), valid: true };
     }
     if (four) {
-      let fourNumber = Array.from(numCount.entries()).find(([n, c]) => c === 4)![0];
+      let fourValue = Array.from(valueCount.entries()).find(([v, c]) => c === 4)![0];
       let maxType = -1;
-      for (let i = 0; i < numbers.length; i++) if (numbers[i] === fourNumber && types[i] > maxType) maxType = types[i];
-      return { type: MADE_FOURCARDS, value: getValue(fourNumber, maxType, maxNumber), valid: true };
+      for (let i = 0; i < values.length; i++) if (values[i] === fourValue && types[i] > maxType) maxType = types[i];
+      return { type: MADE_FOURCARDS, value: getValue(fourValue, maxType, maxNumber), valid: true };
     }
     if (three && two) {
-      let threeNumber = Array.from(numCount.entries()).find(([n, c]) => c === 3)![0];
+      let threeValue = Array.from(valueCount.entries()).find(([v, c]) => c === 3)![0];
       let maxType = -1;
-      for (let i = 0; i < numbers.length; i++) if (numbers[i] === threeNumber && types[i] > maxType) maxType = types[i];
-      return { type: MADE_FULLHOUSE, value: getValue(threeNumber, maxType, maxNumber), valid: true };
+      for (let i = 0; i < values.length; i++) if (values[i] === threeValue && types[i] > maxType) maxType = types[i];
+      return { type: MADE_FULLHOUSE, value: getValue(threeValue, maxType, maxNumber), valid: true };
     }
     if (isFlush) {
-      return { type: MADE_FLUSH, value: getValue(bestNumber, bestType, maxNumber), valid: true };
+      return { type: MADE_FLUSH, value: getValue(bestValue, bestType, maxNumber), valid: true };
     }
     if (isStraight) {
-      return { type: MADE_STRAIGHT, value: getValue(bestNumber, bestType, maxNumber), valid: true };
+      return { type: MADE_STRAIGHT, value: getValue(bestValue, bestType, maxNumber), valid: true };
     }
     return { type: MADE_NONE, value: 0, valid: false };
   }
@@ -1085,90 +1146,71 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   // --- END: 백엔드 로직과 동기화된 카드 평가 함수들 ---
 
   // 카드 제출 가능 여부를 확인하는 함수 (백엔드 로직 기반으로 재작성)
-  const canSubmitCards = (cardNumbers: number[]): { canSubmit: boolean; reason: string } => {
+  const canSubmitCards = (cardNumbers: number[]): { canSubmit: boolean; reason: string; shouldBlock: boolean } => {
     if (cardNumbers.length === 0) {
-      return { canSubmit: false, reason: "카드를 선택해주세요." };
+      return { canSubmit: false, reason: "카드를 선택해주세요.", shouldBlock: true };
     }
 
     const room = ColyseusService.getRoom();
     if (!room || !room.state) {
-        return { canSubmit: false, reason: "게임 서버에 연결되지 않았습니다." };
+        return { canSubmit: false, reason: "게임 서버에 연결되지 않았습니다.", shouldBlock: true };
     }
     const maxNumber = room.state.maxNumber || 13;
     const { lastType, lastMadeType, lastHighestValue } = room.state;
 
-    // 현재 제출한 카드 평가
-    let evaluationResult: { type: number; value: number; valid: boolean; madeType?: number };
-
-    if (cardNumbers.length >= 1 && cardNumbers.length <= 3) {
-        const simpleResult = evaluateSimpleCombo(cardNumbers, maxNumber);
-        evaluationResult = { ...simpleResult, madeType: MADE_NONE };
-    } else if (cardNumbers.length === 5) {
-        const madeResult = evaluateMade(cardNumbers, maxNumber);
-        evaluationResult = { type: 5, value: madeResult.value, valid: madeResult.valid, madeType: madeResult.type };
-    } else {
-        return { canSubmit: false, reason: `잘못된 카드 개수입니다.` };
+    // 기본적인 카드 개수 검증 (즉시 차단)
+    if (cardNumbers.length === 4) {
+        return { canSubmit: false, reason: "4장은 제출할 수 없습니다.", shouldBlock: true };
     }
-
-    if (!evaluationResult.valid) {
-        return { canSubmit: false, reason: "유효한 조합이 아닙니다." };
+    if (cardNumbers.length > 5) {
+        return { canSubmit: false, reason: "5장을 초과해서 제출할 수 없습니다.", shouldBlock: true };
     }
 
     // 사이클의 첫 턴
     if (lastType === 0) {
-        return { canSubmit: true, reason: "첫 턴 제출 가능" };
+        return { canSubmit: true, reason: "첫 턴 제출 가능", shouldBlock: false };
     }
 
-    const currentType = evaluationResult.type;
-    const currentValue = evaluationResult.value;
-    const currentMadeType = evaluationResult.madeType || MADE_NONE;
+    // 패 개수 타입 검증 (즉시 차단)
+    if (lastType === 5 && cardNumbers.length !== 5) {
+        return { canSubmit: false, reason: `카드는 이전과 같은 개수만큼만 제출할 수 있습니다.`, shouldBlock: true };
+    }
+    if (lastType !== 5 && lastType !== 0 && cardNumbers.length !== lastType) {
+        return { canSubmit: false, reason: `카드는 이전과 같은 개수만큼만 제출할 수 있습니다.`, shouldBlock: true };
+    }
 
-    // 경우 1: 현재 제출이 '메이드' (5장)
-    if (currentType === 5) {
-        if (lastType === 5) { // 이전에도 '메이드'였을 경우
-            if (currentMadeType > lastMadeType) {
-                return { canSubmit: true, reason: "더 높은 족보" };
+    // 1~3장 조합의 기본 유효성만 검증 (같은 숫자인지)
+    if (cardNumbers.length >= 1 && cardNumbers.length <= 3) {
+        // 같은 숫자인지만 확인
+        const firstCard = cardNumbers[0];
+        const firstValue = firstCard % maxNumber;
+        
+        for (const card of cardNumbers) {
+            if (card % maxNumber !== firstValue) {
+                return { canSubmit: false, reason: "같은 숫자의 카드가 아닙니다.", shouldBlock: true };
             }
-            if (currentMadeType === lastMadeType && currentValue > lastHighestValue) {
-                return { canSubmit: true, reason: "같은 족보, 더 높은 값" };
-            }
-            return { canSubmit: false, reason: `더 낮은 족보 또는 값입니다.` };
         }
-        // 이전이 '심플 콤보'였을 경우, '메이드'가 항상 이김
-        return { canSubmit: true, reason: "메이드가 이전 조합보다 높음" };
     }
 
-    // 경우 2: 현재 제출이 '심플 콤보' (1~3장)
-    if (currentType >= 1 && currentType <= 3) {
-        if (lastType === 5) { // 이전이 '메이드'였을 경우
-            return { canSubmit: false, reason: "더 높은 조합의 패만 낼 수 있습니다." };
-        }
-        if (currentType !== lastType) {
-            return { canSubmit: false, reason: `이전과 같은 ${lastType}장의 카드를 내야 합니다.` };
-        }
-        if (currentValue > lastHighestValue) {
-            return { canSubmit: true, reason: "더 높은 값" };
-        }
-        return { canSubmit: false, reason: `이전보다 높은 값을 내야 합니다.` };
-    }
-
-    return { canSubmit: false, reason: "알 수 없는 오류가 발생했습니다." };
+    // 5장 조합은 백엔드에서 완전히 검증
+    // 1~3장도 순위 비교는 백엔드에서 처리
+    return { canSubmit: true, reason: "백엔드에서 검증 예정", shouldBlock: false };
   };
 
   // 디버깅용: 카드 정보 출력 함수
   const debugCardInfo = (cardNumber: number): string => {
     const room = ColyseusService.getRoom();
     const maxNumber = room?.state?.maxNumber || 13;
-    const { type, number } = parseCard(cardNumber, maxNumber);
+    const { type, value } = parseCard(cardNumber, maxNumber);
     const orderValue = getCardOrderValue(cardNumber);
     const color = getCardColorFromNumber(cardNumber, maxNumber);
-    const value = getCardValueFromNumber(cardNumber, maxNumber);
-    const orderIndex = getOrderIndex(number, maxNumber);
+    const displayValue = getCardValueFromNumber(cardNumber, maxNumber);
+    const actualNumber = value + 1; // value를 실제 숫자로 변환
     
     // 백엔드의 evaluateSimpleCombo에서 사용하는 계산 방식
     const simpleComboValue = getSimpleComboValue(cardNumber);
     
-    return `카드${cardNumber}: 색상=${color}, 숫자=${value}, type=${type}, number=${number}, orderIndex=${orderIndex}, 올바른순서값=${orderValue}, 실제순서값=${simpleComboValue}`;
+    return `카드${cardNumber}: 색상=${color}, 숫자=${displayValue}, type=${type}, value=${value}, 실제숫자=${actualNumber}, 올바른순서값=${orderValue}, 실제순서값=${simpleComboValue}`;
   };
 
   // Toast 표시 함수
@@ -1950,12 +1992,16 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
       // 제출 가능 여부 확인
       const validation = canSubmitCards(sortedCardNumbers);
-      console.log(`[DEBUG] 제출 검증: ${validation.reason}`);
+      console.log(`[DEBUG] 제출 검증: ${validation.reason}, shouldBlock: ${validation.shouldBlock}`);
       
       if (!validation.canSubmit) {
-        showToast(`제출 불가: ${validation.reason}`, 'error');
-        setIsSubmitting(false);
-        return;
+        if (validation.shouldBlock) {
+          // 즉시 차단 (패 개수, 조합 유효성 등)
+          showToast(validation.reason, 'error');
+          setIsSubmitting(false);
+          return;
+        }
+        // shouldBlock이 false면 백엔드로 전송해서 정확한 검증 받기
       }
 
       // 백엔드에 submit 메시지 전송

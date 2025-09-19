@@ -8,6 +8,7 @@ import {
   removeCardsFromHand,
   MadeEvalResult,
   MADE_NONE,
+  parseCard,
 } from "../gameLogic/cardEvaluator";
 
 // MyRoom이 구현해야 할 메서드를 포함하는 인터페이스
@@ -51,6 +52,14 @@ export function handleSubmit(room: IMyRoom, client: Client, data: any) {
   const submitCards: number[] = data.submitCards.map((item: string) => parseInt(item, 10));
   
   console.log(`[DEBUG] 카드 제출 시도: player=${client.sessionId}, cards=${submitCards.join(', ')}`);
+  
+  // 제출된 카드들의 상세 정보 출력
+  submitCards.forEach(card => {
+    const { type, value } = parseCard(card, room.state.maxNumber);
+    const actualNumber = value + 1; // 사용자 공식: value + 1
+    const typeNames = ['구름', '별', '달', '태양'];
+    console.log(`[DEBUG] 제출 카드: ${card} = ${typeNames[type]} ${actualNumber}`);
+  });
 
   // 턴 검사
   console.log(`[DEBUG] 턴 검사: client=${client.sessionId}, currentPlayer=${room.state.playerOrder[room.state.nowPlayerIndex]}, nowPlayerIndex=${room.state.nowPlayerIndex}`);
@@ -83,7 +92,9 @@ export function handleSubmit(room: IMyRoom, client: Client, data: any) {
         return;
       }
     } else if (submitCards.length !== room.state.lastType) {
-      client.send("submitRejected", { reason: "Wrong cards: different type." });
+      const lastTypeText = room.state.lastType === 5 ? "5장 조합" : `${room.state.lastType}장`;
+      const currentTypeText = submitCards.length === 5 ? "5장 조합" : `${submitCards.length}장`;
+      client.send("submitRejected", { reason: `Wrong cards: need ${lastTypeText}, got ${currentTypeText}.` });
       return;
     }
   }
@@ -113,10 +124,22 @@ export function handleSubmit(room: IMyRoom, client: Client, data: any) {
       client.send("submitRejected", { reason: "Wrong cards: invalid combo." });
       return;
     }
+    console.log(`[DEBUG] 카드 순위 비교: 현재 제출=${result.value}, 이전 최고값=${room.state.lastHighestValue}`);
     if (room.state.lastHighestValue >= result.value) {
+      console.log(`[DEBUG] ❌ 제출 거부: ${result.value} <= ${room.state.lastHighestValue}`);
+      console.log(`[DEBUG] 거부된 카드 상세 정보:`);
+      submitCards.forEach(card => {
+        const { type, value } = parseCard(card, room.state.maxNumber);
+        const actualNumber = value + 1;
+        const typeNames = ['구름', '별', '달', '태양'];
+        console.log(`[DEBUG]   - 카드 ${card} = ${typeNames[type]} ${actualNumber} (type=${type}, value=${value})`);
+      });
+      console.log(`[DEBUG] 현재 족보: type=${result.type}, value=${result.value}`);
+      console.log(`[DEBUG] 이전 최고: lastHighestValue=${room.state.lastHighestValue}, lastMadeType=${room.state.lastMadeType}`);
       client.send("submitRejected", { reason: "Wrong cards: order is lower." });
       return;
     }
+    console.log(`[DEBUG] ✅ 제출 승인: ${result.value} > ${room.state.lastHighestValue}`);
     room.state.lastHighestValue = result.value;
     room.state.lastMadeType = MADE_NONE;
   } else {
@@ -131,6 +154,17 @@ export function handleSubmit(room: IMyRoom, client: Client, data: any) {
       result.type < room.state.lastMadeType ||
       (result.type === room.state.lastMadeType && result.value <= room.state.lastHighestValue)
     ) {
+      console.log(`[DEBUG] ❌ 5장 조합 제출 거부`);
+      console.log(`[DEBUG] 거부된 카드 상세 정보:`);
+      submitCards.forEach(card => {
+        const { type, value } = parseCard(card, room.state.maxNumber);
+        const actualNumber = value + 1;
+        const typeNames = ['구름', '별', '달', '태양'];
+        console.log(`[DEBUG]   - 카드 ${card} = ${typeNames[type]} ${actualNumber} (type=${type}, value=${value})`);
+      });
+      console.log(`[DEBUG] 현재 족보: type=${result.type}, value=${result.value}`);
+      console.log(`[DEBUG] 이전 족보: lastMadeType=${room.state.lastMadeType}, lastHighestValue=${room.state.lastHighestValue}`);
+      console.log(`[DEBUG] 비교 결과: type비교=${result.type} vs ${room.state.lastMadeType}, value비교=${result.value} vs ${room.state.lastHighestValue}`);
       client.send("submitRejected", { reason: "Wrong cards: order is lower." });
       return;
     }

@@ -35,6 +35,9 @@ export const useColyseus = ({
       }
 
       if (state.players && state.playerOrder) {
+        // 현재 턴 플레이어의 세션 ID 가져오기
+        const currentTurnSessionId = state.playerOrder[state.nowPlayerIndex] || null;
+        
         const playerList: Player[] = Array.from(state.playerOrder as Iterable<string>).map((sessionId: string, index: number) => {
           const player = state.players.get(sessionId);
           return {
@@ -42,12 +45,14 @@ export const useColyseus = ({
             nickname: player.nickname || '익명',
             score: player.score || 0,
             remainingTiles: player.hand ? player.hand.length : 0,
-            isCurrentPlayer: sessionId === room.sessionId,
+            isCurrentPlayer: sessionId === currentTurnSessionId, // 현재 턴 플레이어인지 확인
             sessionId: sessionId,
             hasPassed: player.hasPassed || false
           };
         });
         setPlayers(playerList);
+        
+        console.log(`[DEBUG] 프론트엔드 턴 업데이트: nowPlayerIndex=${state.nowPlayerIndex}, currentTurnSessionId=${currentTurnSessionId}`);
       }
     };
 
@@ -56,12 +61,19 @@ export const useColyseus = ({
     room.onMessage('roundStart', (message: any) => {
       if (message.hand) {
         const maxNumber = message.maxNumber || 13;
-        const handCards = message.hand.map((cardNumber: number, index: number) => ({
-          id: index,
-          value: (cardNumber % maxNumber) + 1,
-          color: ['black', 'bronze', 'silver', 'gold'][Math.floor(cardNumber / maxNumber)],
-          originalNumber: cardNumber
-        }));
+        const handCards = message.hand.map((cardNumber: number, index: number) => {
+          const rawValue = cardNumber % maxNumber;
+          
+          // 백엔드와 동일한 value → 실제 숫자 변환 로직 (사용자 공식: value + 1)
+          const displayValue = rawValue + 1;
+          
+          return {
+            id: index,
+            value: displayValue,
+            color: ['black', 'bronze', 'silver', 'gold'][Math.floor(cardNumber / maxNumber)],
+            originalNumber: cardNumber
+          };
+        });
         setAndSortHand(handCards);
       }
     });
@@ -71,12 +83,19 @@ export const useColyseus = ({
         const myPlayer = room.state.players.get(room.sessionId);
         if (myPlayer && myPlayer.hand) {
           const maxNumber = room.state.maxNumber || 13;
-          const handCards = myPlayer.hand.map((cardNumber: number, index: number) => ({
-            id: index,
-            value: (cardNumber % maxNumber) + 1,
-            color: ['black', 'bronze', 'silver', 'gold'][Math.floor(cardNumber / maxNumber)],
-            originalNumber: cardNumber
-          }));
+          const handCards = myPlayer.hand.map((cardNumber: number, index: number) => {
+            const rawValue = cardNumber % maxNumber;
+            
+            // 백엔드와 동일한 value → 실제 숫자 변환 로직 (사용자 공식: value + 1)
+            const displayValue = rawValue + 1;
+            
+            return {
+              id: index,
+              value: displayValue,
+              color: ['black', 'bronze', 'silver', 'gold'][Math.floor(cardNumber / maxNumber)],
+              originalNumber: cardNumber
+            };
+          });
           setAndSortHand(handCards);
         }
       }

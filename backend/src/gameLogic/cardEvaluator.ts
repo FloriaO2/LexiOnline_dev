@@ -16,31 +16,49 @@ export interface MadeEvalResult {
 
 export function parseCard(card: number, maxNumber: number) {
   const type = Math.floor(card / maxNumber);
-  const number = (card + maxNumber - 2) % maxNumber;
-  console.log(`[DEBUG] 카드 파싱: card=${card}, maxNumber=${maxNumber}, type=${type}, number=${number}`);
-  return { type, number };
+  const value = card % maxNumber;
+  
+  // value를 실제 숫자로 변환: value + 1
+  const actualNumber = value + 1;
+  
+  console.log(`[DEBUG] 카드 파싱: card=${card} = ${['구름','별','달','태양'][type]} ${actualNumber} (type=${type}, value=${value})`);
+  return { type, value };
 }
 
-export function getOrderIndex(n: number, maxNumber: number): number {
-  if (n === 0) return maxNumber - 2;
-  if (n === 1) return maxNumber - 1;
-  return n - 2;
+// value 기준 순위: 실제 숫자 3456...12, 2가 가장 높음
+// value: 실제 n → 데이터 n-1, 즉 value 0=실제1, value 1=실제2, ..., value 11=실제12, value 12=실제13
+// 실제 순위는 3<4<5<6<7<8<9<10<11<12<1<2 순서
+export function getValueRank(value: number, maxNumber: number): number {
+  const actualNumber = value + 1; // value를 실제 숫자로 변환
+  
+  // 실제 숫자 기준 순위 매기기
+  if (actualNumber >= 3 && actualNumber <= 12) {
+    return actualNumber - 3; // 3->0, 4->1, ..., 12->9
+  } else if (actualNumber === 1) {
+    return maxNumber - 2; // 1 (두 번째로 높음)
+  } else if (actualNumber === 2) {
+    return maxNumber - 1; // 2 (가장 높음)
+  }
+  return actualNumber - 3; // 기본값
 }
 
-export function getValue(number: number, type: number, maxNumber: number): number {
-  return getOrderIndex(number, maxNumber) * maxNumber + type;
+// 카드의 최종 비교값 계산: type * maxNumber + value (사용자 요구사항)
+export function getCardCompareValue(value: number, type: number, maxNumber: number): number {
+  return type * maxNumber + value;
 }
 
-export function isStraightWithException(numbers: number[], maxNumber: number): boolean {
-  console.log(`[DEBUG] 스트레이트 검사 시작: numbers=[${numbers.join(', ')}], maxNumber=${maxNumber}`);
+export function isStraightWithException(values: number[], maxNumber: number): boolean {
+  console.log(`[DEBUG] 스트레이트 검사 시작: values=[${values.join(', ')}], maxNumber=${maxNumber}`);
 
-  const remappedNumbers = numbers.map(n => (n + 2) % maxNumber).sort((a, b) => a - b);
-  console.log(`[DEBUG] 재매핑된 숫자: [${remappedNumbers.join(', ')}]`);
+  // value를 실제 숫자로 변환: 사용자 공식 value + 1
+  const actualNumbers = values.map(v => v + 1).sort((a, b) => a - b);
+  
+  console.log(`[DEBUG] 실제 숫자로 변환: [${actualNumbers.join(', ')}]`);
 
   // Check for normal consecutive straight
   let isConsecutive = true;
-  for (let i = 0; i < remappedNumbers.length - 1; i++) {
-    if (remappedNumbers[i+1] - remappedNumbers[i] !== 1) {
+  for (let i = 0; i < actualNumbers.length - 1; i++) {
+    if (actualNumbers[i+1] - actualNumbers[i] !== 1) {
       isConsecutive = false;
       break;
     }
@@ -50,12 +68,15 @@ export function isStraightWithException(numbers: number[], maxNumber: number): b
     return true;
   }
 
-  // Check for mountain straight (10-J-Q-K-A)
-  // Remapped numbers are [9, 10, 11, 12, 0], sorted to [0, 9, 10, 11, 12]
-  const mountainStraight = [0, maxNumber - 4, maxNumber - 3, maxNumber - 2, maxNumber - 1];
-  const isMountain = remappedNumbers.length === mountainStraight.length && remappedNumbers.every((val, index) => val === mountainStraight[index]);
+  // Check for mountain straight: 10-11-12-1-2 (실제 숫자 기준)
+  // value 기준으로는: 9, 10, 11, 0, 1
+  const sortedValues = [...values].sort((a, b) => a - b);
+  const isMountain = values.length === 5 && 
+    sortedValues.includes(0) && sortedValues.includes(1) && // 1, 2
+    sortedValues.includes(maxNumber - 3) && sortedValues.includes(maxNumber - 2) && sortedValues.includes(maxNumber - 1); // 10, 11, 12
+  
   if (isMountain) {
-    console.log(`[DEBUG] 마운틴 스트레이트 (10-J-Q-K-A) 확인됨.`);
+    console.log(`[DEBUG] 마운틴 스트레이트 (10-11-12-1-2) 확인됨.`);
     return true;
   }
 
@@ -69,15 +90,26 @@ export function evaluateSimpleCombo(cards: number[], maxNumber: number): MadeEva
   if (![1, 2, 3].includes(len)) return { type: MADE_NONE, value: 0, valid: false };
 
   const parsed = cards.map(card => {
-    const { type, number } = parseCard(card, maxNumber);
-    return { type, number, value: number * maxNumber + type };
+    const { type, value } = parseCard(card, maxNumber);
+    return { type, value };
   });
 
-  const firstNumber = parsed[0].number;
-  if (!parsed.every(c => c.number === firstNumber)) return { type: MADE_NONE, value: 0, valid: false };
+  const firstValue = parsed[0].value;
+  if (!parsed.every(c => c.value === firstValue)) return { type: MADE_NONE, value: 0, valid: false };
 
   const maxType = Math.max(...parsed.map(c => c.type));
-  return { type: len, value: firstNumber * maxNumber + maxType, valid: true };
+  
+  // Simple combo도 value 순위 기반으로 비교
+  const valueRank = getValueRank(firstValue, maxNumber);
+  const compareValue = valueRank * maxNumber * 4 + maxType; // 순위 기반 비교값
+  
+  // 실제 카드 숫자로 변환해서 로그 출력 (사용자 공식: value + 1)
+  const actualNumber = firstValue + 1;
+  
+  const typeNames = ['구름', '별', '달', '태양'];
+  console.log(`[DEBUG] Simple combo 평가: ${typeNames[maxType] || 'Unknown'} ${actualNumber} - len=${len}, firstValue=${firstValue}, valueRank=${valueRank}, maxType=${maxType}, compareValue=${compareValue}`);
+  
+  return { type: len, value: compareValue, valid: true };
 }
 
 // 5장 족보 평가
@@ -85,60 +117,130 @@ export function evaluateMade(cards: number[], maxNumber: number): MadeEvalResult
   if (cards.length !== 5) return { type: MADE_NONE, value: 0, valid: false };
 
   const parsed = cards.map(card => parseCard(card, maxNumber));
-  const numbers = parsed.map(c => c.number).sort((a, b) => a - b);
+  const values = parsed.map(c => c.value);
   const types = parsed.map(c => c.type);
 
-  const numCount = new Map<number, number>();
+  const valueCount = new Map<number, number>();
   const typeCount = new Map<number, number>();
-  numbers.forEach(n => numCount.set(n, (numCount.get(n) || 0) + 1));
+  values.forEach(v => valueCount.set(v, (valueCount.get(v) || 0) + 1));
   types.forEach(t => typeCount.set(t, (typeCount.get(t) || 0) + 1));
 
   const isFlush = typeCount.size === 1;
-  const isStraight = isStraightWithException(numbers, maxNumber);
+  const isStraight = isStraightWithException(values, maxNumber);
 
   let four = false, three = false, two = false;
-  for (const count of numCount.values()) {
+  for (const count of valueCount.values()) {
     if (count === 4) four = true;
     else if (count === 3) three = true;
     else if (count === 2) two = true;
   }
   
   console.log(`[DEBUG] 족보 판별: isFlush=${isFlush}, isStraight=${isStraight}, typeCount.size=${typeCount.size}`);
-  console.log(`[DEBUG] 숫자 분포:`, Array.from(numCount.entries()));
+  console.log(`[DEBUG] 값 분포:`, Array.from(valueCount.entries()));
   console.log(`[DEBUG] 색상 분포:`, Array.from(typeCount.entries()));
   console.log(`[DEBUG] three=${three}, two=${two}, four=${four}`);
+  
+  // 각 카드의 실제 숫자 출력
+  const actualNumbers = values.map(v => v + 1);
+  console.log(`[DEBUG] 실제 숫자들: [${actualNumbers.join(', ')}]`);
 
-  let bestIndex = -1, bestType = -1, bestNumber = -1;
-  for (let i = 0; i < numbers.length; i++) {
-    const idx = getOrderIndex(numbers[i], maxNumber);
-    if (idx > bestIndex || (idx === bestIndex && types[i] > bestType)) {
-      bestIndex = idx;
-      bestType = types[i];
-      bestNumber = numbers[i];
-    }
-  }
-
+  // 스트레이트와 플러시: 가장 높은 수(value rank 기준)를 찾아서 순위 결정
   if (isFlush && isStraight) {
-    return { type: MADE_STRAIGHTFLUSH, value: getValue(bestNumber, bestType, maxNumber), valid: true };
+    let bestValue = -1, bestType = -1;
+    let bestRank = -1;
+    for (let i = 0; i < values.length; i++) {
+      const rank = getValueRank(values[i], maxNumber);
+      if (rank > bestRank || (rank === bestRank && types[i] > bestType)) {
+        bestRank = rank;
+        bestValue = values[i];
+        bestType = types[i];
+      }
+    }
+    
+    // 스트레이트 플러시는 가장 높은 카드의 순위로 비교
+    const compareValue = bestRank * maxNumber * 4 + bestType; // 순위 기반 비교값
+    
+    console.log(`[DEBUG] 스트레이트 플러시 평가: bestValue=${bestValue}, bestRank=${bestRank}, bestType=${bestType}, compareValue=${compareValue}`);
+    
+    return { type: MADE_STRAIGHTFLUSH, value: compareValue, valid: true };
   }
+  
+  // 포카드: 4개짜리 조합의 수로 비교
   if (four) {
-    let fourNumber = [...numCount.entries()].find(([n, c]) => c === 4)![0];
+    let fourValue = [...valueCount.entries()].find(([v, c]) => c === 4)![0];
     let maxType = -1;
-    for (let i = 0; i < numbers.length; i++) if (numbers[i] === fourNumber && types[i] > maxType) maxType = types[i];
-    return { type: MADE_FOURCARDS, value: getValue(fourNumber, maxType, maxNumber), valid: true };
+    for (let i = 0; i < values.length; i++) {
+      if (values[i] === fourValue && types[i] > maxType) maxType = types[i];
+    }
+    
+    // 포카드는 4개짜리의 value 순위로 비교해야 함
+    const fourRank = getValueRank(fourValue, maxNumber);
+    const compareValue = fourRank * maxNumber * 4 + maxType; // 순위 기반 비교값
+    
+    console.log(`[DEBUG] 포카드 평가: fourValue=${fourValue}, fourRank=${fourRank}, maxType=${maxType}, compareValue=${compareValue}`);
+    
+    return { type: MADE_FOURCARDS, value: compareValue, valid: true };
   }
+  
+  // 풀하우스: 3개짜리 조합의 수로 비교
   if (three && two) {
-    let threeNumber = [...numCount.entries()].find(([n, c]) => c === 3)![0];
+    let threeValue = [...valueCount.entries()].find(([v, c]) => c === 3)![0];
     let maxType = -1;
-    for (let i = 0; i < numbers.length; i++) if (numbers[i] === threeNumber && types[i] > maxType) maxType = types[i];
-    return { type: MADE_FULLHOUSE, value: getValue(threeNumber, maxType, maxNumber), valid: true };
+    for (let i = 0; i < values.length; i++) {
+      if (values[i] === threeValue && types[i] > maxType) maxType = types[i];
+    }
+    
+    // 풀하우스는 3개짜리의 value 순위로 비교해야 함
+    const threeRank = getValueRank(threeValue, maxNumber);
+    const compareValue = threeRank * maxNumber * 4 + maxType; // 순위 기반 비교값
+    
+    console.log(`[DEBUG] 풀하우스 평가: threeValue=${threeValue}, threeRank=${threeRank}, maxType=${maxType}, compareValue=${compareValue}`);
+    
+    return { type: MADE_FULLHOUSE, value: compareValue, valid: true };
   }
+  
+  // 플러시: 가장 높은 수로 비교
   if (isFlush) {
-    return { type: MADE_FLUSH, value: getValue(bestNumber, bestType, maxNumber), valid: true };
+    let bestValue = -1, bestType = -1;
+    let bestRank = -1;
+    for (let i = 0; i < values.length; i++) {
+      const rank = getValueRank(values[i], maxNumber);
+      if (rank > bestRank || (rank === bestRank && types[i] > bestType)) {
+        bestRank = rank;
+        bestValue = values[i];
+        bestType = types[i];
+      }
+    }
+    
+    // 플러시는 가장 높은 카드의 순위로 비교
+    const compareValue = bestRank * maxNumber * 4 + bestType; // 순위 기반 비교값
+    
+    console.log(`[DEBUG] 플러시 평가: bestValue=${bestValue}, bestRank=${bestRank}, bestType=${bestType}, compareValue=${compareValue}`);
+    
+    return { type: MADE_FLUSH, value: compareValue, valid: true };
   }
+  
+  // 스트레이트: 가장 높은 수로 비교
   if (isStraight) {
-    return { type: MADE_STRAIGHT, value: getValue(bestNumber, bestType, maxNumber), valid: true };
+    let bestValue = -1, bestType = -1;
+    let bestRank = -1;
+    for (let i = 0; i < values.length; i++) {
+      const rank = getValueRank(values[i], maxNumber);
+      if (rank > bestRank || (rank === bestRank && types[i] > bestType)) {
+        bestRank = rank;
+        bestValue = values[i];
+        bestType = types[i];
+      }
+    }
+    
+    // 스트레이트는 가장 높은 카드의 순위로 비교
+    const compareValue = bestRank * maxNumber * 4 + bestType; // 순위 기반 비교값
+    
+    console.log(`[DEBUG] 스트레이트 평가: bestValue=${bestValue}, bestRank=${bestRank}, bestType=${bestType}, compareValue=${compareValue}`);
+    
+    return { type: MADE_STRAIGHT, value: compareValue, valid: true };
   }
+  
   return { type: MADE_NONE, value: 0, valid: false };
 }
 
