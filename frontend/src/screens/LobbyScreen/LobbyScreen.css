@@ -627,9 +627,13 @@
 /* 공개방 탭 내 로딩 컨테이너도 동일하게 적용 */
 .lobby-screen .public-rooms-list .loading-container {
   height: 20vh !important;
-  min-height: 10vh !important;
+  min-height: 20vh !important;
   padding: 2vw !important;
   font-size: 1vw !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .lobby-screen .public-rooms-list .loading-container .loading-spinner {
@@ -637,6 +641,23 @@
 }
 
 .lobby-screen .public-rooms-list .loading-container p {
+  font-size: 1vw !important;
+  margin: 0 !important;
+  opacity: 0.8 !important;
+}
+
+/* 공개방이 없을 때 메시지 영역 높이 통일 */
+.lobby-screen .public-rooms-list .no-rooms {
+  height: 20vh !important;
+  min-height: 20vh !important;
+  padding: 2vw !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.lobby-screen .public-rooms-list .no-rooms p {
   font-size: 1vw !important;
   margin: 0 !important;
   opacity: 0.8 !important;
@@ -989,6 +1010,7 @@
   width: 7vw;
 }
 
+/* 기본 no-rooms 스타일 (다른 곳에서 사용할 수 있음) */
 .no-rooms {
   text-align: center;
   padding: 3vw;

@@ -936,11 +936,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                     {isLoadingRooms ? (
                       <div className="loading-container">
                         <div className="loading-spinner"></div>
-                        <p>공개방 목록을 불러오는 중...</p>
+                        <p>방 목록을 불러오는 중...</p>
                       </div>
                     ) : publicRooms.length === 0 ? (
                       <div className="no-rooms">
-                        <p>현재 활성화된 공개방이 없습니다.</p>
+                        <p>현재 활성화된 방이 없습니다.</p>
                       </div>
                     ) : (
                       <div className="rooms-grid">
