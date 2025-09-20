@@ -798,15 +798,15 @@
 .rooms-grid {
   display: flex;
   flex-direction: column;
-  gap: 1.8vh;
-  padding: 1.5vh 0;
+  gap: 1.2vw;
+  padding: 1vw 0;
 }
 
 .room-card {
   background: rgba(255, 255, 255, 0.05);
-  border: 0.15vh solid rgba(255, 255, 255, 0.1);
-  border-radius: 1.5vh;
-  padding: 1.05vh;
+  border: 0.1vw solid rgba(255, 255, 255, 0.1);
+  border-radius: 1vw;
+  padding: 0.7vw;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -817,7 +817,7 @@
 .room-card:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-0.3vh);
+  transform: translateY(-0.2vw);
 }
 
 .lobby-screen .room-card .room-info {
@@ -831,72 +831,72 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 1.5vh;
+  gap: 1vw;
   flex: 1;
 }
 
 .lobby-screen .room-card .room-title {
   color: #ffffff;
-  font-size: 1.95vh;
+  font-size: 1.3vw;
   font-weight: 600;
   margin: 0;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 24.75vh;
-  padding-right: 0.6vh;
+  max-width: 16.5vw;
+  padding-right: 0.4vw;
 }
 
 .lobby-screen .room-card .room-type-badge {
-  font-size: 1.35vh;
-  padding: 0.45vh 0.9vh;
-  border-radius: 0.6vh;
+  font-size: 0.9vw;
+  padding: 0.3vw 0.6vw;
+  border-radius: 0.4vw;
   font-weight: 500;
   white-space: nowrap;
-  margin-left: 0.6vh;
+  margin-left: 0.4vw;
 }
 
 .lobby-screen .room-card .room-type-badge.public {
   background: rgba(74, 158, 255, 0.2);
   color: #4a9eff;
-  border: 0.15vh solid rgba(74, 158, 255, 0.3);
+  border: 0.1vw solid rgba(74, 158, 255, 0.3);
 }
 
 .lobby-screen .room-card .room-type-badge.private {
   background: rgba(255, 193, 7, 0.2);
   color: #ffc107;
-  border: 0.15vh solid rgba(255, 193, 7, 0.3);
+  border: 0.1vw solid rgba(255, 193, 7, 0.3);
 }
 
 .lobby-screen .room-card .room-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.2vh;
+  gap: 0.8vw;
 }
 
 .lobby-screen .room-card .player-count {
   display: flex;
   align-items: center;
-  gap: 0.75vh;
+  gap: 0.5vw;
   background: rgba(255, 255, 255, 0.05);
-  padding: 0.6vh 1.2vh;
-  border-radius: 0.9vh;
-  border: 0.15vh solid rgba(255, 255, 255, 0.1);
-  margin-right: 0.6vh;
+  padding: 0.4vw 0.8vw;
+  border-radius: 0.6vw;
+  border: 0.1vw solid rgba(255, 255, 255, 0.1);
+  margin-right: 0.4vw;
 }
 
 .lobby-screen .room-card .player-icon {
-  font-size: 1.65vh;
+  font-size: 1.1vw;
   opacity: 0.8;
 }
 
 .lobby-screen .room-card .player-numbers {
   display: flex;
   align-items: center;
-  gap: 0.3vh;
-  font-size: 1.5vh;
+  gap: 0.2vw;
+  font-size: 1vw;
   font-weight: 600;
 }
 
@@ -918,25 +918,25 @@
 .lobby-screen .room-card .join-button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  border-radius: 0.75vh;
-  padding: 0.9vh 1.2vh;
-  font-size: 1.8vh;
+  border-radius: 0.5vw;
+  padding: 0.6vw 0.8vw;
+  font-size: 1.2vw;
   color: #ffffff;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 3.75vh;
-  height: 3.75vh;
-  box-shadow: 0 0.3vh 0.75vh rgba(102, 126, 234, 0.3);
-  margin-right: 0.6vh;
+  min-width: 2.5vw;
+  height: 2.5vw;
+  box-shadow: 0 0.2vw 0.5vw rgba(102, 126, 234, 0.3);
+  margin-right: 0.4vw;
 }
 
 .lobby-screen .room-card .join-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #7680f0 0%, #8650b8 100%);
-  transform: translateY(-0.15vh);
-  box-shadow: 0 0.45vh 1.2vh rgba(102, 126, 234, 0.4);
+  transform: translateY(-0.1vw);
+  box-shadow: 0 0.3vw 0.8vw rgba(102, 126, 234, 0.4);
 }
 
 .lobby-screen .room-card .join-button:disabled {
@@ -949,8 +949,8 @@
 
 .lobby-screen .room-card .room-id {
   color: #888888;
-  font-size: 1.35vh;
-  margin: 0.45vh 0;
+  font-size: 0.9vw;
+  margin: 0.3vw 0;
   text-align: left;
   font-family: 'Courier New', monospace;
 }
