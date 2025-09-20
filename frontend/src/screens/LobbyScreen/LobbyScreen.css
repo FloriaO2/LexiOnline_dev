@@ -644,6 +644,8 @@
   font-size: 1vw !important;
   margin: 0 !important;
   opacity: 0.8 !important;
+  color: #b0b0b0 !important;
+  text-align: center !important;
 }
 
 /* 공개방이 없을 때 메시지 영역 높이 통일 */
@@ -661,6 +663,8 @@
   font-size: 1vw !important;
   margin: 0 !important;
   opacity: 0.8 !important;
+  color: #b0b0b0 !important;
+  text-align: center !important;
 }
 
 .loading-container p {
