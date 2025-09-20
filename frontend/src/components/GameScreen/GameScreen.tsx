@@ -1680,14 +1680,27 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     
     const dragImage = cardElement.cloneNode(true) as HTMLElement;
     dragImage.id = 'touch-drag-image';
+    
+    // 원본 카드의 크기 정보 가져오기
+    const rect = cardElement.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(cardElement);
+    
     dragImage.style.position = 'fixed';
-    dragImage.style.left = (x - 25) + 'px';
-    dragImage.style.top = (y - 30) + 'px';
+    dragImage.style.left = (x - rect.width / 2) + 'px';
+    dragImage.style.top = (y - rect.height / 2) + 'px';
+    dragImage.style.width = rect.width + 'px';
+    dragImage.style.height = rect.height + 'px';
     dragImage.style.opacity = '0.8';
     dragImage.style.transform = 'rotate(5deg) scale(1.1)';
     dragImage.style.zIndex = '9999';
     dragImage.style.pointerEvents = 'none';
     dragImage.style.transition = 'none';
+    
+    // 원본 카드의 모든 스타일 복사
+    dragImage.style.backgroundColor = computedStyle.backgroundColor;
+    dragImage.style.border = computedStyle.border;
+    dragImage.style.borderRadius = computedStyle.borderRadius;
+    dragImage.style.boxShadow = computedStyle.boxShadow;
     
     document.body.appendChild(dragImage);
   };
@@ -1696,8 +1709,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   const updateTouchDragImage = (x: number, y: number) => {
     const dragImage = document.getElementById('touch-drag-image');
     if (dragImage) {
-      dragImage.style.left = (x - 25) + 'px';
-      dragImage.style.top = (y - 30) + 'px';
+      const width = parseFloat(dragImage.style.width) || 0;
+      const height = parseFloat(dragImage.style.height) || 0;
+      dragImage.style.left = (x - width / 2) + 'px';
+      dragImage.style.top = (y - height / 2) + 'px';
     }
   };
 
