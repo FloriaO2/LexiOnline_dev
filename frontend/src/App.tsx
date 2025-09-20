@@ -8,6 +8,7 @@ import ResultScreen from './screens/ResultScreen/ResultScreen';
 import FinalResultScreen from './screens/FinalResultScreen/FinalResultScreen';
 import ColyseusService from './services/ColyseusService';
 import GoogleOAuthCallback from './auth/google/callback';
+import OrientationWarning from './components/OrientationWarning/OrientationWarning';
 
 type ScreenType = 'lobby' | 'waiting' | 'game' | 'result' | 'finalResult';
 
@@ -109,6 +110,31 @@ function AppContent() {
 }
 
 function App() {
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  // 화면 방향 감지
+  useEffect(() => {
+    const checkOrientation = () => {
+      const isPortraitMode = window.innerHeight > window.innerWidth;
+      setIsPortrait(isPortraitMode);
+    };
+
+    // 초기 체크
+    checkOrientation();
+
+    // 화면 크기 변경 및 회전 감지
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', () => {
+      // orientationchange 이벤트 후 약간의 지연을 두고 체크
+      setTimeout(checkOrientation, 100);
+    });
+
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
+
   // 모바일에서 브라우저 UI 숨김 처리
   useEffect(() => {
     const handleMobileViewport = () => {
@@ -166,6 +192,7 @@ function App() {
   return (
     <Router>
       <div className="App">
+        {isPortrait && <OrientationWarning />}
         <Routes>
           <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
           <Route path="*" element={<AppContent />} />
