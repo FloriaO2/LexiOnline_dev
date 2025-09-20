@@ -237,7 +237,7 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
                     <div className="privacy-icon">🔒</div>
                     <p className="privacy-message">{privacyMessage}</p>
                     <p className="privacy-description">
-                      이 유저는 전적 공개를 허용하지 않았습니다.
+                      이 유저의 전적을 확인할 수 없습니다.
                     </p>
                   </div>
                 ) : games.length === 0 ? (
