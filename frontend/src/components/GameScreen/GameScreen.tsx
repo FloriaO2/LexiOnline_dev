@@ -1597,6 +1597,73 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     }, 0);
   };
 
+  // 터치 이벤트 핸들러 (기존 마우스 이벤트와 통합)
+  const handleTouchStart = (e: React.TouchEvent, cardId: number) => {
+    e.preventDefault(); // 컨텍스트 메뉴 방지
+    const touch = e.touches[0];
+    
+    // 터치 위치 저장
+    e.currentTarget.setAttribute('data-touch-x', touch.clientX.toString());
+    e.currentTarget.setAttribute('data-touch-y', touch.clientY.toString());
+    e.currentTarget.setAttribute('data-touch-time', Date.now().toString());
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const startX = parseFloat(e.currentTarget.getAttribute('data-touch-x') || '0');
+    const startY = parseFloat(e.currentTarget.getAttribute('data-touch-y') || '0');
+    const deltaX = Math.abs(touch.clientX - startX);
+    const deltaY = Math.abs(touch.clientY - startY);
+    
+    // 10px 이상 이동하면 드래그 시작
+    if ((deltaX > 10 || deltaY > 10) && !isDragging) {
+      const cardId = parseInt(e.currentTarget.getAttribute('data-card-id') || '0');
+      setDraggedCard(cardId);
+      setIsDragging(true);
+    }
+
+    // 드래그 중이면 기존 handleDragOver 호출
+    if (isDragging && handRef.current) {
+      const syntheticEvent = {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        preventDefault: () => {},
+        dataTransfer: { dropEffect: 'move' }
+      } as React.DragEvent;
+      handleDragOver(syntheticEvent);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    if (isDragging) {
+      // 드래그 완료
+      const touch = e.changedTouches[0];
+      const syntheticEvent = {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        preventDefault: () => {},
+        dataTransfer: { dropEffect: 'move' }
+      } as React.DragEvent;
+      handleDrop(syntheticEvent);
+    } else {
+      // 짧은 터치 - 카드 선택
+      const touch = e.changedTouches[0];
+      const startX = parseFloat(e.currentTarget.getAttribute('data-touch-x') || '0');
+      const startY = parseFloat(e.currentTarget.getAttribute('data-touch-y') || '0');
+      const deltaX = Math.abs(touch.clientX - startX);
+      const deltaY = Math.abs(touch.clientY - startY);
+      
+      if (deltaX < 10 && deltaY < 10) {
+        const cardId = parseInt(e.currentTarget.getAttribute('data-card-id') || '0');
+        handleCardSelect(cardId);
+      }
+    }
+  };
+
   // 마우스 위치를 기준으로 가장 가까운 삽입 위치를 계산하는 함수 (절대 위치 기준)
   const calculateDropPosition = (e: React.DragEvent): number => {
     if (!handRef.current) return 0;
@@ -2136,7 +2203,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   };
 
   return (
-    <div className="game-screen">
+    <div 
+      className="game-screen" 
+      onContextMenu={(e) => e.preventDefault()}
+      style={{ touchAction: 'manipulation' }}
+    >
 
       {/* 다음 라운드 대기 팝업 */}
       {waitingForNextRound && (
@@ -2408,6 +2479,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
               {sortedHand.map((tile, index) => (
                 <div 
                   key={tile.id} 
+                  data-card-id={tile.id}
                   className={`hand-tile ${getDisplayColor(tile.color, gameMode)} ${selectedCards.includes(tile.id) ? 'selected' : ''} ${draggedCard === tile.id ? 'dragging' : ''} ${isSorting ? 'sorting' : ''} ${isDragging && draggedCard !== tile.id && cardOffsets[tile.id] !== undefined ? 'dragging-preview' : ''}`}
                   style={(isSorting || (isDragging && cardOffsets[tile.id] !== undefined)) ? {
                     transform: `translateX(${cardOffsets[tile.id]}px)`
@@ -2416,6 +2488,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                   draggable={!isSorting}
                   onDragStart={(e: React.DragEvent) => handleDragStart(e, tile.id)}
                   onDragEnd={handleDragEnd}
+                  onTouchStart={(e: React.TouchEvent) => handleTouchStart(e, tile.id)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
                 >
                   {/* 카드 분배 애니메이션 중에는 뒷면만 표시 */}
                   {gameMode === 'normal' && imagesLoaded && getCardImage(getDisplayColor(tile.color, gameMode)) && (
