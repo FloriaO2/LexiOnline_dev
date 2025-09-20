@@ -633,14 +633,6 @@
     font-size: clamp(0.8vw, 2.5vw, 1.2vw);
   }
   
-  .rounds-setting label {
-    font-size: clamp(1.2vw, 3vw, 1.6vw);
-  }
-  
-  .blindmode-setting label {
-    font-size: clamp(1.2vw, 3vw, 1.6vw);
-  }
-  
   .custom-dropdown {
     min-width: 12vw;
   }
@@ -664,14 +656,6 @@
   
   .status {
     font-size: clamp(1vw, 3vw, 1.4vw);
-  }
-  
-  .rounds-setting label {
-    font-size: clamp(1.4vw, 3.5vw, 1.8vw);
-  }
-  
-  .blindmode-setting label {
-    font-size: clamp(1.4vw, 3.5vw, 1.8vw);
   }
   
   .custom-dropdown {
