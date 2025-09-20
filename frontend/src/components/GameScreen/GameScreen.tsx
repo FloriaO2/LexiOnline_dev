@@ -1606,6 +1606,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     e.currentTarget.setAttribute('data-touch-x', touch.clientX.toString());
     e.currentTarget.setAttribute('data-touch-y', touch.clientY.toString());
     e.currentTarget.setAttribute('data-touch-time', Date.now().toString());
+    
+    // 터치 드래그용 반투명 카드 생성
+    createTouchDragImage(e.currentTarget as HTMLElement, touch.clientX, touch.clientY);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -1616,6 +1619,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     const startY = parseFloat(e.currentTarget.getAttribute('data-touch-y') || '0');
     const deltaX = Math.abs(touch.clientX - startX);
     const deltaY = Math.abs(touch.clientY - startY);
+    
+    // 터치 드래그 이미지 위치 업데이트
+    updateTouchDragImage(touch.clientX, touch.clientY);
     
     // 10px 이상 이동하면 드래그 시작
     if ((deltaX > 10 || deltaY > 10) && !isDragging) {
@@ -1639,6 +1645,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.preventDefault();
     
+    // 터치 드래그 이미지 제거
+    removeTouchDragImage();
+    
     if (isDragging) {
       // 드래그 완료
       const touch = e.changedTouches[0];
@@ -1661,6 +1670,42 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         const cardId = parseInt(e.currentTarget.getAttribute('data-card-id') || '0');
         handleCardSelect(cardId);
       }
+    }
+  };
+
+  // 터치 드래그용 반투명 카드 생성
+  const createTouchDragImage = (cardElement: HTMLElement, x: number, y: number) => {
+    // 기존 터치 드래그 이미지가 있으면 제거
+    removeTouchDragImage();
+    
+    const dragImage = cardElement.cloneNode(true) as HTMLElement;
+    dragImage.id = 'touch-drag-image';
+    dragImage.style.position = 'fixed';
+    dragImage.style.left = (x - 25) + 'px';
+    dragImage.style.top = (y - 30) + 'px';
+    dragImage.style.opacity = '0.8';
+    dragImage.style.transform = 'rotate(5deg) scale(1.1)';
+    dragImage.style.zIndex = '9999';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.transition = 'none';
+    
+    document.body.appendChild(dragImage);
+  };
+
+  // 터치 드래그 이미지 위치 업데이트
+  const updateTouchDragImage = (x: number, y: number) => {
+    const dragImage = document.getElementById('touch-drag-image');
+    if (dragImage) {
+      dragImage.style.left = (x - 25) + 'px';
+      dragImage.style.top = (y - 30) + 'px';
+    }
+  };
+
+  // 터치 드래그 이미지 제거
+  const removeTouchDragImage = () => {
+    const dragImage = document.getElementById('touch-drag-image');
+    if (dragImage) {
+      document.body.removeChild(dragImage);
     }
   };
 
@@ -1912,6 +1957,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     // console.log('[DEBUG] 🧹 드래그 엔드에서 완전 정리: 오프셋 초기화');
     setCardOffsets({}); // 카드 오프셋도 초기화
     lastDropPositionRef.current = -1; // 위치 참조도 초기화
+    
+    // 터치 드래그 이미지 제거
+    removeTouchDragImage();
     
     // 타이머 정리
     if (dragOverTimeoutRef.current) {
