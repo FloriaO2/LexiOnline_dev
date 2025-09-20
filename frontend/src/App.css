@@ -1,7 +1,11 @@
 .App {
   width: 100vw;
   min-height: 100vh;
-  min-height: 100dvh; /* 동적 뷰포트 높이 지원 */
+  min-height: 100svh; /* Small Viewport Height - 브라우저 UI 제외한 최소 높이 */
+  min-height: 100dvh; /* Dynamic Viewport Height - 브라우저 UI 상태에 따라 변동 */
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -11,6 +15,8 @@
   /* 스크롤바 숨기기 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
+  /* 모바일에서 스크롤 바운스 방지 */
+  overscroll-behavior: none;
 }
 
 /* Webkit 브라우저에서 스크롤바 숨기기 */
@@ -21,7 +27,33 @@
 /* 모바일/태블릿에서 전체 화면 사용 */
 @media screen and (max-width: 768px) {
   .App {
+    height: 100vh;
+    height: 100svh; /* 모바일에서 안정적인 높이 */
+    height: 100dvh; /* 동적 높이 */
     min-height: 100vh;
+    min-height: 100svh;
     min-height: 100dvh;
+  }
+}
+
+/* 더 작은 모바일 화면 (스마트폰) */
+@media screen and (max-width: 480px) {
+  .App {
+    /* 스마트폰에서 브라우저 UI가 더 자주 변경되므로 svh 사용 */
+    height: 100svh;
+    min-height: 100svh;
+    /* JavaScript로 설정된 동적 뷰포트 높이 사용 */
+    height: calc(var(--vh, 1vh) * 100);
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+}
+
+/* CSS 변수를 지원하지 않는 브라우저를 위한 폴백 */
+@supports not (height: calc(var(--vh) * 100)) {
+  @media screen and (max-width: 480px) {
+    .App {
+      height: 100vh;
+      min-height: 100vh;
+    }
   }
 }

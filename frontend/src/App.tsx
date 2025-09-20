@@ -109,6 +109,60 @@ function AppContent() {
 }
 
 function App() {
+  // 모바일에서 브라우저 UI 숨김 처리
+  useEffect(() => {
+    const handleMobileViewport = () => {
+      // 모바일 기기 감지
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isSmallScreen = window.innerWidth <= 768;
+      
+      if (isMobile || isSmallScreen) {
+        // 뷰포트 높이 동적 조정을 위한 CSS 변수 설정
+        const updateViewportHeight = () => {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+        
+        // 초기 설정
+        updateViewportHeight();
+        
+        // 화면 크기 변경 시 업데이트 (브라우저 UI 숨김/표시 시)
+        window.addEventListener('resize', updateViewportHeight);
+        window.addEventListener('orientationchange', () => {
+          setTimeout(updateViewportHeight, 100);
+        });
+        
+        // 스크롤 시 브라우저 UI 숨김 유도 (iOS Safari 등)
+        let ticking = false;
+        const handleScroll = () => {
+          if (!ticking) {
+            requestAnimationFrame(() => {
+              // 최상단으로 스크롤하여 주소창 숨김 유도
+              if (window.scrollY > 0) {
+                window.scrollTo(0, 1);
+                setTimeout(() => window.scrollTo(0, 0), 0);
+              }
+              ticking = false;
+            });
+            ticking = true;
+          }
+        };
+        
+        // 터치 이벤트로 브라우저 UI 숨김 유도
+        document.addEventListener('touchstart', handleScroll, { passive: true });
+        
+        // 정리 함수
+        return () => {
+          window.removeEventListener('resize', updateViewportHeight);
+          window.removeEventListener('orientationchange', updateViewportHeight);
+          document.removeEventListener('touchstart', handleScroll);
+        };
+      }
+    };
+    
+    handleMobileViewport();
+  }, []);
+
   return (
     <Router>
       <div className="App">
