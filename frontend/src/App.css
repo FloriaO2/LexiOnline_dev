@@ -1,7 +1,27 @@
 .App {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh; /* 동적 뷰포트 높이 지원 */
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* 모바일/태블릿에서 스크롤 허용 */
+  -webkit-overflow-scrolling: touch;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Webkit 브라우저에서 스크롤바 숨기기 */
+.App::-webkit-scrollbar {
+  display: none;
+}
+
+/* 모바일/태블릿에서 전체 화면 사용 */
+@media screen and (max-width: 768px) {
+  .App {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
 }

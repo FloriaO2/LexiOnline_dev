@@ -1,6 +1,7 @@
 .game-screen {
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* 동적 뷰포트 높이 지원 */
   background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 25%, #0f0f0f 50%, #1a1a1a 75%, #2a2a2a 100%);
   display: flex;
   justify-content: center;
@@ -8,12 +9,24 @@
   font-family: 'Arial', sans-serif;
   color: #333333;
   margin: 0 auto;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* 모바일/태블릿에서 스크롤 허용 */
+  -webkit-overflow-scrolling: touch;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* 게임 화면 스크롤바 숨기기 */
+.game-screen::-webkit-scrollbar {
+  display: none;
 }
 
 .game-container {
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* 동적 뷰포트 높이 지원 */
   display: grid;
   grid-template-areas: 
     "top-left game-board"
@@ -842,6 +855,10 @@
   aspect-ratio: 42/60;
   min-width: 25px;
   min-height: 36px;
+  /* 터치 드래그 지원 */
+  touch-action: manipulation;
+  -webkit-user-drag: element;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .hand-tile:active {
@@ -1033,6 +1050,9 @@
   .game-screen {
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* 모바일에서 동적 뷰포트 높이 사용 */
+    min-height: 100vh;
+    min-height: 100dvh;
   }
   .game-container {
     width: 95vw;
@@ -1341,5 +1361,31 @@
   .combination-item {
     font-size: 0.9vw;
     height: 2vh;
+  }
+}
+
+/* 모바일/태블릿 전용 스타일 */
+@media screen and (max-width: 768px) {
+  .game-screen {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .game-container {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    grid-template-rows: auto auto auto;
+    gap: 15px;
+    padding: 10px;
+    margin: 0;
+    border-radius: 0;
+  }
+  
+  /* 모바일에서 터치 개선 */
+  .hand-tile {
+    -webkit-tap-highlight-color: transparent;
   }
 }

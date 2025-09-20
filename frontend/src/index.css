@@ -6,7 +6,41 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* 모바일/태블릿에서 스크롤 허용 */
+  -webkit-overflow-scrolling: touch;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  /* 모바일/태블릿에서 전체 화면 사용 */
+  height: 100vh;
+  height: 100dvh; /* 동적 뷰포트 높이 지원 */
+}
+
+/* Webkit 브라우저 (Chrome, Safari)에서 스크롤바 숨기기 */
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* 모바일/태블릿에서 브라우저 UI 숨기기 */
+@supports (height: 100dvh) {
+  body {
+    height: 100dvh;
+  }
+}
+
+/* iOS Safari에서 주소창 숨기기 */
+@media screen and (max-width: 768px) {
+  body {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: auto;
+  }
 }
 
 code {
