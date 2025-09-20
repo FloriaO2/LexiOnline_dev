@@ -637,11 +637,11 @@
 }
 
 .lobby-screen .public-rooms-list .loading-container .loading-spinner {
-  margin-bottom: 1.5vw !important;
+  margin-bottom: 2.25vh !important;
 }
 
 .lobby-screen .public-rooms-list .loading-container p {
-  font-size: 1vw !important;
+  font-size: 1.5vh !important;
   margin: 0 !important;
   opacity: 0.8 !important;
   color: #b0b0b0 !important;
@@ -660,7 +660,7 @@
 }
 
 .lobby-screen .public-rooms-list .no-rooms p {
-  font-size: 1vw !important;
+  font-size: 1.5vh !important;
   margin: 0 !important;
   opacity: 0.8 !important;
   color: #b0b0b0 !important;
@@ -742,22 +742,22 @@
 .room-type-selector {
   display: flex;
   justify-content: center;
-  gap: 0.8vw;
-  margin-top: 0.5vw;
+  gap: 1.2vh;
+  margin-top: 0.75vh;
 }
 
 .room-type-button {
   background: rgba(255, 255, 255, 0.05);
-  border: 0.15vw solid rgba(255, 255, 255, 0.1);
-  border-radius: 1.2vw;
-  padding: 1vw 1.8vw;
-  font-size: 1vw;
+  border: 0.225vh solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.8vh;
+  padding: 1.5vh 2.7vh;
+  font-size: 1.5vh;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 0.6vw;
+  gap: 0.9vh;
   color: #cccccc;
   flex: 1;
   justify-content: center;
@@ -765,7 +765,7 @@
 
 .room-type-button:hover {
   border-color: #667eea;
-  transform: translateY(-0.15vw);
+  transform: translateY(-0.225vh);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -773,11 +773,11 @@
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border-color: #667eea;
-  box-shadow: 0 0.6vw 2vw rgba(102, 126, 234, 0.3);
+  box-shadow: 0 0.9vh 3vh rgba(102, 126, 234, 0.3);
 }
 
 .room-type-icon {
-  font-size: 1.2vw;
+  font-size: 1.8vh;
   transition: all 0.3s ease;
 }
 
@@ -796,8 +796,8 @@
 }
 
 .rooms-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(31.25vh, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.8vh;
   padding: 1.5vh 0;
 }
@@ -820,14 +820,14 @@
   transform: translateY(-0.3vh);
 }
 
-.room-info {
+.lobby-screen .room-card .room-info {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
 
-.room-header {
+.lobby-screen .room-card .room-header {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -835,7 +835,7 @@
   flex: 1;
 }
 
-.room-title {
+.lobby-screen .room-card .room-title {
   color: #ffffff;
   font-size: 1.95vh;
   font-weight: 600;
@@ -848,7 +848,7 @@
   padding-right: 0.6vh;
 }
 
-.room-type-badge {
+.lobby-screen .room-card .room-type-badge {
   font-size: 1.35vh;
   padding: 0.45vh 0.9vh;
   border-radius: 0.6vh;
@@ -857,26 +857,26 @@
   margin-left: 0.6vh;
 }
 
-.room-type-badge.public {
+.lobby-screen .room-card .room-type-badge.public {
   background: rgba(74, 158, 255, 0.2);
   color: #4a9eff;
   border: 0.15vh solid rgba(74, 158, 255, 0.3);
 }
 
-.room-type-badge.private {
+.lobby-screen .room-card .room-type-badge.private {
   background: rgba(255, 193, 7, 0.2);
   color: #ffc107;
   border: 0.15vh solid rgba(255, 193, 7, 0.3);
 }
 
-.room-meta {
+.lobby-screen .room-card .room-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.2vh;
 }
 
-.player-count {
+.lobby-screen .room-card .player-count {
   display: flex;
   align-items: center;
   gap: 0.75vh;
@@ -887,12 +887,12 @@
   margin-right: 0.6vh;
 }
 
-.player-icon {
+.lobby-screen .room-card .player-icon {
   font-size: 1.65vh;
   opacity: 0.8;
 }
 
-.player-numbers {
+.lobby-screen .room-card .player-numbers {
   display: flex;
   align-items: center;
   gap: 0.3vh;
@@ -900,22 +900,22 @@
   font-weight: 600;
 }
 
-.current-players {
+.lobby-screen .room-card .current-players {
   color: #4a9eff;
   font-weight: 700;
 }
 
-.player-separator {
+.lobby-screen .room-card .player-separator {
   color: #cccccc;
   font-weight: 400;
 }
 
-.max-players {
+.lobby-screen .room-card .max-players {
   color: #888888;
   font-weight: 500;
 }
 
-.join-button {
+.lobby-screen .room-card .join-button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   border-radius: 0.75vh;
@@ -933,13 +933,13 @@
   margin-right: 0.6vh;
 }
 
-.join-button:hover:not(:disabled) {
+.lobby-screen .room-card .join-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #7680f0 0%, #8650b8 100%);
   transform: translateY(-0.15vh);
   box-shadow: 0 0.45vh 1.2vh rgba(102, 126, 234, 0.4);
 }
 
-.join-button:disabled {
+.lobby-screen .room-card .join-button:disabled {
   background: linear-gradient(135deg, #666666 0%, #888888 100%);
   cursor: not-allowed;
   opacity: 0.6;
@@ -947,7 +947,7 @@
   box-shadow: none;
 }
 
-.room-id {
+.lobby-screen .room-card .room-id {
   color: #888888;
   font-size: 1.35vh;
   margin: 0.45vh 0;
