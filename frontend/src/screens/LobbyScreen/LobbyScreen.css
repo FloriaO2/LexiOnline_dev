@@ -624,10 +624,10 @@
   opacity: 0.8 !important;
 }
 
-/* 공개방 탭 내 로딩 컨테이너도 동일하게 적용 */
+/* 방 참여하기 탭 내 로딩 컨테이너도 동일하게 적용 */
 .lobby-screen .public-rooms-list .loading-container {
-  height: 20vh !important;
-  min-height: 20vh !important;
+  height: 15vh !important;
+  min-height: 15vh !important;
   padding: 2vw !important;
   font-size: 1vw !important;
   display: flex !important;
@@ -637,7 +637,7 @@
 }
 
 .lobby-screen .public-rooms-list .loading-container .loading-spinner {
-  margin-bottom: 2.25vh !important;
+  margin-bottom: 1vh !important;
 }
 
 .lobby-screen .public-rooms-list .loading-container p {
@@ -648,10 +648,10 @@
   text-align: center !important;
 }
 
-/* 공개방이 없을 때 메시지 영역 높이 통일 */
+/* 방이 없을 때 메시지 영역 높이 통일 */
 .lobby-screen .public-rooms-list .no-rooms {
-  height: 20vh !important;
-  min-height: 20vh !important;
+  height: 15vh !important;
+  min-height: 15vh !important;
   padding: 2vw !important;
   display: flex !important;
   flex-direction: column !important;
@@ -781,10 +781,10 @@
   transition: all 0.3s ease;
 }
 
-/* 공개방 목록 스타일 */
+/* 방 목록 스타일 */
 .public-rooms-list {
   margin-top: 2.25vh;
-  max-height: 47vh;
+  max-height: 35vh;
   overflow-y: auto;
   /* 스크롤바 숨기기 */
   scrollbar-width: none; /* Firefox */

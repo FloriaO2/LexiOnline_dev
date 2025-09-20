@@ -46,7 +46,7 @@ export default config({
     // API 라우터 등록
     app.use('/api', authRouter);
     
-    // 공개방 목록 조회 API
+    // 방 목록 조회 API
     app.get('/api/rooms', async (req, res) => {
       try {
         // Colyseus 게임 서버에서 활성화된 방 목록 가져오기

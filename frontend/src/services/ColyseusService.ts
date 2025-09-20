@@ -183,7 +183,7 @@ class ColyseusService {
     return this.roomInfo;
   }
 
-  // 공개방 목록 조회
+  // 방 목록 조회
   async getPublicRooms(): Promise<any[]> {
     try {
       const isProduction = process.env.NODE_ENV === 'production';

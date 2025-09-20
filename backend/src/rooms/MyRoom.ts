@@ -72,7 +72,7 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       this.state.roomTitle = options.roomTitle;
     }
     
-    // 방 메타데이터 설정 (공개방 목록 조회용)
+    // 방 메타데이터 설정 (방 목록 조회용)
     const metadata = {
       roomType: this.state.roomType,
       roomTitle: this.state.roomTitle,

@@ -143,7 +143,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       });
   }, [token]);
 
-  // 공개방 탭이 활성화될 때 공개방 목록 로드
+  // 방 참여하기 탭이 활성화될 때 방 목록 로드
   useEffect(() => {
     if (activeTab === 'public' && token) {
       loadPublicRooms();
@@ -435,7 +435,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         }
       }
       
-      // 방 생성 후 공개방 목록 새로고침 (공개방인 경우에만)
+      // 방 생성 후 방 목록 새로고침
       if (roomType === 'public' && activeTab === 'public') {
         setTimeout(() => {
           loadPublicRooms();
@@ -479,7 +479,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       });
       console.log('방 참가 성공:', room.sessionId);
       
-      // 방 참가 후 공개방 목록 새로고침
+      // 방 참가 후 방 목록 새로고침
       if (activeTab === 'public') {
         setTimeout(() => {
           loadPublicRooms();
@@ -552,7 +552,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
         setPasswordModal({ isOpen: false, roomId: '', roomTitle: '' });
       }
       
-      // 방 참가 후 공개방 목록 새로고침 (공개방인 경우에만)
+      // 방 참가 후 방 목록 새로고침
       if (!isPrivateRoom && activeTab === 'public') {
         setTimeout(() => {
           loadPublicRooms();

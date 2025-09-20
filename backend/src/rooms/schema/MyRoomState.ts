@@ -12,7 +12,7 @@ export class MyRoomState extends Schema {
   // 비밀방일 때 사용할 비밀번호
   @type("string") roomPassword = "";
 
-  // 방 제목 (공개방 목록에서 표시)
+  // 방 제목 (방 목록에서 표시)
   @type("string") roomTitle = "";
 
   @type("int8") lastPlayerIndex = 0;
