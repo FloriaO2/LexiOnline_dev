@@ -837,7 +837,7 @@
 
 .lobby-screen .room-card .room-title {
   color: #ffffff;
-  font-size: 1.3vw;
+  font-size: 1.1vw;
   font-weight: 600;
   margin: 0;
   text-align: left;
@@ -920,7 +920,7 @@
   border: none;
   border-radius: 0.5vw;
   padding: 0.6vw 0.8vw;
-  font-size: 1.2vw;
+  font-size: 1vw;
   color: #ffffff;
   cursor: pointer;
   transition: all 0.3s ease;

@@ -26,4 +26,6 @@ export class PlayerState extends Schema {
   @type("boolean") hasPassed = false;
 
   @type("boolean") readyForNextRound = false;
+
+  @type("boolean") isLoaded = false; // 게임 로딩 완료 상태
 }

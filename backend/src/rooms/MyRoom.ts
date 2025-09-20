@@ -302,6 +302,29 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       });
     });
 
+    // 게임 로딩 완료 신호 처리
+    this.onMessage("gameLoaded", (client) => {
+      console.log(`플레이어 ${client.sessionId}가 게임 로딩 완료 신호를 보냄`);
+      
+      const player = this.state.players.get(client.sessionId);
+      if (player) {
+        player.isLoaded = true;
+        console.log(`플레이어 ${client.sessionId} 로딩 완료 상태 업데이트`);
+        
+        // 모든 플레이어가 로딩 완료되었는지 확인
+        const allPlayersLoaded = Array.from(this.state.players.values()).every(p => p.isLoaded);
+        console.log(`로딩 상태 확인: ${Array.from(this.state.players.entries()).map(([id, p]) => `${id}:${p.isLoaded}`).join(', ')}`);
+        
+        if (allPlayersLoaded && this.state.round > 0) {
+          console.log("모든 플레이어가 로딩 완료 - 타임어택 타이머 시작");
+          // 모든 플레이어가 로딩 완료되었고 게임이 시작된 상태라면 타임어택 타이머 시작
+          if (this.state.timeAttackMode) {
+            this.startTurnTimer();
+          }
+        }
+      }
+    });
+
     this.onMessage("requestFinalResult", (client) => {
       if (this.finalGameResult) {
         console.log(`[DEBUG] 플레이어 ${client.sessionId}에게 최종 결과를 전송합니다.`);
@@ -943,13 +966,27 @@ export class MyRoom extends Room<MyRoomState> implements IMyRoom {
       round: this.state.round,
     });
 
-    // 9) 첫 번째 턴 시작 (타임어택 모드인 경우 타이머도 시작)
+    // 9) 첫 번째 턴 시작 (타임어택 모드는 모든 플레이어 로딩 완료 후 시작)
     console.log(`[DEBUG] startRound 완료 - 첫 번째 턴 시작`);
     // nextPlayer()를 호출하지 않음 - 이미 nowPlayerIndex가 구름3 플레이어로 설정됨
     
-    // 타임어택 모드인 경우 첫 번째 턴 타이머 시작
+    // 모든 플레이어의 로딩 상태 초기화
+    Array.from(this.state.players.values()).forEach(player => {
+      player.isLoaded = false;
+    });
+    
+    // 타임어택 모드인 경우 모든 플레이어가 로딩 완료할 때까지 기다림 (최대 5초)
     if (this.state.timeAttackMode) {
-      this.startTurnTimer();
+      console.log(`[DEBUG] 타임어택 모드 - 모든 플레이어 로딩 완료 대기 중 (최대 5초)`);
+      
+      // 5초 후에도 모든 플레이어가 로딩 완료되지 않으면 강제로 타이머 시작
+      setTimeout(() => {
+        const allPlayersLoaded = Array.from(this.state.players.values()).every(p => p.isLoaded);
+        if (!allPlayersLoaded) {
+          console.log("5초 타임아웃 - 강제로 타임어택 타이머 시작");
+          this.startTurnTimer();
+        }
+      }, 5000);
     }
   }
 

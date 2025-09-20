@@ -107,6 +107,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   
   // 이미지 로딩 상태 관리
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  
+  // 게임 로딩 완료 상태 관리
+  const [isGameLoaded, setIsGameLoaded] = useState(false);
 
   const [boardSize, setBoardSize] = useState({ rows: 4, cols: 15 });
   const [showCombinationGuide, setShowCombinationGuide] = useState(false);
@@ -238,6 +241,18 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     
     loadImages();
   }, []);
+
+  // 게임 로딩 완료 신호 전송
+  useEffect(() => {
+    if (imagesLoaded && !isGameLoaded) {
+      console.log('게임 로딩 완료 신호 전송', { imagesLoaded, isGameLoaded });
+      const room = ColyseusService.getRoom();
+      if (room) {
+        room.send('gameLoaded', {});
+        setIsGameLoaded(true);
+      }
+    }
+  }, [imagesLoaded, isGameLoaded]);
 
   // 타임어택 타이머 관리
   useEffect(() => {
@@ -500,6 +515,16 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       setBoardSize({ rows: 4, cols: 15 });
       setPendingCards([]);
       console.log('새 라운드 시작 - 보드 크기 리셋: 4x15');
+      
+      // 새로운 라운드 시작 시 로딩 상태 초기화
+      setIsGameLoaded(false);
+      
+      // 이미지가 로딩되어 있다면 즉시 로딩 완료 신호 전송
+      if (imagesLoaded) {
+        console.log('라운드 시작 - 즉시 로딩 완료 신호 전송');
+        room.send('gameLoaded', {});
+        setIsGameLoaded(true);
+      }
       
       if (message.hand) {
         const maxNumber = message.maxNumber || 13;
@@ -1985,6 +2010,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   };
 
   const handlePass = () => {
+    // 로딩 상태 체크 - 게임이 완전히 로딩되지 않았으면 함수 실행 중단
+    if (!isGameLoaded) {
+      console.log('[DEBUG] handlePass - 게임 로딩 중, 함수 실행 중단');
+      return;
+    }
+    
     // 턴 체크 - 자신의 차례가 아니면 함수 실행 중단
     if (!isMyTurn) {
       console.log('[DEBUG] handlePass - 자신의 차례가 아님, 함수 실행 중단');
@@ -2043,6 +2074,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     // 중복 제출 방지
     if (isSubmitting) {
       console.log('[DEBUG] handleSubmitCards - 이미 제출 중, 중복 호출 방지');
+      return;
+    }
+    
+    // 로딩 상태 체크 - 게임이 완전히 로딩되지 않았으면 함수 실행 중단
+    if (!isGameLoaded) {
+      console.log('[DEBUG] handleSubmitCards - 게임 로딩 중, 함수 실행 중단');
       return;
     }
     
@@ -2499,30 +2536,30 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
             {/* 우측 - Drop/Pass 버튼 */}
             <div className="action-buttons">
               <button 
-                className={`action-btn drop-btn ${!isMyTurn || isSubmitting ? 'disabled' : ''}`} 
+                className={`action-btn drop-btn ${!isMyTurn || isSubmitting || !isGameLoaded ? 'disabled' : ''}`} 
                 onClick={(e) => {
                   e.preventDefault();
-                  if (!isMyTurn || isSubmitting) {
+                  if (!isMyTurn || isSubmitting || !isGameLoaded) {
                     return;
                   }
                   handleSubmitCards();
                 }}
-                disabled={!isMyTurn || isSubmitting}
-                title={!isMyTurn ? '다른 플레이어의 차례입니다' : isSubmitting ? '제출 중입니다' : '카드를 제출합니다'}
+                disabled={!isMyTurn || isSubmitting || !isGameLoaded}
+                title={!isGameLoaded ? '게임 로딩 중입니다' : !isMyTurn ? '다른 플레이어의 차례입니다' : isSubmitting ? '제출 중입니다' : '카드를 제출합니다'}
               >
                 Submit
               </button>
               <button 
-                className={`action-btn pass-btn ${!isMyTurn ? 'disabled' : ''}`}
+                className={`action-btn pass-btn ${!isMyTurn || !isGameLoaded ? 'disabled' : ''}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (!isMyTurn) {
+                  if (!isMyTurn || !isGameLoaded) {
                     return;
                   }
                   handlePass();
                 }}
-                disabled={!isMyTurn}
-                title={!isMyTurn ? '다른 플레이어의 차례입니다' : '패스합니다'}
+                disabled={!isMyTurn || !isGameLoaded}
+                title={!isGameLoaded ? '게임 로딩 중입니다' : !isMyTurn ? '다른 플레이어의 차례입니다' : '패스합니다'}
               >
                 Pass
               </button>
