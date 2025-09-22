@@ -108,8 +108,7 @@
   border-radius: 0.6vw;
   padding: 1vh;
   position: relative;
-  min-width: 9vw;
-  max-width: 35vw;
+  min-width: 40px;
   width: 20vw;
   height: 6.5vh;
   flex: 1;
