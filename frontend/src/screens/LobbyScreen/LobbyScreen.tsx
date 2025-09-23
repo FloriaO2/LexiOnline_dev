@@ -65,6 +65,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   const [roomType, setRoomType] = useState<'public' | 'private'>('public');
   const [roomTitle, setRoomTitle] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
+  const [isInitialRoomTitleSet, setIsInitialRoomTitleSet] = useState(false);
   const [publicRooms, setPublicRooms] = useState<any[]>([]);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [ranking, setRanking] = useState<any[]>([]);
@@ -239,12 +240,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     };
   }, [token]); // token이 변경될 때마다 실행
 
-  // 닉네임이 변경될 때 방 제목도 자동으로 업데이트
+  // 처음 닉네임이 설정될 때만 방 제목을 자동으로 설정 (한 번만 실행)
   useEffect(() => {
-    if (nickname.trim() && !roomTitle.trim()) {
+    if (nickname.trim() && !roomTitle.trim() && !isInitialRoomTitleSet) {
       setRoomTitle(nickname.trim());
+      setIsInitialRoomTitleSet(true);
     }
-  }, [nickname, roomTitle]);
+  }, [nickname, roomTitle, isInitialRoomTitleSet]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({
@@ -820,7 +822,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                         id="roomTitle"
                         value={roomTitle}
                         onChange={(e) => setRoomTitle(e.target.value)}
-                        placeholder="방 제목을 입력하세요 (기본값: 닉네임)"
+                        placeholder="방 제목을 입력하세요"
                         className={`input-field ${token ? 'compact' : ''}`}
                       />
                     </div>
@@ -1005,7 +1007,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                                     {index === 0 && '🥇'}
                                     {index === 1 && '🥈'}
                                     {index === 2 && '🥉'}
-                                    {index > 2 && `#${player.rank}`}
+                                    {index > 2 && (
+                                      <div className="rank-circle">
+                                        {player.rank}
+                                      </div>
+                                    )}
                                   </>
                                 )}
                               </div>
@@ -1060,7 +1066,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                         </div>
                         <div className="ranking-card outside-rank clickable" onClick={() => setSelectedUserForHistory(myRanking.player.id)}>
                           <div className={`rank-badge ${myRanking.rank === "-" ? "no-rank" : ""}`}>
-                            {myRanking.rank === "-" ? "-" : `#${myRanking.rank}`}
+                            {myRanking.rank === "-" ? "-" : (
+                              <div className="rank-circle">
+                                {myRanking.rank}
+                              </div>
+                            )}
                           </div>
                           <div className="player-info">
                             <div className="player-profile">

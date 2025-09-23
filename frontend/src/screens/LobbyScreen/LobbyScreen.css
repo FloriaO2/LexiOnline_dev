@@ -1241,6 +1241,23 @@
   justify-content: center !important;
 }
 
+/* 동그란 원 랭킹 스타일 (4등 이하) */
+.lobby-screen .rank-circle {
+  width: 2.8vh;
+  height: 2.8vh;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4a5568, #2d3748);
+  border: 0.15vh solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5vh;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: 0 0.3vh 0.9vh rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.15vh 0.3vh rgba(0, 0, 0, 0.5);
+}
+
 .lobby-screen .player-info {
   flex: 1 !important;
 }
