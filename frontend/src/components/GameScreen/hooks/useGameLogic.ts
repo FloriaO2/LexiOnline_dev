@@ -16,6 +16,8 @@ export interface Card {
   value: number;
   color: string;
   originalNumber: number;
+  isFlipped?: boolean; // 카드가 뒤집혔는지 (라운드 시작 시 사용)
+  isAnimating?: boolean; // 카드 뒤집기 애니메이션 중인지
 }
 
 export const useGameLogic = () => {

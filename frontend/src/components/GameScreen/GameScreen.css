@@ -437,6 +437,34 @@
   }
 }
 
+/* 손패 카드 뒤집기 애니메이션 (뒷면에서 앞면으로) */
+@keyframes flipHandCard {
+  0% {
+    transform: rotateY(180deg) scale(1);
+    opacity: 1;
+  }
+  20% {
+    transform: rotateY(144deg) scale(0.98);
+    opacity: 0.9;
+  }
+  40% {
+    transform: rotateY(108deg) scale(0.96);
+    opacity: 0.8;
+  }
+  60% {
+    transform: rotateY(72deg) scale(0.94);
+    opacity: 0.7;
+  }
+  80% {
+    transform: rotateY(36deg) scale(0.98);
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
 .board-card.flipping-card {
   animation: flipCard 0.8s ease-in-out !important;
   animation-fill-mode: forwards !important;
@@ -463,6 +491,57 @@
 .board-card.flipped-card.new-card {
   box-shadow: none;
   animation: none;
+}
+
+/* 손패 카드 스타일 */
+.hand-tile {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: all 0.3s ease;
+}
+
+.hand-tile.card-back {
+  background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+  border: 2px solid #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.hand-tile.flipping-hand-card {
+  animation: flipHandCard 0.6s ease-in-out !important;
+  animation-fill-mode: forwards !important;
+  transform-style: preserve-3d !important;
+  z-index: 10 !important;
+  position: relative !important;
+  transform-origin: center !important;
+  background: linear-gradient(135deg, #343a40 0%, #212529 100%) !important;
+  border: 2px solid #fff !important;
+  border-radius: 6px !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 손패 카드 뒷면 스타일 */
+.hand-tile.card-back .card-image,
+.hand-tile.card-back .tile-value {
+  display: none;
+}
+
+/* 애니메이션 중일 때도 앞면 내용 숨기기 */
+.hand-tile.flipping-hand-card .card-image,
+.hand-tile.flipping-hand-card .tile-value {
+  display: none !important;
+}
+
+.hand-tile.card-back::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+  border-radius: 4px;
+  z-index: 1;
 }
 
 @keyframes glow {
