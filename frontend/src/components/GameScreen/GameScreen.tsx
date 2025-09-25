@@ -313,7 +313,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
     // 게임 상태 구독
     room.onStateChange((state) => {
-      console.log('게임 상태 변경:', state);
+      // 게임 종료 시에는 상태 변경 로그를 출력하지 않음 (API 낭비 방지)
+      // 또한 게임이 시작되지 않은 상태에서도 로그 출력 최소화
+      if (!state.gameEnded && state.gameStarted) {
+        console.log('게임 상태 변경:', state);
+      }
 
       // 개인의 easyMode 설정은 초기 로드 시에만 적용 (자동 동기화 방지)
       // const myPlayer = state.players.get(room.sessionId);
@@ -457,6 +461,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
     room.onMessage('gameEnded', (message) => {
       console.log('게임 종료:', message);
+      // 게임 종료 시 불필요한 상태 업데이트 방지를 위해 플래그 설정
+      setIsGameLoaded(false);
       onScreenChange('finalResult', message.finalScores);
     });
 
@@ -504,7 +510,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
     // 준비 상태 응답
     room.onMessage('readyStatusResponse', (message) => {
-      console.log('준비 상태 응답:', message);
+      // 게임 종료 시에는 준비 상태 로그를 출력하지 않음 (API 낭비 방지)
+      const room = ColyseusService.getRoom();
+      if (room && !room.state.gameEnded) {
+        console.log('준비 상태 응답:', message);
+      }
       const newReadyPlayers = new Set(message.readyPlayers as string[]);
       setReadyPlayers(newReadyPlayers);
     });
@@ -711,15 +721,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
           const updated = prev.map(card => {
             if (card.isFlipped) {
               // 이미 뒤집힌 패들은 아무것도 변경하지 않음
-              console.log(`[DEBUG] 이미 뒤집힌 패 유지: ${card.id}, isFlipped: ${card.isFlipped}`);
+              //console.log(`[DEBUG] 이미 뒤집힌 패 유지: ${card.id}, isFlipped: ${card.isFlipped}`);
               return card;
             } else {
               // 아직 앞면인 패들만 애니메이션 시작
-              console.log(`[DEBUG] 앞면 패 애니메이션 시작: ${card.id}, isFlipped: ${card.isFlipped}`);
+              //console.log(`[DEBUG] 앞면 패 애니메이션 시작: ${card.id}, isFlipped: ${card.isFlipped}`);
               return { ...card, isAnimating: true };
             }
           });
-          console.log(`[DEBUG] 애니메이션 시작 후 패 상태:`, updated.map(c => ({ id: c.id, isFlipped: c.isFlipped, isAnimating: c.isAnimating })));
+          //console.log(`[DEBUG] 애니메이션 시작 후 패 상태:`, updated.map(c => ({ id: c.id, isFlipped: c.isFlipped, isAnimating: c.isAnimating })));
           return updated;
         });
         
@@ -729,15 +739,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
             const updated = prev.map(card => {
               if (card.isAnimating) {
                 // 애니메이션 중이던 패들만 뒤집힌 상태로 변경
-                console.log(`[DEBUG] 애니메이션 완료 - 패 뒤집기: ${card.id}`);
+                //console.log(`[DEBUG] 애니메이션 완료 - 패 뒤집기: ${card.id}`);
                 return { ...card, isFlipped: true, isAnimating: false };
               } else {
                 // 이미 뒤집힌 패들은 그대로 유지
-                console.log(`[DEBUG] 애니메이션 완료 - 패 유지: ${card.id}, isFlipped: ${card.isFlipped}`);
+                //console.log(`[DEBUG] 애니메이션 완료 - 패 유지: ${card.id}, isFlipped: ${card.isFlipped}`);
                 return card;
               }
             });
-            console.log(`[DEBUG] 애니메이션 완료 후 패 상태:`, updated.map(c => ({ id: c.id, isFlipped: c.isFlipped, isAnimating: c.isAnimating })));
+            //console.log(`[DEBUG] 애니메이션 완료 후 패 상태:`, updated.map(c => ({ id: c.id, isFlipped: c.isFlipped, isAnimating: c.isAnimating })));
             return updated;
           });
           
@@ -1328,7 +1338,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     // 각 카드를 순차적으로 뒤집기 (0.2초 간격)
     for (let index = 0; index < myHand.length; index++) {
       setTimeout(() => {
-        console.log(`[DEBUG] 카드 ${index} 애니메이션 시작`);
+        //console.log(`[DEBUG] 카드 ${index} 애니메이션 시작`);
         
         setMyHand(prevHand => {
           const updated = [...prevHand];
@@ -1340,7 +1350,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         
         // 애니메이션 완료 후 앞면으로 변경
         setTimeout(() => {
-          console.log(`[DEBUG] 카드 ${index} 애니메이션 완료`);
+          //console.log(`[DEBUG] 카드 ${index} 애니메이션 완료`);
           setMyHand(prevHand => {
             const updated = [...prevHand];
             if (updated[index]) {
@@ -1378,24 +1388,25 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     setSortedHand([...myHand]);
   }, [myHand]);
 
-  // 로딩 완료 후 손패 애니메이션 시작
+  // 로딩 완료 후 손패 애니메이션 시작 - 이미지 로딩 완료 확인 추가
   useEffect(() => {
     console.log('[DEBUG] 애니메이션 조건 체크:', {
       shouldStartHandAnimation,
       animationStarted: animationStartedRef.current,
-      isHandCardFlipping
+      isHandCardFlipping,
+      imagesLoaded,
+      myHandLength: myHand.length
     });
     
-    if (shouldStartHandAnimation && !animationStartedRef.current && !isHandCardFlipping) {
+    if (shouldStartHandAnimation && !animationStartedRef.current && !isHandCardFlipping && imagesLoaded && myHand.length > 0) {
       console.log('[DEBUG] 애니메이션 시작 조건 만족 - 손패 애니메이션 시작');
       setShouldStartHandAnimation(false);
       // animationStartedRef.current는 애니메이션 완료 후에만 true로 설정
       
-      setTimeout(() => {
-        startSequentialCardFlip();
-      }, 300); // 0.3초 후 애니메이션 시작
+      // 이미지 로딩이 완료되면 바로 애니메이션 시작
+      startSequentialCardFlip();
     }
-  }, [shouldStartHandAnimation, isHandCardFlipping]);
+  }, [shouldStartHandAnimation, isHandCardFlipping, imagesLoaded, myHand.length]);
 
 
 
@@ -2451,6 +2462,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
           </div>
         </div>
       )}
+
       
       <div className="game-container">
 
@@ -2565,6 +2577,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                                   src={getCardImage(getDisplayColor(card.color, gameMode))!} 
                                   alt={getDisplayColor(card.color, gameMode)} 
                                   className="card-image"
+                                  onLoad={() => {
+                                    // 이미지 로드 완료 확인 (디버깅용)
+                                    console.log(`보드 카드 이미지 로드 완료: ${getDisplayColor(card.color, gameMode)}`);
+                                  }}
+                                  onError={(e) => {
+                                    console.error(`보드 카드 이미지 로드 실패: ${getDisplayColor(card.color, gameMode)}`, e);
+                                  }}
                                 />
                               )}
                               <span className="card-value">{card.value || '?'}</span>
@@ -2720,6 +2739,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                           src={getCardImage(getDisplayColor(tile.color, gameMode))!} 
                           alt={getDisplayColor(tile.color, gameMode)} 
                           className="card-image"
+                          onLoad={() => {
+                            // 이미지 로드 완료 확인 (디버깅용)
+                            console.log(`카드 이미지 로드 완료: ${getDisplayColor(tile.color, gameMode)}`);
+                          }}
+                          onError={(e) => {
+                            console.error(`카드 이미지 로드 실패: ${getDisplayColor(tile.color, gameMode)}`, e);
+                          }}
                         />
                       )}
                       <span className="tile-value">{tile.value || '?'}</span>
