@@ -251,33 +251,65 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     loadImages();
   }, []);
 
-  // 게임 로딩 완료 신호 전송 (하지만 isGameLoaded는 애니메이션 완료 후에 설정)
-  useEffect(() => {
-    if (imagesLoaded && !isGameLoaded) {
-      console.log('게임 로딩 완료 신호 전송', { imagesLoaded, isGameLoaded });
-      const room = ColyseusService.getRoom();
-      if (room) {
-        room.send('gameLoaded', {});
-        // setIsGameLoaded(true); // 애니메이션 완료 후에 설정하도록 주석 처리
-      }
-    }
-  }, [imagesLoaded, isGameLoaded]);
+  // 이미지 로딩 완료 시에는 gameLoaded 신호를 보내지 않음 (애니메이션 완료 후에만 전송)
 
   // 타임어택 타이머 관리
   useEffect(() => {
-    console.log('타이머 useEffect 실행:', { timeAttackMode, turnStartTime, timeLimit, isHandCardFlipping, waitingForNextRound });
+    // console.log('⏰ [TIMER] useEffect 실행:', { 
+    //   timeAttackMode, 
+    //   turnStartTime, 
+    //   timeLimit, 
+    //   isHandCardFlipping, 
+    //   shouldStartHandAnimation, 
+    //   waitingForNextRound,
+    //   isGameLoaded,
+    //   isFlipping,
+    //   currentTime: Date.now()
+    // });
     
-    if (!timeAttackMode || turnStartTime === 0 || isHandCardFlipping || waitingForNextRound) {
-      console.log('타이머 비활성화:', { timeAttackMode, turnStartTime, isHandCardFlipping, waitingForNextRound });
+    if (!timeAttackMode || turnStartTime === 0 || isHandCardFlipping || shouldStartHandAnimation || waitingForNextRound || !isGameLoaded || isFlipping) {
+      // console.log('⏰ [TIMER] 비활성화:', { 
+      //   timeAttackMode, 
+      //   turnStartTime, 
+      //   isHandCardFlipping, 
+      //   shouldStartHandAnimation, 
+      //   waitingForNextRound, 
+      //   isGameLoaded, 
+      //   isFlipping,
+      //   reason: !timeAttackMode ? '타임어택 모드 아님' :
+      //           turnStartTime === 0 ? '턴 시작 시간 없음' :
+      //           isHandCardFlipping ? '손패 애니메이션 중' :
+      //           shouldStartHandAnimation ? '애니메이션 시작 대기' :
+      //           waitingForNextRound ? '다음 라운드 대기' :
+      //           !isGameLoaded ? '게임 로딩 미완료' :
+      //           isFlipping ? '보드 카드 뒤집기 중' : '알 수 없음'
+      // });
       setRemainingTime(0);
       return;
     }
 
+    // console.log('⏰ [TIMER] 활성화 - 타이머 시작:', { 
+    //   turnStartTime, 
+    //   timeLimit, 
+    //   currentTime: Date.now(),
+    //   timeDiff: Date.now() - turnStartTime
+    // });
+
     const updateTimer = () => {
-      const elapsed = (Date.now() - turnStartTime) / 1000;
+      const currentTime = Date.now();
+      const elapsed = (currentTime - turnStartTime) / 1000;
       const remaining = Math.max(0, timeLimit - elapsed);
+      
+      // console.log('⏰ [TIMER] 업데이트:', { 
+      //   currentTime,
+      //   turnStartTime,
+      //   elapsed: elapsed.toFixed(2),
+      //   remaining: remaining.toFixed(2),
+      //   timeLimit,
+      //   timeDiff: currentTime - turnStartTime
+      // });
+      
       setRemainingTime(remaining);
-      // console.log('타이머 업데이트:', { elapsed, remaining, timeLimit });
     };
 
     // 즉시 한 번 실행
@@ -287,7 +319,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     const interval = setInterval(updateTimer, 100);
 
     return () => clearInterval(interval);
-  }, [timeAttackMode, turnStartTime, timeLimit, isHandCardFlipping, waitingForNextRound]);
+  }, [timeAttackMode, turnStartTime, timeLimit, isHandCardFlipping, shouldStartHandAnimation, waitingForNextRound, isGameLoaded, isFlipping]);
 
   // Colyseus 연결 초기화
   useEffect(() => {
@@ -374,7 +406,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
           setTimeLimit(state.timeLimit);
         }
         if (state.turnStartTime !== undefined) {
-          setTurnStartTime(state.turnStartTime);
+          // console.log('⏰ [TIMER] onStateChange에서 turnStartTime 수신 (설정하지 않음):', { 
+          //   oldTurnStartTime: turnStartTime,
+          //   receivedTurnStartTime: state.turnStartTime,
+          //   currentTime: Date.now(),
+          //   timeDiff: state.turnStartTime - Date.now()
+          // });
+          // onStateChange에서는 turnStartTime을 설정하지 않음 (애니메이션 완료 후에만 설정)
         }
         
         // 게임이 이미 시작되었고 손패가 있다면 손패만 업데이트 (애니메이션 없이)
@@ -448,13 +486,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         
         // setAndSortHand 후에 상태 강제 설정
         setTimeout(() => {
-          // 1라운드일 때만 애니메이션 시작 (roundStart가 호출되지 않으므로)
-          if (message.round === 1) {
-            console.log('[DEBUG] 1라운드 - playerInfoResponse에서 애니메이션 시작');
-            setShouldStartHandAnimation(true);
-          } else {
-            console.log(`[DEBUG] ${message.round}라운드 - playerInfoResponse 카드 설정 완료 (roundStart에서 애니메이션 시작)`);
-          }
+          // 모든 라운드에서 순차적 카드 뒤집기 애니메이션 시작 (로딩 완료 후)
+          console.log(`[DEBUG] ${message.round}라운드 - playerInfoResponse에서 애니메이션 시작`);
+          setShouldStartHandAnimation(true);
         }, 50);
       }
     });
@@ -490,6 +524,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       setBoardCards([]);
       setBoardSize({ rows: 4, cols: 15 });
       setPendingCards([]);
+      // 라운드 종료 시 타이머 상태 초기화
+      // console.log('⏰ [TIMER] 라운드 종료 - 타이머 상태 초기화');
+      setRemainingTime(0);
+      setTurnStartTime(0);
       onScreenChange('result', message);
     });
 
@@ -532,7 +570,36 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       console.log('턴 타이머 시작:', message);
       console.log('타임어택 모드:', timeAttackMode);
       console.log('시간 제한:', timeLimit);
-      setTurnStartTime(message.turnStartTime);
+      console.log('애니메이션 상태:', { isHandCardFlipping, shouldStartHandAnimation });
+      
+      // 애니메이션 중이거나 애니메이션 시작 대기 중이면 타이머 시작을 지연
+      if (isHandCardFlipping || shouldStartHandAnimation) {
+        console.log('애니메이션 중이므로 타이머 시작 지연');
+        // 애니메이션 완료 후에 타이머 시작하도록 지연
+        const checkAndStartTimer = () => {
+          if (!isHandCardFlipping && !shouldStartHandAnimation) {
+            // console.log('⏰ [TIMER] 애니메이션 완료 후 타이머 시작:', { 
+            //   oldTurnStartTime: turnStartTime,
+            //   newTurnStartTime: message.turnStartTime,
+            //   currentTime: Date.now(),
+            //   timeDiff: message.turnStartTime - Date.now()
+            // });
+            setTurnStartTime(message.turnStartTime);
+          } else {
+            // 아직 애니메이션 중이면 100ms 후 다시 확인
+            setTimeout(checkAndStartTimer, 100);
+          }
+        };
+        setTimeout(checkAndStartTimer, 100);
+      } else {
+        // console.log('⏰ [TIMER] turnTimerStarted에서 즉시 타이머 시작:', { 
+        //   oldTurnStartTime: turnStartTime,
+        //   newTurnStartTime: message.turnStartTime,
+        //   currentTime: Date.now(),
+        //   timeDiff: message.turnStartTime - Date.now()
+        // });
+        setTurnStartTime(message.turnStartTime);
+      }
     });
 
     room.onMessage('timeOut', (message) => {
@@ -552,17 +619,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       setPendingCards([]);
       console.log('새 라운드 시작 - 보드 크기 리셋: 4x15');
       
-      // 새로운 라운드 시작 시 로딩 상태 초기화
+      // 새로운 라운드 시작 시 로딩 상태 및 타이머 상태 초기화
       setIsGameLoaded(false);
       setIsGameStarted(true); // 게임 시작 상태 설정
       animationStartedRef.current = false; // 애니메이션 시작 전이므로 false로 초기화
+      // console.log('⏰ [TIMER] 새 라운드 시작 - 타이머 상태 초기화');
+      setRemainingTime(0); // 타이머 잔여 시간 초기화
+      setTurnStartTime(0); // 턴 시작 시간 초기화
       
-      // 이미지가 로딩되어 있다면 로딩 완료 신호 전송 (하지만 isGameLoaded는 애니메이션 완료 후에 설정)
-      if (imagesLoaded) {
-        console.log('라운드 시작 - 로딩 완료 신호 전송');
-        room.send('gameLoaded', {});
-        // setIsGameLoaded(true); // 애니메이션 완료 후에 설정하도록 주석 처리
-      }
+      // 라운드 시작 시에는 gameLoaded 신호를 보내지 않음 (애니메이션 완료 후에만 전송)
       
       if (message.hand) {
         const maxNumber = message.maxNumber || 13;
@@ -967,6 +1032,23 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     return currentPlayer && currentPlayer.sessionId === room.sessionId;
   }, [room?.state?.playerOrder, room?.state?.nowPlayerIndex, room?.sessionId, players]);
 
+  // 타임어택 모드에서 게임 버튼 활성화 조건 (타이머와 완전히 동일)
+  const isGameButtonEnabled = useMemo(() => {
+    // 타임어택 모드에서는 타이머와 완전히 동일한 조건
+    if (timeAttackMode) {
+      return timeAttackMode && 
+             turnStartTime > 0 && 
+             !isHandCardFlipping && 
+             !shouldStartHandAnimation && 
+             !waitingForNextRound && 
+             isGameLoaded && 
+             !isFlipping;
+    }
+    
+    // 일반 모드에서는 기본 조건만 확인
+    return isGameStarted && !isHandCardFlipping;
+  }, [timeAttackMode, turnStartTime, isHandCardFlipping, shouldStartHandAnimation, waitingForNextRound, isGameLoaded, isFlipping, isGameStarted]);
+
 
   // 카드 번호를 색상으로 변환 (올바른 매핑)
   const getCardColorFromNumber = (cardNumber: number, maxNumber: number): string => {
@@ -1338,7 +1420,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     // 각 카드를 순차적으로 뒤집기 (0.2초 간격)
     for (let index = 0; index < myHand.length; index++) {
       setTimeout(() => {
-        //console.log(`[DEBUG] 카드 ${index} 애니메이션 시작`);
+        console.log(`[DEBUG] 카드 ${index} 애니메이션 시작`);
         
         setMyHand(prevHand => {
           const updated = [...prevHand];
@@ -1363,11 +1445,31 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     }
     
     // 모든 애니메이션 완료 후 상태 초기화
-    setTimeout(() => {
-      setIsHandCardFlipping(false);
-      setIsGameLoaded(true); // 애니메이션 완료 후 게임 로딩 완료 상태 설정
-      animationStartedRef.current = true; // 애니메이션 완료 후 true로 설정하여 이후 setAndSortHand에서 카드가 앞면으로 유지되도록 함
-      console.log('[DEBUG] 순차적 카드 뒤집기 애니메이션 완료');
+      setTimeout(() => {
+        setIsHandCardFlipping(false);
+        setIsGameLoaded(true); // 애니메이션 완료 후 게임 로딩 완료 상태 설정
+        animationStartedRef.current = true; // 애니메이션 완료 후 true로 설정하여 이후 setAndSortHand에서 카드가 앞면으로 유지되도록 함
+        
+        // 타임어택 모드에서 애니메이션 완료 시점에 turnStartTime을 현재 시간으로 재설정
+        if (timeAttackMode && turnStartTime > 0) {
+          const newTurnStartTime = Date.now();
+          // console.log('⏰ [TIMER] 애니메이션 완료 후 turnStartTime 재설정:', { 
+          //   oldTurnStartTime: turnStartTime, 
+          //   newTurnStartTime,
+          //   currentTime: Date.now(),
+          //   timeDiff: newTurnStartTime - turnStartTime
+          // });
+          setTurnStartTime(newTurnStartTime);
+        }
+        
+        // 애니메이션 완료 후 백엔드에 게임 로딩 완료 신호 전송 (동기화용)
+        const room = ColyseusService.getRoom();
+        if (room) {
+          console.log('[DEBUG] 애니메이션 완료 - 게임 로딩 완료 신호 전송');
+          room.send('gameLoaded', {});
+        }
+        
+        console.log('[DEBUG] 순차적 카드 뒤집기 애니메이션 완료');
       
       // 상태 업데이트 후 로그 출력을 위해 추가 setTimeout
       setTimeout(() => {
@@ -1388,25 +1490,30 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     setSortedHand([...myHand]);
   }, [myHand]);
 
-  // 로딩 완료 후 손패 애니메이션 시작 - 이미지 로딩 완료 확인 추가
+  // 로딩 완료 후 손패 애니메이션 시작
   useEffect(() => {
+    // 애니메이션이 이미 시작되었다면 더 이상 조건 체크하지 않음
+    if (animationStartedRef.current) {
+      return;
+    }
+    
     console.log('[DEBUG] 애니메이션 조건 체크:', {
       shouldStartHandAnimation,
-      animationStarted: animationStartedRef.current,
-      isHandCardFlipping,
       imagesLoaded,
-      myHandLength: myHand.length
+      animationStarted: animationStartedRef.current,
+      isHandCardFlipping
     });
     
-    if (shouldStartHandAnimation && !animationStartedRef.current && !isHandCardFlipping && imagesLoaded && myHand.length > 0) {
+    if (shouldStartHandAnimation && imagesLoaded && !animationStartedRef.current && !isHandCardFlipping) {
       console.log('[DEBUG] 애니메이션 시작 조건 만족 - 손패 애니메이션 시작');
       setShouldStartHandAnimation(false);
       // animationStartedRef.current는 애니메이션 완료 후에만 true로 설정
       
-      // 이미지 로딩이 완료되면 바로 애니메이션 시작
-      startSequentialCardFlip();
+      setTimeout(() => {
+        startSequentialCardFlip();
+      }, 300); // 0.3초 후 애니메이션 시작
     }
-  }, [shouldStartHandAnimation, isHandCardFlipping, imagesLoaded, myHand.length]);
+  }, [shouldStartHandAnimation, imagesLoaded, isHandCardFlipping]);
 
 
 
@@ -2462,7 +2569,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
           </div>
         </div>
       )}
-
       
       <div className="game-container">
 
@@ -2577,13 +2683,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                                   src={getCardImage(getDisplayColor(card.color, gameMode))!} 
                                   alt={getDisplayColor(card.color, gameMode)} 
                                   className="card-image"
-                                  onLoad={() => {
-                                    // 이미지 로드 완료 확인 (디버깅용)
-                                    console.log(`보드 카드 이미지 로드 완료: ${getDisplayColor(card.color, gameMode)}`);
-                                  }}
-                                  onError={(e) => {
-                                    console.error(`보드 카드 이미지 로드 실패: ${getDisplayColor(card.color, gameMode)}`, e);
-                                  }}
                                 />
                               )}
                               <span className="card-value">{card.value || '?'}</span>
@@ -2674,30 +2773,30 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
             {/* 우측 - Drop/Pass 버튼 */}
             <div className="action-buttons">
               <button 
-                className={`action-btn drop-btn ${!isGameStarted || !isMyTurn || isSubmitting || !isGameLoaded || isHandCardFlipping ? 'disabled' : ''}`} 
+                className={`action-btn drop-btn ${!isGameButtonEnabled || !isMyTurn || isSubmitting ? 'disabled' : ''}`} 
                 onClick={(e) => {
                   e.preventDefault();
-                  if (!isGameStarted || !isMyTurn || isSubmitting || !isGameLoaded || isHandCardFlipping) {
+                  if (!isGameButtonEnabled || !isMyTurn || isSubmitting) {
                     return;
                   }
                   handleSubmitCards();
                 }}
-                disabled={!isGameStarted || !isMyTurn || isSubmitting || !isGameLoaded || isHandCardFlipping}
-                title={!isGameStarted ? '게임이 시작되지 않았습니다' : !isGameLoaded ? '게임 로딩 중입니다' : !isMyTurn ? '다른 플레이어의 차례입니다' : isSubmitting ? '제출 중입니다' : isHandCardFlipping ? '카드 뒤집기 애니메이션 중입니다' : '카드를 제출합니다'}
+                disabled={!isGameButtonEnabled || !isMyTurn || isSubmitting}
+                title={!isGameButtonEnabled ? '게임 버튼이 비활성화된 상태입니다' : !isMyTurn ? '다른 플레이어의 차례입니다' : isSubmitting ? '제출 중입니다' : '카드를 제출합니다'}
               >
                 Submit
               </button>
               <button 
-                className={`action-btn pass-btn ${!isGameStarted || !isMyTurn || !isGameLoaded || isHandCardFlipping ? 'disabled' : ''}`}
+                className={`action-btn pass-btn ${!isGameButtonEnabled || !isMyTurn ? 'disabled' : ''}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (!isGameStarted || !isMyTurn || !isGameLoaded || isHandCardFlipping) {
+                  if (!isGameButtonEnabled || !isMyTurn) {
                     return;
                   }
                   handlePass();
                 }}
-                disabled={!isGameStarted || !isMyTurn || !isGameLoaded || isHandCardFlipping}
-                title={!isGameStarted ? '게임이 시작되지 않았습니다' : !isGameLoaded ? '게임 로딩 중입니다' : !isMyTurn ? '다른 플레이어의 차례입니다' : isHandCardFlipping ? '카드 뒤집기 애니메이션 중입니다' : '패스합니다'}
+                disabled={!isGameButtonEnabled || !isMyTurn}
+                title={!isGameButtonEnabled ? '게임 버튼이 비활성화된 상태입니다' : !isMyTurn ? '다른 플레이어의 차례입니다' : '패스합니다'}
               >
                 Pass
               </button>
@@ -2739,13 +2838,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
                           src={getCardImage(getDisplayColor(tile.color, gameMode))!} 
                           alt={getDisplayColor(tile.color, gameMode)} 
                           className="card-image"
-                          onLoad={() => {
-                            // 이미지 로드 완료 확인 (디버깅용)
-                            console.log(`카드 이미지 로드 완료: ${getDisplayColor(tile.color, gameMode)}`);
-                          }}
-                          onError={(e) => {
-                            console.error(`카드 이미지 로드 실패: ${getDisplayColor(tile.color, gameMode)}`, e);
-                          }}
                         />
                       )}
                       <span className="tile-value">{tile.value || '?'}</span>
@@ -2758,28 +2850,28 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
             <div className="sort-buttons">
               {selectedCards.length > 0 && (
                 <button 
-                  className={`sort-btn reset-btn ${!isGameStarted || isHandCardFlipping ? 'disabled' : ''}`}
+                  className={`sort-btn reset-btn ${!isGameButtonEnabled ? 'disabled' : ''}`}
                   onClick={handleResetSelection}
-                  disabled={!isGameStarted || isHandCardFlipping}
-                  title={!isGameStarted ? '게임이 시작되지 않았습니다' : isHandCardFlipping ? '카드 뒤집기 애니메이션 중입니다' : '선택을 초기화합니다'}
+                  disabled={!isGameButtonEnabled}
+                  title={!isGameButtonEnabled ? '게임 버튼이 비활성화된 상태입니다' : '선택을 초기화합니다'}
                 >
                   Reset
                 </button>
               )}
               <div className="sort-buttons-group">
                 <button 
-                  className={`sort-btn ${!isGameStarted || isHandCardFlipping ? 'disabled' : ''}`}
+                  className={`sort-btn ${!isGameButtonEnabled ? 'disabled' : ''}`}
                   onClick={handleSortByNumber}
-                  disabled={!isGameStarted || isHandCardFlipping}
-                  title={!isGameStarted ? '게임이 시작되지 않았습니다' : isHandCardFlipping ? '카드 뒤집기 애니메이션 중입니다' : '숫자 순으로 정렬합니다'}
+                  disabled={!isGameButtonEnabled}
+                  title={!isGameButtonEnabled ? '게임 버튼이 비활성화된 상태입니다' : '숫자 순으로 정렬합니다'}
                 >
                   숫자정렬
                 </button>
                 <button 
-                  className={`sort-btn ${!isGameStarted || isHandCardFlipping ? 'disabled' : ''}`}
+                  className={`sort-btn ${!isGameButtonEnabled ? 'disabled' : ''}`}
                   onClick={handleSortByColor}
-                  disabled={!isGameStarted || isHandCardFlipping}
-                  title={!isGameStarted ? '게임이 시작되지 않았습니다' : isHandCardFlipping ? '카드 뒤집기 애니메이션 중입니다' : '색상 순으로 정렬합니다'}
+                  disabled={!isGameButtonEnabled}
+                  title={!isGameButtonEnabled ? '게임 버튼이 비활성화된 상태입니다' : '색상 순으로 정렬합니다'}
                 >
                   색상정렬
                 </button>
