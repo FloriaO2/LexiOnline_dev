@@ -1032,7 +1032,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     return currentPlayer && currentPlayer.sessionId === room.sessionId;
   }, [room?.state?.playerOrder, room?.state?.nowPlayerIndex, room?.sessionId, players]);
 
-  // 타임어택 모드에서 게임 버튼 활성화 조건 (타이머와 완전히 동일)
+  // 게임 버튼 활성화 조건 (타임어택 모드와 프리 모드 모두 동일한 애니메이션 조건 적용)
   const isGameButtonEnabled = useMemo(() => {
     // 타임어택 모드에서는 타이머와 완전히 동일한 조건
     if (timeAttackMode) {
@@ -1045,8 +1045,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
              !isFlipping;
     }
     
-    // 일반 모드에서는 기본 조건만 확인
-    return isGameStarted && !isHandCardFlipping;
+    // 프리 모드에서도 카드 뒤집기 애니메이션 중에는 버튼 비활성화
+    return isGameStarted && 
+           !isHandCardFlipping && 
+           !shouldStartHandAnimation && 
+           !waitingForNextRound && 
+           isGameLoaded && 
+           !isFlipping;
   }, [timeAttackMode, turnStartTime, isHandCardFlipping, shouldStartHandAnimation, waitingForNextRound, isGameLoaded, isFlipping, isGameStarted]);
 
 
