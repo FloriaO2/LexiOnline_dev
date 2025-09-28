@@ -9,8 +9,71 @@ import Toast from '../../components/Toast/Toast';
 import PasswordModal from '../../components/PasswordModal/PasswordModal';
 import GameHistoryModal from '../../components/GameHistoryModal/GameHistoryModal';
 
+// 커스텀 드롭다운 컴포넌트
+const CustomDropdown: React.FC<{
+  value: number;
+  onChange: (value: number) => void;
+  options: { value: number; label: string }[];
+  disabled?: boolean;
+}> = ({ value, onChange, options, disabled = false }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  const handleSelect = (optionValue: number) => {
+    onChange(optionValue);
+    setIsOpen(false);
+  };
+
+  const selectedOption = options.find(option => option.value === value);
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div 
+      ref={dropdownRef}
+      className={`custom-dropdown ${isOpen ? 'open' : ''} ${disabled ? 'disabled' : ''}`}
+    >
+      <div 
+        className="dropdown-header" 
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption?.label}</span>
+        <div className="dropdown-arrow"></div>
+      </div>
+      {isOpen && (
+        <div className="dropdown-options">
+          {options.map((option) => (
+            <div
+              key={option.value}
+              className={`dropdown-option ${option.value === value ? 'selected' : ''}`}
+              onClick={() => handleSelect(option.value)}
+            >
+              {option.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface LobbyScreenProps {
-  onScreenChange: (screen: 'lobby' | 'waiting' | 'game' | 'result') => void;
+  onScreenChange: (screen: 'lobby' | 'waiting' | 'game' | 'result' | 'practice', result?: any, maxNumber?: 7 | 9 | 13 | 15) => void;
 }
 
 // 방 카드 컴포넌트 (memo로 최적화)
@@ -61,11 +124,12 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'create' | 'public' | 'ranking'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'public' | 'ranking' | 'practice'>('create');
   const [roomType, setRoomType] = useState<'public' | 'private'>('public');
   const [roomTitle, setRoomTitle] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
   const [isInitialRoomTitleSet, setIsInitialRoomTitleSet] = useState(false);
+  const [selectedMaxNumber, setSelectedMaxNumber] = useState<7 | 9 | 13 | 15>(9);
   const [publicRooms, setPublicRooms] = useState<any[]>([]);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [ranking, setRanking] = useState<any[]>([]);
@@ -784,6 +848,13 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                 방 참가하기
               </button>
               <button 
+                className={`tab-button ${activeTab === 'practice' ? 'active' : ''} ${token ? 'compact' : ''}`}
+                onClick={() => setActiveTab('practice')}
+              >
+                <span className={`tab-icon ${token ? 'compact' : ''}`}>🎯</span>
+                연습모드
+              </button>
+              <button 
                 className={`tab-button ${activeTab === 'ranking' ? 'active' : ''} ${token ? 'compact' : ''}`}
                 onClick={() => setActiveTab('ranking')}
               >
@@ -958,6 +1029,67 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'practice' && (
+                <div className="practice-tab">
+                  <div className={`tab-header ${token ? 'compact' : ''}`}>
+                    <h3>연습모드</h3>
+                    <p>패 조합을 연습하고 게임 규칙을 익혀보세요!</p>
+                  </div>
+                  
+                  <div className="practice-settings">
+                    <div className="practice-setting-row">
+                      <div className="practice-setting-item">
+                        <label>사용 숫자:</label>
+                        <CustomDropdown
+                          value={selectedMaxNumber}
+                          onChange={(value) => setSelectedMaxNumber(value as 7 | 9 | 13 | 15)}
+                          options={[
+                            { value: 7, label: '1~7 (2인모드)' },
+                            { value: 9, label: '1~9 (3인모드)' },
+                            { value: 13, label: '1~13 (4인모드)' },
+                            { value: 15, label: '1~15 (5인모드)' }
+                          ]}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="practice-info">
+                    <div className="practice-features">
+                      <div className="practice-feature">
+                        <div className="feature-icon">🎯</div>
+                        <div className="feature-text">
+                          <h4>1인 연습 모드</h4>
+                          <p>모든 패를 가지고 자유롭게 연습할 수 있습니다.</p>
+                        </div>
+                      </div>
+                      <div className="practice-feature">
+                        <div className="feature-icon">📚</div>
+                        <div className="feature-text">
+                          <h4>상세한 규칙 설명</h4>
+                          <p>패 조합 규칙을 자세히 설명해드립니다.</p>
+                        </div>
+                      </div>
+                      <div className="practice-feature">
+                        <div className="feature-icon">🔄</div>
+                        <div className="feature-text">
+                          <h4>무제한 리셋</h4>
+                          <p>언제든지 처음부터 다시 시작할 수 있습니다.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button 
+                    className={`btn btn-primary btn-large ${token ? 'compact' : ''}`}
+                    onClick={() => onScreenChange('practice', undefined, selectedMaxNumber)}
+                  >
+                    <span className="btn-icon">🎮</span>
+                    연습게임 시작하기
+                  </button>
                 </div>
               )}
 

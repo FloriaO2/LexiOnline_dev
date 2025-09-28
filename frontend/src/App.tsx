@@ -6,11 +6,12 @@ import WaitingScreen from './screens/WaitingScreen/WaitingScreen';
 import GameScreen from './components/GameScreen/GameScreen';
 import ResultScreen from './screens/ResultScreen/ResultScreen';
 import FinalResultScreen from './screens/FinalResultScreen/FinalResultScreen';
+import PracticeScreen from './components/PracticeScreen/PracticeScreen';
 import ColyseusService from './services/ColyseusService';
 import GoogleOAuthCallback from './auth/google/callback';
 import OrientationWarning from './components/OrientationWarning/OrientationWarning';
 
-type ScreenType = 'lobby' | 'waiting' | 'game' | 'result' | 'finalResult';
+type ScreenType = 'lobby' | 'waiting' | 'game' | 'result' | 'finalResult' | 'practice';
 
 function AppContent() {
   const location = useLocation();
@@ -19,6 +20,7 @@ function AppContent() {
   const [playerCount, setPlayerCount] = useState<number>(5); // 기본값 5명
   const [roundResult, setRoundResult] = useState<any>(null); // 라운드 결과 저장
   const [finalResult, setFinalResult] = useState<any>(null); // 최종 결과 저장
+  const [practiceMaxNumber, setPracticeMaxNumber] = useState<7 | 9 | 13 | 15>(9); // 연습방 최대 숫자
 
   // URL 경로에 따라 화면 상태 설정
   useEffect(() => {
@@ -35,6 +37,8 @@ function AppContent() {
       setCurrentScreen('result');
     } else if (path === '/final-result') {
       setCurrentScreen('finalResult');
+    } else if (path === '/practice') {
+      setCurrentScreen('practice');
     } else if (savedRoomInfo && path === '/') {
       // 저장된 방 정보가 있고 루트 경로인 경우 대기실로 이동
       console.log('저장된 방 정보 발견. 대기실로 이동합니다.');
@@ -62,12 +66,14 @@ function AppContent() {
 
   }, [location.pathname, navigate]);
 
-  const handleScreenChange = (screen: ScreenType, result?: any) => {
+  const handleScreenChange = (screen: ScreenType, result?: any, maxNumber?: 7 | 9 | 13 | 15) => {
     setCurrentScreen(screen);
     if (screen === 'result') {
       setRoundResult(result);
     } else if (screen === 'finalResult') {
       setFinalResult(result);
+    } else if (screen === 'practice' && maxNumber) {
+      setPracticeMaxNumber(maxNumber);
     }
     // 화면 변경 시 URL도 업데이트
     switch (screen) {
@@ -82,6 +88,9 @@ function AppContent() {
         break;
       case 'finalResult':
         navigate('/final-result');
+        break;
+      case 'practice':
+        navigate('/practice');
         break;
       default:
         navigate('/');
@@ -101,6 +110,8 @@ function AppContent() {
         return <ResultScreen onScreenChange={handleScreenChange} playerCount={playerCount} roundResult={roundResult} />;
       case 'finalResult':
         return <FinalResultScreen onScreenChange={handleScreenChange} finalScores={finalResult} />;
+      case 'practice':
+        return <PracticeScreen onScreenChange={handleScreenChange} maxNumber={practiceMaxNumber} />;
       default:
         return <LobbyScreen onScreenChange={handleScreenChange} />;
     }

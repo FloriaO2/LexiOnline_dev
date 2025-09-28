@@ -1,0 +1,836 @@
+.practice-screen {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 25%, #0f0f0f 50%, #1a1a1a 75%, #2a2a2a 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Arial', sans-serif;
+  color: #333333;
+  margin: 0 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  box-sizing: border-box;
+}
+
+.practice-screen::-webkit-scrollbar {
+  display: none;
+}
+
+.practice-container {
+  width: 95vw;
+  height: 95vh;
+  height: 95dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+  background: rgba(26, 26, 26, 0.95);
+  border-radius: 1.5vw;
+  padding: 2vh 3vw;
+  margin: 0 4vw;
+  box-shadow: 0 1vh 3vh rgba(0, 0, 0, 0.5);
+  position: relative;
+  backdrop-filter: blur(1vh);
+  border: 0.1vw solid rgba(255, 255, 255, 0.15);
+  box-sizing: border-box;
+}
+
+/* 알림 영역 - GUIDE 스타일 */
+.practice-notification {
+  height: 6vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 248, 255, 0.8) 100%);
+  border: 0.2vh solid rgba(255, 255, 255, 0.3);
+  border-radius: 1.2vh;
+  margin: 0 7vw;
+  padding: 1vh 1vw;
+  flex-shrink: 0;
+  box-shadow: 
+    0 0.6vh 2vh rgba(0, 0, 0, 0.1),
+    0 0 0 0.1vh rgba(255, 255, 255, 0.2) inset;
+  backdrop-filter: blur(0.5vh);
+  transition: all 0.3s ease;
+}
+
+.notification-content {
+  color: #333;
+  font-size: 1.2vw;
+  text-align: center;
+  line-height: 1.4;
+  font-weight: bold;
+  white-space: pre-line;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8vw;
+}
+
+  /* 알림 메시지 내 강조 텍스트 */
+  .notification-content .highlight-count {
+    background-color: #f0e00ccc;
+    padding: 0.1em 0.3em;
+    border-radius: 0.3em;
+    color: #1d9012;
+    font-weight: bold;
+    margin-right: 0.2vw;
+  }
+
+/* GUIDE 태그 스타일 */
+.guide-tag {
+  background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.6vh 1.2vw;
+  padding-left: 0.9vw;
+  border-radius: 1.5vh;
+  font-size: 1.2vw;
+  font-weight: bold;
+  box-shadow: 0 0.2vh 0.8vh rgba(102, 126, 234, 0.3);
+  border: 0.1vh solid rgba(255, 255, 255, 0.2);
+  margin: 0;
+  margin-right: 1.2vw;
+  text-shadow: 0 0.1vh 0.2vh rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+
+/* 순위 정보 텍스트가 표시될 때만 적용되는 GUIDE 태그 스타일 */
+.guide-tag-rank-order {
+  margin-right: 0vw;
+}
+
+/* 게임 영역 */
+.practice-game-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+  padding: 1vh 0;
+  min-height: 0;
+}
+
+.practice-game-board {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1vh 0;
+}
+
+.practice-game-board.main-board {
+  min-height: 8vh;
+}
+
+.practice-game-board.previous-board {
+  min-height: 5vh;
+  opacity: 0.7;
+}
+
+.board-cards {
+  display: flex;
+  gap: 0.5vw;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-board {
+  display: none;
+}
+
+/* 하단 - 내 정보 및 컨트롤 */
+.practice-bottom-section {
+  height: 12vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1vh;
+  border-radius: 0.8vw;
+  padding: 1vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* 하단 상단 - 내 정보 및 컨트롤 */
+.practice-bottom-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2vw;
+  height: auto;
+  flex-shrink: 0;
+  min-height: 5vh;
+  max-height: 40%;
+}
+
+/* 좌측 - 내 정보 (RESET 버튼으로 대체) */
+.practice-reset-btn-box {
+  display: flex;
+  align-items: stretch;
+  width: 12vw;
+}
+
+.practice-reset-btn {
+  background: linear-gradient(135deg, #e74c3c 0%, #dc3545 25%, #c0392b 50%, #a93226 75%, #922b21 100%);
+  color: white;
+  border: 0.2vw solid #8b0900;
+  border-radius: 0.8vw;
+  padding: 3.2vh 1.4vw;
+  font-size: 1.2vw;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 
+    0 0.4vw 0.8vw rgba(220, 53, 69, 0.4),
+    inset 0 0.1vw 0 rgba(255, 255, 255, 0.2),
+    inset 0 -0.1vw 0 rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.practice-reset-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.practice-reset-btn:hover::before {
+  left: 100%;
+}
+
+.practice-reset-btn:hover {
+  background: linear-gradient(135deg, #dc3545 0%, #c0392b 25%, #a93226 50%, #922b21 75%, #7b241c 100%);
+  transform: translateY(-0.1vh) scale(1.02);
+  box-shadow: 
+    0 0.6vw 1.2vw rgba(220, 53, 69, 0.6),
+    inset 0 0.1vw 0 rgba(255, 255, 255, 0.3),
+    inset 0 -0.1vw 0 rgba(0, 0, 0, 0.2);
+}
+
+.practice-reset-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 
+    0 0.2vw 0.4vw rgba(220, 53, 69, 0.3),
+    inset 0 0.1vw 0 rgba(0, 0, 0, 0.2);
+}
+
+/* 중앙 - 라운드, 현재 조합 및 버튼들 */
+.practice-center-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1vw;
+  flex: 1;
+  border: 0.15vw solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.6vw;
+  padding: 1vh 1.5vw;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(0.5vw);
+}
+
+/* 인라인 라운드 정보 */
+.practice-round-info-inline {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.practice-round-text-inline {
+  background: linear-gradient(135deg, #f7b500 0%, #fdd835 50%, #f39c12 100%);
+  color: #2c3e50;
+  padding: 0.4vh 0.7vw;
+  border-radius: 0.4vw;
+  font-size: 1.1vw;
+  font-weight: bold;
+  box-shadow: 0 0.3vh 0.8vh rgba(0, 0, 0, 0.3), inset 0 0.1vh 0.2vh rgba(255, 255, 255, 0.4);
+  border: 0.15vw solid #f39c12;
+  white-space: nowrap;
+  text-shadow: 0 0.1vh 0.2vh rgba(255, 255, 255, 0.5);
+}
+
+.practice-guide-btn {
+  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+}
+
+.practice-guide-btn:hover {
+  background: linear-gradient(135deg, #545b62 0%, #3d4449 100%);
+}
+
+.practice-mode-btn {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.practice-mode-btn:hover {
+  background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+}
+
+.practice-current-combination {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2vw;
+  margin-bottom: 0.9vw;
+}
+
+.practice-control-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 0.8vw;
+}
+
+.practice-control-btn {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  border-radius: 0.3vw;
+  padding: 0.4vw 0.7vw;
+  font-size: 1.1vw;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0.15vw 0.4vw rgba(0, 123, 255, 0.3);
+}
+
+.practice-control-btn:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-0.07vh);
+  box-shadow: 0 0.3vw 0.8vw rgba(0, 123, 255, 0.4);
+}
+
+.practice-control-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.practice-control-btn.disabled:hover {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  transform: none;
+  box-shadow: 0 0.15vw 0.4vw rgba(0, 0, 0, 0.2);
+}
+
+/* 우측 - SUBMIT 버튼 */
+.practice-submit-btn-box {
+  display: flex;
+  align-items: stretch;
+  width: 12vw;
+}
+
+.practice-submit-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 25%, #388e3c 50%, #2e7d32 75%, #1b5e20 100%);
+  color: white;
+  border: 0.2vw solid #66bb6a;
+  border-radius: 0.8vw;
+  padding: 3.2vh 1.4vw;
+  font-size: 1.2vw;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 
+    0 0.4vw 0.8vw rgba(76, 175, 80, 0.4),
+    inset 0 0.1vw 0 rgba(255, 255, 255, 0.2),
+    inset 0 -0.1vw 0 rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.practice-submit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.practice-submit-btn:hover::before {
+  left: 100%;
+}
+
+.practice-submit-btn:hover {
+  background: linear-gradient(135deg, #45a049 0%, #388e3c 25%, #2e7d32 50%, #1b5e20 75%, #0d4f1c 100%);
+  border-color: #81c784;
+  transform: translateY(-0.1vh) scale(1.02);
+  box-shadow: 
+    0 0.6vw 1.2vw rgba(76, 175, 80, 0.6),
+    inset 0 0.1vw 0 rgba(255, 255, 255, 0.3),
+    inset 0 -0.1vw 0 rgba(0, 0, 0, 0.2);
+}
+
+.practice-submit-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 
+    0 0.2vw 0.4vw rgba(76, 175, 80, 0.3),
+    inset 0 0.1vw 0 rgba(0, 0, 0, 0.2);
+}
+
+/* 패 영역 */
+.practice-hand-area {
+  height: 40vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.practice-hand-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1vh 0;
+  background: rgba(200, 200, 200, 0.9);
+  border-radius: 0.8vw;
+  border: 0.1vw solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(0.5vw);
+  height: 38vh;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.practice-suit-row {
+  display: flex;
+  gap: 0.5vw;
+  justify-content: center;
+  align-items: center;
+  height: 9vh;
+}
+
+/* 카드 스타일 */
+.practice-card {
+  width: 5.625vh; /* 7.5vh * (3/4) = 5.625vh */
+  height: 7.5vh;
+  border: 0.2vw solid #ffffff;
+  border-radius: 0.4vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2vw;
+  color: white;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0.3vh 0.8vh rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.practice-card.hand-card {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.practice-card.hand-card:hover {
+  transform: translateY(-0.3vh);
+  box-shadow: 0 0.5vh 1.2vh rgba(0, 0, 0, 0.4);
+}
+
+.practice-card.selected {
+  transform: translateY(-0.5vh);
+  box-shadow: 0 0.5vh 1.5vh rgba(0, 123, 255, 0.4);
+  border: 0.3vw solid #007bff;
+}
+
+.practice-card.board-card {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: default;
+}
+
+.practice-card.played-card {
+  background: #1a1a1a;
+  border-color: #333;
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.practice-card.played-card .card-suit-image {
+  display: none;
+}
+
+.practice-card.played-card .card-value {
+  display: none;
+}
+
+/* 게임 보드 내 카드 크기 조정 */
+.practice-game-board.main-board .practice-card {
+  width: 5vw;
+  height: 7.1vw;
+}
+
+.practice-game-board.previous-board .practice-card {
+  width: 3vw;
+  height: 4.3vw;
+}
+
+/* 일반모드 카드 슈트별 색상 */
+.practice-card.sun {
+  background: transparent;
+  color: #ff0000;
+}
+
+.practice-card.moon {
+  background: transparent;
+  color: #00ff00;
+}
+
+.practice-card.star {
+  background: transparent;
+  color: #ffd700;
+}
+
+.practice-card.cloud {
+  background: transparent;
+  color: #40e0d0;
+}
+
+/* 초보모드 카드 색상 */
+.practice-card.gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+  color: #333;
+}
+
+.practice-card.gold .card-value {
+  color: #333;
+}
+
+.practice-card.silver {
+  background: linear-gradient(135deg, #c0c0c0 0%, #a9a9a9 100%);
+  color: #333;
+}
+
+.practice-card.silver .card-value {
+  color: #333;
+}
+
+.practice-card.bronze {
+  background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+  color: #fff;
+}
+
+.practice-card.bronze .card-value {
+  color: #fff;
+}
+
+.practice-card.black {
+  background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+  color: #fff;
+}
+
+.practice-card.black .card-value {
+  color: #fff;
+}
+
+.card-suit-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.card-value {
+  font-weight: bold;
+  font-size: 1.4vw;
+  position: absolute;
+  top: 10%;
+  left: 34%;
+  transform: translateX(-50%);
+  z-index: 2;
+  color: inherit;
+}
+
+/* 홈 버튼 */
+.practice-back-btn {
+  position: absolute;
+  top: 2vh;
+  left: 2vw;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 0.1vw solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.3vw;
+  padding: 0;
+  font-size: 1.2vw;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(1vw);
+  -webkit-backdrop-filter: blur(1vw);
+  width: 6vw;
+  height: 3vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.practice-back-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-0.05vh);
+}
+ 
+/* 반응형 디자인 */
+/*
+@media screen and (max-width: 76.8vw) {
+  .practice-container {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    gap: 1vh;
+    padding: 1vh 2vw;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .practice-notification {
+    height: 10vh;
+  }
+
+  .practice-bottom-section {
+    height: 15vh;
+  }
+
+  .practice-hand-area {
+    height: 45vh;
+  }
+
+  .practice-hand-container {
+    height: 43vh;
+  }
+
+  .practice-suit-row {
+    height: 10.5vh;
+  }
+
+  .notification-content {
+    font-size: 3vw;
+    white-space: pre-line;
+  }
+
+  .guide-tag {
+    font-size: 2.5vw;
+    padding: 0.8vh 1.5vw;
+    border-radius: 2vh;
+  }
+
+  .practice-reset-btn,
+  .practice-submit-btn {
+    font-size: 3vw;
+    padding: 1.5vh 3vw;
+  }
+
+  .practice-control-btn {
+    font-size: 2.8vw;
+    padding: 1.5vh 3vw;
+  }
+
+  .practice-round-text-inline {
+    font-size: 2.8vw;
+    padding: 1vh 2vw;
+  }
+
+  .practice-card {
+    width: 6.375vh;
+    height: 8.5vh;
+    font-size: 2.5vw;
+  }
+
+  .practice-game-board.main-board .practice-card {
+    width: 7vw;
+    height: 10vw;
+  }
+
+  .practice-game-board.previous-board .practice-card {
+    width: 4vw;
+    height: 5.7vw;
+  }
+
+  .card-value {
+    font-size: 3vw;
+  }
+
+  .board-header {
+    font-size: 2.5vw;
+  }
+
+  .empty-board {
+    font-size: 2vw;
+  }
+
+  .practice-no-selection {
+    font-size: 2.5vw;
+  }
+
+  .practice-back-btn {
+    font-size: 3vw;
+    width: 6vw;
+    height: 6vw;
+    padding: 0;
+    backdrop-filter: blur(1.5vw);
+    -webkit-backdrop-filter: blur(1.5vw);
+  }
+
+  .practice-bottom-top {
+    flex-direction: column;
+    gap: 1vh;
+    min-height: auto;
+  }
+
+  .practice-reset-btn,
+  .practice-submit-btn {
+    font-size: 4vw;
+  }
+
+  .practice-control-btn {
+    font-size: 3.5vw;
+  }
+
+  .practice-round-text-inline {
+    font-size: 3.5vw;
+  }
+
+  .practice-reset-btn,
+  .practice-submit-btn-box {
+    width: 100%;
+    height: 8vh;
+  }
+
+  .practice-center-controls {
+    width: 100%;
+    height: 8vh;
+  }
+}
+
+@media screen and (max-width: 48vw) and (orientation: portrait) {
+  .practice-container {
+    gap: 0.5vh;
+    padding: 0.5vh 1vw;
+  }
+
+  .practice-notification {
+    height: 12vh;
+  }
+
+  .practice-bottom-section {
+    height: 18vh;
+  }
+
+  .practice-hand-area {
+    height: 50vh;
+  }
+
+  .practice-hand-container {
+    height: 48vh;
+  }
+
+  .practice-suit-row {
+    height: 11.5vh;
+  }
+
+  .practice-card {
+    height: 9.5vh;
+  }
+
+  .notification-content {
+    font-size: 3.5vw;
+    white-space: pre-line;
+  }
+
+  .guide-tag {
+    font-size: 3.5vw;
+    padding: 1vh 2vw;
+    border-radius: 2.5vh;
+  }
+
+  .practice-card {
+    width: 7.125vh;
+    height: 9.5vh;
+    font-size: 3vw;
+  }
+
+  .practice-game-board.main-board .practice-card {
+    width: 10vw;
+    height: 14.3vw;
+  }
+
+  .practice-game-board.previous-board .practice-card {
+    width: 6vw;
+    height: 8.6vw;
+  }
+
+  .card-value {
+    font-size: 3.5vw;
+  }
+}
+
+@media screen and (max-width: 76.8vw) and (orientation: landscape) {
+  .practice-notification {
+    height: 8vh;
+  }
+
+  .practice-bottom-section {
+    height: 12vh;
+  }
+
+  .practice-hand-area {
+    height: 35vh;
+  }
+
+  .practice-hand-container {
+    height: 33vh;
+  }
+
+  .practice-suit-row {
+    height: 8vh;
+  }
+
+  .practice-card {
+    width: 4.875vh;
+    height: 6.5vh;
+  }
+
+  .practice-game-board.main-board .practice-card {
+    width: 4vw;
+    height: 5.7vw;
+  }
+
+  .practice-game-board.previous-board .practice-card {
+    width: 2.5vw;
+    height: 3.6vw;
+  }
+}
+ */

@@ -713,7 +713,6 @@
 
 .feature-icon {
   font-size: 2.5vw;
-  margin-bottom: 1.2vw;
   display: block;
 }
 
@@ -1603,5 +1602,195 @@
 
   .privacy-note p {
     font-size: 4.5vh;
+  }
+}
+
+/* 연습방 관련 스타일 */
+.practice-tab {
+  text-align: center;
+}
+
+.practice-info {
+  margin: 2vh 0;
+}
+
+.practice-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5vh;
+  margin-bottom: 3vh;
+}
+
+.practice-feature {
+  display: flex;
+  align-items: center;
+  gap: 1.5vw;
+  padding: 1.5vh 2vw;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1vw;
+  border: 0.1vw solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.practice-feature:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 1.5vh rgba(0, 0, 0, 0.2);
+}
+
+.practice-feature .feature-icon {
+  font-size: 2vw;
+  width: 4vw;
+  height: 4vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.practice-feature .feature-text {
+  flex: 1;
+  text-align: left;
+}
+
+.practice-feature .feature-text h4 {
+  color: #fff;
+  font-size: 1.2vw;
+  margin: 0.1vh;
+  font-weight: 600;
+}
+
+.practice-feature .feature-text p {
+  color: #ccc;
+  font-size: 1vw;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 연습방 설정 */
+.practice-settings {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.practice-setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.practice-setting-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.practice-setting-item label {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 100px;
+}
+
+/* 커스텀 드롭다운 스타일 */
+.custom-dropdown {
+  position: relative;
+  min-width: 200px;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.dropdown-header:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.dropdown-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #fff;
+  transition: transform 0.3s ease;
+}
+
+.custom-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.dropdown-option {
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: #fff;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.dropdown-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-option.selected {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.custom-dropdown.disabled .dropdown-header {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .practice-settings {
+    padding: 1rem;
+  }
+  
+  .practice-setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .practice-setting-item label {
+    min-width: auto;
+  }
+  
+  .custom-dropdown {
+    min-width: 100%;
   }
 } 
