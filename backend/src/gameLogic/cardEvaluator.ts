@@ -144,7 +144,7 @@ export function evaluateMade(cards: number[], maxNumber: number): MadeEvalResult
   const actualNumbers = values.map(v => v + 1);
   console.log(`[DEBUG] 실제 숫자들: [${actualNumbers.join(', ')}]`);
 
-  // 스트레이트와 플러시: 가장 높은 수(value rank 기준)를 찾아서 순위 결정
+  // 스트레이트와 플러쉬: 가장 높은 수(value rank 기준)를 찾아서 순위 결정
   if (isFlush && isStraight) {
     let bestValue = -1, bestType = -1;
     let bestRank = -1;
@@ -157,10 +157,10 @@ export function evaluateMade(cards: number[], maxNumber: number): MadeEvalResult
       }
     }
     
-    // 스트레이트 플러시는 가장 높은 카드의 순위로 비교
+    // 스트레이트 플러쉬는 가장 높은 카드의 순위로 비교
     const compareValue = bestRank * maxNumber * 4 + bestType; // 순위 기반 비교값
     
-    console.log(`[DEBUG] 스트레이트 플러시 평가: bestValue=${bestValue}, bestRank=${bestRank}, bestType=${bestType}, compareValue=${compareValue}`);
+    console.log(`[DEBUG] 스트레이트 플러쉬 평가: bestValue=${bestValue}, bestRank=${bestRank}, bestType=${bestType}, compareValue=${compareValue}`);
     
     return { type: MADE_STRAIGHTFLUSH, value: compareValue, valid: true };
   }
@@ -199,7 +199,7 @@ export function evaluateMade(cards: number[], maxNumber: number): MadeEvalResult
     return { type: MADE_FULLHOUSE, value: compareValue, valid: true };
   }
   
-  // 플러시: 가장 높은 수로 비교
+  // 플러쉬: 가장 높은 수로 비교
   if (isFlush) {
     let bestValue = -1, bestType = -1;
     let bestRank = -1;
@@ -212,10 +212,10 @@ export function evaluateMade(cards: number[], maxNumber: number): MadeEvalResult
       }
     }
     
-    // 플러시는 가장 높은 카드의 순위로 비교
+    // 플러쉬는 가장 높은 카드의 순위로 비교
     const compareValue = bestRank * maxNumber * 4 + bestType; // 순위 기반 비교값
     
-    console.log(`[DEBUG] 플러시 평가: bestValue=${bestValue}, bestRank=${bestRank}, bestType=${bestType}, compareValue=${compareValue}`);
+    console.log(`[DEBUG] 플러쉬 평가: bestValue=${bestValue}, bestRank=${bestRank}, bestType=${bestType}, compareValue=${compareValue}`);
     
     return { type: MADE_FLUSH, value: compareValue, valid: true };
   }

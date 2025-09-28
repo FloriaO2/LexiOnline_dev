@@ -1142,13 +1142,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       case 1:
         return '스트레이트';
       case 2:
-        return '플러시';
+        return '플러쉬';
       case 3:
         return '풀하우스';
       case 4:
         return '포카드';
       case 5:
-        return '스트레이트플러시';
+        return '스트레이트플러쉬';
       default:
         return '알 수 없음';
     }

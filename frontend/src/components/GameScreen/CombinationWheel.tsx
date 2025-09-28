@@ -28,9 +28,9 @@ const CombinationWheel: React.FC<CombinationWheelProps> = ({
     '트리플',
     '포카드',
     '스트레이트',
-    '플러시',
+    '플러쉬',
     '풀하우스',
-    '스트레이트플러시'
+    '스트레이트플러쉬'
   ];
 
   // 현재 조합에 해당하는 인덱스 찾기

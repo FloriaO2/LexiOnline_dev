@@ -225,7 +225,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     }
 
     if (cards.length === 5) {
-      // 5장 조합 검증: 플러시, 스트레이트, 풀하우스, 포카드, 스트레이트플러시
+      // 5장 조합 검증: 플러쉬, 스트레이트, 풀하우스, 포카드, 스트레이트플러쉬
       const values = cards.map(card => card.value);
       const suits = cards.map(card => card.suit);
       
@@ -263,17 +263,17 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       const isFullHouse = counts[0] === 3 && counts[1] === 2;
       
       if (isFlush && isStraightCheck) {
-        return { isValid: true, message: '' }; // 스트레이트플러시
+        return { isValid: true, message: '' }; // 스트레이트플러쉬
       } else if (isFourOfKind) {
         return { isValid: true, message: '' }; // 포카드
       } else if (isFullHouse) {
         return { isValid: true, message: '' }; // 풀하우스
       } else if (isFlush) {
-        return { isValid: true, message: '' }; // 플러시
+        return { isValid: true, message: '' }; // 플러쉬
       } else if (isStraightCheck) {
         return { isValid: true, message: '' }; // 스트레이트
       } else {
-        return { isValid: false, message: '5장의 카드는 유효한 조합(스트레이트, 플러시, 풀하우스, 포카드, 스트레이트플러시)이어야 합니다.' };
+        return { isValid: false, message: '5장의 카드는 유효한 조합(스트레이트, 플러쉬, 풀하우스, 포카드, 스트레이트플러쉬)이어야 합니다.' };
       }
     }
 
@@ -466,7 +466,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       const isFourOfKind = counts[0] === 4;
       const isFullHouse = counts[0] === 3 && counts[1] === 2;
       
-      // 스트레이트플러시: 가장 높은 카드의 순위와 색상 고려
+      // 스트레이트플러쉬: 가장 높은 카드의 순위와 색상 고려
       if (isFlush && isStraightCheck) {
         let bestValue = -1, bestType = -1;
         let bestRank = -1;
@@ -516,7 +516,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         return { type: 'fullhouse', value: compareValue, isValid: true, message: '' };
       }
       
-      // 플러시: 가장 높은 카드의 순위와 색상 고려
+      // 플러쉬: 가장 높은 카드의 순위와 색상 고려
       if (isFlush) {
         let bestValue = -1, bestType = -1;
         let bestRank = -1;
@@ -570,10 +570,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       pair: 2, 
       triple: 3, 
       straight: 4,    // 스트레이트
-      flush: 5,       // 플러시  
+      flush: 5,       // 플러쉬  
       fullhouse: 6,   // 풀하우스
       fourcards: 7,   // 포카드
-      straightflush: 8 // 스트레이트플러시
+      straightflush: 8 // 스트레이트플러쉬
     };
 
     if (typeOrder[newComb.type] > typeOrder[current.type]) {
@@ -644,10 +644,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       case 'pair': return '페어';
       case 'triple': return '트리플';
       case 'straight': return '스트레이트';
-      case 'flush': return '플러시';
+      case 'flush': return '플러쉬';
       case 'fullhouse': return '풀하우스';
       case 'fourcards': return '포카드';
-      case 'straightflush': return '스트레이트플러시';
+      case 'straightflush': return '스트레이트플러쉬';
       default: return '알 수 없는 조합';
     }
   };
@@ -686,10 +686,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       case 'pair': return '원페어';
       case 'triple': return '트리플';
       case 'straight': return '스트레이트';
-      case 'flush': return '플러시';
+      case 'flush': return '플러쉬';
       case 'fullhouse': return '풀하우스';
       case 'fourcards': return '포카드';
-      case 'straightflush': return '스트레이트플러시';
+      case 'straightflush': return '스트레이트플러쉬';
       default: return '미등록';
     }
   };
@@ -742,20 +742,20 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         const isFlush = new Set(suits).size === 1;
         
         if (isFlush && !pendingFlushSubmission) {
-          // 플러시로 제출 가능한 경우
+          // 플러쉬로 제출 가능한 경우
           if (submitCount === 0) {
             // 첫 번째 제출: 마운틴 패턴 오류 메시지
             setNotificationMessage(`스트레이트플러쉬는 최대 숫자인 ${maxNumber}를 넘어갔을 때, 제일 순위가 높은 <span class="highlight-count">2까지만</span> 사용 가능합니다.\n이를 벗어난 ${highlightInvalidNumbers(invalidMountain.pattern)} 은 스트레이트플러쉬로 <span style="color: red; font-weight: bold;">인정하지 않으며</span>, 추가 설명이 필요하다면 SUBMIT을 다시 눌러주세요.`);
             setSubmitCount(1);
           } else {
-            // 두 번째 제출: 플러시로 제출 가능하다는 안내
+            // 두 번째 제출: 플러쉬로 제출 가능하다는 안내
             setNotificationMessage(`현재는 스트레이트가 인정되지 않아 <span class="highlight-count">플러쉬</span> 상태입니다.\n<span class="highlight-count">플러쉬</span> 조합으로 제출하고 싶다면 SUBMIT을 한번 더 눌러주세요.`);
             setPendingFlushSubmission(true);
             setSubmitCount(2);
           }
         } else if (isFlush && pendingFlushSubmission) {
-          // 세 번째 제출: 플러시로 제출
-          // 플러시 조합으로 제출 처리
+          // 세 번째 제출: 플러쉬로 제출
+          // 플러쉬 조합으로 제출 처리
           const playedCards: PlayedCard[] = selectedCards.map(card => ({
             id: card.id,
             value: card.value,
@@ -787,7 +787,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           setPendingFlushSubmission(false);
           return;
         } else {
-          // 플러시가 아닌 경우: 기존 로직
+          // 플러쉬가 아닌 경우: 기존 로직
           if (submitCount % 2 === 0) {
             setNotificationMessage(`스트레이트는 최대 숫자인 ${maxNumber}를 넘어갔을 때, 제일 순위가 높은 <span class="highlight-count">2까지만</span> 사용 가능합니다.\n이를 벗어난 ${highlightInvalidNumbers(invalidMountain.pattern)} 은 스트레이트로 <span style="color: red; font-weight: bold;">인정하지 않습니다</span>. 때문에 유효한 조합이 아닙니다.`);
           } else {
