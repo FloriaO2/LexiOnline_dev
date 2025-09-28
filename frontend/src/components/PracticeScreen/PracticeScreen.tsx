@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CombinationWheel from '../GameScreen/CombinationWheel';
 import CombinationGuide from '../GameScreen/CombinationGuide';
 import GameGuide from '../GameScreen/GameGuide';
@@ -25,6 +25,7 @@ interface PlayedCard {
   id: string;
   value: number;
   suit: 'sun' | 'moon' | 'star' | 'cloud';
+  isAnimating?: boolean; // 애니메이션 중인지 여부
 }
 
 interface GameBoard {
@@ -45,6 +46,9 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
   const [showGameGuide, setShowGameGuide] = useState(false);
   const [submitCount, setSubmitCount] = useState(0);
   const [pendingFlushSubmission, setPendingFlushSubmission] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false); // 카드 이동 애니메이션 상태
+  const mainBoardRef = useRef<HTMLDivElement>(null);
+  const previousBoardRef = useRef<HTMLDivElement>(null);
 
   // 카드 이미지 매핑
   const cardImages = {
@@ -727,6 +731,130 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     });
   };
 
+  // 카드 이동 애니메이션 함수
+  const animateCardMovement = async (cardsToMove: PlayedCard[]): Promise<void> => {
+    if (cardsToMove.length === 0 || !mainBoardRef.current || !previousBoardRef.current) {
+      return;
+    }
+
+    setIsAnimating(true);
+
+    // 기존 previous-board의 카드들을 서서히 사라지게 하기
+    const existingPreviousCards = previousBoardRef.current?.querySelectorAll('.previous-board-cards .practice-card');
+    if (existingPreviousCards && existingPreviousCards.length > 0) {
+      existingPreviousCards.forEach((card, index) => {
+        const cardElement = card as HTMLElement;
+        cardElement.style.transition = 'opacity 0.4s ease-out';
+        cardElement.style.opacity = '0';
+      });
+    }
+
+    // main-board와 previous-board의 위치 정보 가져오기
+    const mainBoardRect = mainBoardRef.current.getBoundingClientRect();
+    const previousBoardRect = previousBoardRef.current.getBoundingClientRect();
+
+    // main-board와 previous-board의 카드 크기 비율 계산
+    const mainCardWidth = 5 * window.innerWidth / 100; // main-board 카드 너비
+    const previousCardWidth = 3 * window.innerWidth / 100; // previous-board 카드 너비
+    const cardGap = 0.5 * window.innerWidth / 100; // 카드 간격
+    
+    // 실제 카드 배치 계산 (gap과 정렬 고려)
+    const totalMainWidth = (mainCardWidth * cardsToMove.length) + (cardGap * (cardsToMove.length - 1));
+    const totalPreviousWidth = (previousCardWidth * cardsToMove.length) + (cardGap * (cardsToMove.length - 1));
+    
+    // main-board의 카드 배치 중심점 계산
+    const mainCardsContainer = mainBoardRef.current?.querySelector('.main-board-cards') as HTMLElement;
+    
+    if (!mainCardsContainer) {
+      setIsAnimating(false);
+      return;
+    }
+    
+    const mainCardsRect = mainCardsContainer.getBoundingClientRect();
+    
+    // previous-board의 카드 배치 중심점 계산 (main-board와 동일한 방식으로)
+    const previousCardsContainer = previousBoardRef.current?.querySelector('.previous-board-cards') as HTMLElement;
+    
+    if (!previousCardsContainer) {
+      setIsAnimating(false);
+      return;
+    }
+    
+    const previousCardsRect = previousCardsContainer.getBoundingClientRect();
+    
+    // 실제 카드 배치의 중심점 계산 (컨테이너 중심이 아닌 카드들의 실제 중심)
+    const mainBoardCenterX = mainCardsRect.left + mainCardsRect.width / 2;
+    const mainBoardCenterY = mainCardsRect.top + mainCardsRect.height / 2;
+    const previousBoardCenterX = previousCardsRect.left + previousCardsRect.width / 2;
+    const previousBoardCenterY = previousCardsRect.top + previousCardsRect.height / 2;
+    
+    // 각 카드에 대해 애니메이션 실행
+    const animationPromises = cardsToMove.map((card, index) => {
+      return new Promise<void>((resolve) => {
+        // main-board에서 해당 카드 요소 찾기
+        const cardElement = mainBoardRef.current?.querySelector(`[data-card-id="${card.id}"]`) as HTMLElement;
+        
+        if (!cardElement) {
+          resolve();
+          return;
+        }
+
+        // 카드의 현재 위치와 크기
+        const cardRect = cardElement.getBoundingClientRect();
+        
+        // main-board에서의 카드 중심점
+        const mainCardCenterX = cardRect.left + cardRect.width / 2;
+        const mainCardCenterY = cardRect.top + cardRect.height / 2;
+        
+        // main-board에서의 카드 중심점이 전체 패 중심점으로부터 얼마나 떨어져 있는지 계산
+        const offsetFromMainCenter = mainCardCenterX - mainBoardCenterX;
+        
+        // 비율에 따라 previous-board에서의 위치 계산
+        const scaleRatio = previousCardWidth / mainCardWidth;
+        const previousOffset = offsetFromMainCenter * scaleRatio;
+        
+        // previous-board에서의 실제 카드 배치 위치 사용 (정확한 계산)
+        const previousCardStartX = previousBoardCenterX - (totalPreviousWidth / 2);
+        const targetX = previousCardStartX + (index * (previousCardWidth + cardGap));
+        const targetY = previousBoardCenterY - (4.3 * window.innerWidth / 100 / 2); // previous-board 카드 높이의 절반
+        
+        
+        
+        // 이동 거리 계산 (오차 보정 적용)
+        const offsetX = 17; // 우측으로 치우치는 오차, 커질수록 왼쪽
+        const offsetY = 29;   // 아래로 치우치는 오차, 커질수록 올라감
+        const deltaX = (targetX - cardRect.left) - offsetX;
+        const deltaY = (targetY - cardRect.top) - offsetY;
+        
+        // 크기 변화 계산 (main-board: 5vw x 7.1vw → previous-board: 3vw x 4.3vw)
+        const scaleX = (3 * window.innerWidth / 100) / (5 * window.innerWidth / 100);
+        const scaleY = (4.3 * window.innerWidth / 100) / (7.1 * window.innerWidth / 100);
+
+        // 애니메이션 적용
+        cardElement.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        cardElement.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})`;
+        cardElement.style.opacity = '0.7'; // previous-board와 동일한 반투명도
+        cardElement.style.zIndex = '1000';
+
+        // 애니메이션 완료 후 정리
+        setTimeout(() => {
+          cardElement.style.transition = '';
+          cardElement.style.transform = '';
+          cardElement.style.zIndex = '';
+          resolve();
+        }, 600);
+      });
+    });
+
+    // 모든 애니메이션 완료 대기
+    await Promise.all(animationPromises);
+    
+    // 애니메이션 완료 후 상태 업데이트
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 100);
+  };
+
   // 카드 제출
   const submitCards = () => {
     const validation = validateCardCombination(selectedCards);
@@ -762,14 +890,35 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
             suit: card.suit
           }));
 
-          setGameBoards(prev => {
-            const newBoards = [...prev];
-            if (newBoards[0].cards.length > 0) {
-              newBoards[1] = { id: 'previous', cards: [...newBoards[0].cards] };
-            }
-            newBoards[0] = { id: 'main', cards: playedCards };
-            return newBoards;
-          });
+          // 애니메이션이 필요한 경우 (기존 패가 있을 때)
+          if (gameBoards[0].cards.length > 0) {
+            // 애니메이션 실행
+            animateCardMovement(gameBoards[0].cards).then(() => {
+              // 애니메이션 완료 후 게임보드 업데이트
+              setGameBoards(prev => {
+                const newBoards = [...prev];
+                newBoards[1] = { id: 'previous', cards: [...gameBoards[0].cards] };
+                newBoards[0] = { id: 'main', cards: playedCards };
+                return newBoards;
+              });
+            });
+            
+            // 페이드아웃 완료 후 previous-board 비우기
+            setTimeout(() => {
+              setGameBoards(prev => {
+                const newBoards = [...prev];
+                newBoards[1] = { id: 'previous', cards: [] };
+                return newBoards;
+              });
+            }, 400); // 0.4초 후 (페이드아웃 완료 후)
+          } else {
+            // 애니메이션이 필요 없는 경우 (첫 번째 제출)
+            setGameBoards(prev => {
+              const newBoards = [...prev];
+              newBoards[0] = { id: 'main', cards: playedCards };
+              return newBoards;
+            });
+          }
 
           setAllCards(prev => prev.map(card => {
             const isSelected = selectedCards.some(selectedCard => selectedCard.id === card.id);
@@ -817,16 +966,35 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       suit: card.suit
     }));
 
-    setGameBoards(prev => {
-      const newBoards = [...prev];
-      // 이전 조합을 두 번째 보드로 이동
-      if (newBoards[0].cards.length > 0) {
-        newBoards[1] = { id: 'previous', cards: [...newBoards[0].cards] };
-      }
-      // 새 조합을 첫 번째 보드에 추가
-      newBoards[0] = { id: 'main', cards: playedCards };
-      return newBoards;
-    });
+    // 애니메이션이 필요한 경우 (기존 패가 있을 때)
+    if (gameBoards[0].cards.length > 0) {
+      // 애니메이션 실행
+      animateCardMovement(gameBoards[0].cards).then(() => {
+        // 애니메이션 완료 후 게임보드 업데이트
+        setGameBoards(prev => {
+          const newBoards = [...prev];
+          newBoards[1] = { id: 'previous', cards: [...gameBoards[0].cards] };
+          newBoards[0] = { id: 'main', cards: playedCards };
+          return newBoards;
+        });
+      });
+      
+      // 페이드아웃 완료 후 previous-board 비우기
+      setTimeout(() => {
+        setGameBoards(prev => {
+          const newBoards = [...prev];
+          newBoards[1] = { id: 'previous', cards: [] };
+          return newBoards;
+        });
+      }, 400); // 0.4초 후 (페이드아웃 완료 후)
+    } else {
+      // 애니메이션이 필요 없는 경우 (첫 번째 제출)
+      setGameBoards(prev => {
+        const newBoards = [...prev];
+        newBoards[0] = { id: 'main', cards: playedCards };
+        return newBoards;
+      });
+    }
 
     // 선택된 카드들을 제출된 상태로 변경 (정렬된 순서대로)
     setAllCards(prev => prev.map(card => {
@@ -879,6 +1047,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     return (
       <div
         key={card.id}
+        data-card-id={card.id}
         className={`practice-card ${card.isPlayed ? 'played-card' : displayColor} ${card.isSelected ? 'selected' : ''} ${isHand ? 'hand-card' : 'board-card'}`}
         onClick={() => isHand && !card.isPlayed && toggleCardSelection(card.id)}
       >
@@ -890,8 +1059,11 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
 
   // 게임보드 렌더링
   const renderGameBoard = (board: GameBoard, isMain: boolean = true) => (
-    <div className={`practice-game-board ${isMain ? 'main-board' : 'previous-board'}`}>
-      <div className="board-cards">
+    <div 
+      ref={isMain ? mainBoardRef : previousBoardRef}
+      className={`practice-game-board ${isMain ? 'main-board' : 'previous-board'}`}
+    >
+      <div className={`board-cards ${isMain ? 'main-board-cards' : 'previous-board-cards'}`}>
         {board.cards.map(card => renderCard(card as Card, false))}
       </div>
     </div>
@@ -960,8 +1132,9 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
             {/* 우측 - SUBMIT 버튼 */}
             <div className="practice-submit-btn-box">
               <button 
-                className="practice-submit-btn" 
+                className={`practice-submit-btn ${isAnimating ? 'disabled' : ''}`}
                 onClick={submitCards}
+                disabled={isAnimating}
               >
                 SUBMIT
               </button>

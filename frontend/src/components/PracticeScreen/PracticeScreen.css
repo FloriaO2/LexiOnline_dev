@@ -142,6 +142,11 @@
   justify-content: center;
 }
 
+/* previous-board의 gap 조정 */
+.practice-game-board.previous-board .board-cards {
+  gap: 0.3vw; /* main-board의 0.5vw에서 축소된 크기 (0.5 * 0.6 = 0.3) */
+}
+
 .empty-board {
   display: none;
 }
@@ -392,6 +397,22 @@
     inset 0 0.1vw 0 rgba(0, 0, 0, 0.2);
 }
 
+.practice-submit-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  border-color: #6c757d;
+}
+
+.practice-submit-btn.disabled:hover {
+  transform: none;
+  box-shadow: 
+    0 0.4vw 0.8vw rgba(76, 175, 80, 0.4),
+    inset 0 0.1vw 0 rgba(255, 255, 255, 0.2),
+    inset 0 -0.1vw 0 rgba(0, 0, 0, 0.1);
+}
+
 /* 패 영역 */
 .practice-hand-area {
   height: 40vh;
@@ -492,6 +513,31 @@
 .practice-game-board.previous-board .practice-card {
   width: 3vw;
   height: 4.3vw;
+}
+
+/* previous-board 카드의 텍스트 크기 및 border 조정 */
+.practice-game-board.previous-board .practice-card {
+  border-width: 0.12vw; /* main-board의 0.2vw에서 축소된 크기 (0.2 * 0.6 = 0.12) */
+  border-radius: 0.24vw; /* main-board의 0.4vw에서 축소된 크기 (0.4 * 0.6 = 0.24) */
+}
+
+.practice-game-board.previous-board .practice-card .card-value {
+  font-size: 0.8vw; /* main-board의 1.4vw에서 축소된 크기 */
+}
+
+.practice-game-board.previous-board .practice-card .card-suit-image {
+  /* 이미지는 자동으로 카드 크기에 맞춰 조정됨 */
+}
+
+/* 카드 이동 애니메이션 */
+.practice-card.animating {
+  position: relative;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.practice-game-board.animating {
+  pointer-events: none;
 }
 
 /* 일반모드 카드 슈트별 색상 */
