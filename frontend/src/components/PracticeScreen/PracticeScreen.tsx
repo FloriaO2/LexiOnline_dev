@@ -47,6 +47,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
   const [submitCount, setSubmitCount] = useState(0);
   const [pendingFlushSubmission, setPendingFlushSubmission] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false); // 카드 이동 애니메이션 상태
+  const [imagesLoaded, setImagesLoaded] = useState(false); // 이미지 로딩 상태
   const mainBoardRef = useRef<HTMLDivElement>(null);
   const previousBoardRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +82,30 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       return originalSuit;
     }
   };
+
+  // 이미지 프리로딩 확인
+  useEffect(() => {
+    const preloadImages = () => {
+      const imageUrls = [sunImage, moonImage, starImage, cloudImage];
+      let loadedCount = 0;
+      
+      const checkAllLoaded = () => {
+        loadedCount++;
+        if (loadedCount === imageUrls.length) {
+          setImagesLoaded(true);
+        }
+      };
+      
+      imageUrls.forEach(imageUrl => {
+        const img = new Image();
+        img.onload = checkAllLoaded;
+        img.onerror = checkAllLoaded; // 에러가 발생해도 로딩 완료로 처리
+        img.src = imageUrl;
+      });
+    };
+    
+    preloadImages();
+  }, []);
 
   // 초기 카드 생성 (1-maxNumber, 4가지 슈트)
   useEffect(() => {
@@ -152,7 +177,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           rankOrder.push(i);
         }
         const normalOrder = rankOrder.join(',');
-        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 가장 높은 순위입니다.</span>` };
+        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>` };
       }
       
       // 여러 카드인 경우 조합 검증
@@ -163,7 +188,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           rankOrder.push(i);
         }
         const normalOrder = rankOrder.join(',');
-        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 가장 높은 순위입니다.</span>` };
+        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>` };
       } else {
         return validation;
       }
@@ -194,7 +219,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 가장 높은 순위입니다.</span>` };
+    return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>` };
   };
 
   // 카드 타입 검증
@@ -931,7 +956,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
             rankOrder.push(i);
           }
           const normalOrder = rankOrder.join(',');
-          setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 가장 높은 순위입니다.</span>`);
+          setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>`);
           setSubmitCount(0);
           setPendingFlushSubmission(false);
           return;
@@ -1008,7 +1033,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 가장 높은 순위입니다.</span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>`);
     setSubmitCount(0);
     setPendingFlushSubmission(false);
   };
@@ -1035,7 +1060,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 가장 높은 순위입니다.</span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>`);
     setSubmitCount(0);
     setPendingFlushSubmission(false);
   };
@@ -1143,19 +1168,21 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         </div>
 
         {/* 패 영역 */}
-        <div className="practice-hand-area">
-          <div className="practice-hand-container">
-            {['sun', 'moon', 'star', 'cloud'].map(suit => (
-              <div key={suit} className="practice-suit-row">
-                {allCards
-                  .filter(card => card.suit === suit)
-                  .sort((a, b) => a.value - b.value)
-                  .map(card => renderCard(card, true))
-                }
-              </div>
-            ))}
+        {imagesLoaded && (
+          <div className="practice-hand-area">
+            <div className="practice-hand-container">
+              {['sun', 'moon', 'star', 'cloud'].map(suit => (
+                <div key={suit} className="practice-suit-row">
+                  {allCards
+                    .filter(card => card.suit === suit)
+                    .sort((a, b) => a.value - b.value)
+                    .map(card => renderCard(card, true))
+                  }
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 홈 버튼 */}
         <button className="practice-back-btn" onClick={() => onScreenChange('lobby')}>
