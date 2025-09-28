@@ -1168,21 +1168,19 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         </div>
 
         {/* 패 영역 */}
-        {imagesLoaded && (
-          <div className="practice-hand-area">
-            <div className="practice-hand-container">
-              {['sun', 'moon', 'star', 'cloud'].map(suit => (
-                <div key={suit} className="practice-suit-row">
-                  {allCards
-                    .filter(card => card.suit === suit)
-                    .sort((a, b) => a.value - b.value)
-                    .map(card => renderCard(card, true))
-                  }
-                </div>
-              ))}
-            </div>
+        <div className="practice-hand-area">
+          <div className="practice-hand-container">
+            {imagesLoaded && ['sun', 'moon', 'star', 'cloud'].map(suit => (
+              <div key={suit} className="practice-suit-row">
+                {allCards
+                  .filter(card => card.suit === suit)
+                  .sort((a, b) => a.value - b.value)
+                  .map(card => renderCard(card, true))
+                }
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* 홈 버튼 */}
         <button className="practice-back-btn" onClick={() => onScreenChange('lobby')}>
