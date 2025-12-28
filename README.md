@@ -1,10 +1,16 @@
+<div align="center">
+  <a href="https://www.notion.so/LexiOnline-249eb69cdf4980beaaa3d13a8050a323">
+    ▶ Notion에서 보기
+  </a>
+</div>
+
+
 # 🎲 LexiOnline
 
 **렉시오 온라인, 실시간 전략 카드 게임**
 
 ---
-
-![logo.png](attachment:5324a32b-f418-48bb-91df-11b74e0c44b1:logo.png)
+<img width="512" height="250" alt="logo" src="https://github.com/user-attachments/assets/140963e9-f2dd-4032-bc69-e6710c649748" />
 
 ## 🤷 What is LexiOnline?
 
@@ -57,11 +63,14 @@
 
 ---
 
-![Lobby1.gif](attachment:81fadb22-f2c4-49da-adc8-6d28825b71e6:Lobby1.gif)
+![Lobby1](https://github.com/user-attachments/assets/5245a554-126a-493c-b514-fe87ecb62764)
 
-![Lobby2.gif](attachment:e3efb55f-41a4-4db0-a703-c85c9d59460a:Lobby2.gif)
-
-![Lobby3.gif](attachment:74ccb64d-df0a-48b6-a1b4-579022f7768f:Lobby3.gif)
+<table align="center">
+  <tr>
+    <td valign="middle" align="center"><img src="https://github.com/user-attachments/assets/04d7d283-6fe5-445f-8d46-a36c404e8298" alt="Lobby2"></td>
+    <td valign="middle" align="center"><img src="https://github.com/user-attachments/assets/9bf07cb0-ace5-410f-8b42-3af8571f053f" alt="Lobby3"></td>
+  </tr>
+</table>
 
 ### 손쉽게 방을 만들고 참가하세요!
 
@@ -77,7 +86,7 @@
 
 ---
 
-![Waiting1.gif](attachment:bc563680-5919-42ea-ab1d-dad5f0e9a100:Waiting1.gif)
+![Waiting1](https://github.com/user-attachments/assets/49116010-80a7-49e1-b691-9ab128e1e0bc)
 
 ### 게임 대기실에서 실시간으로 준비 상태 관리
 
@@ -93,9 +102,16 @@
 
 ---
 
-![스크린샷 2025-07-31 182551.png](attachment:9a7f8458-0d5b-4cc4-a422-9e7944880888:스크린샷_2025-07-31_182551.png)
-
-![스크린샷 2025-07-31 182612.png](attachment:e3340fb7-e52d-4762-985b-553acde1a5be:스크린샷_2025-07-31_182612.png)
+<table align="center">
+  <tr>
+    <td valign="middle" align="center">
+      <img width="1400" height="750" alt="스크린샷 2025-07-31 182612" src="https://github.com/user-attachments/assets/faf0a262-d1f4-427b-a3ab-42c2795f8b35" />
+    </td>
+    <td valign="middle" align="center">
+      <img width="1400" height="750" alt="스크린샷 2025-07-31 182551" src="https://github.com/user-attachments/assets/89b11cc1-2dff-409b-8737-08cb6ed991d7" />
+    </td>
+  </tr>
+</table>
 
 ### 초보 모드 또는 일반 모드로 플레이
 
@@ -110,11 +126,11 @@
 
 ---
 
-![Game_Sort.gif](attachment:6a4f94f6-2368-48e4-a7cb-c786f14e5828:Game_Sort.gif)
+![Game_Sort](https://github.com/user-attachments/assets/63261239-62ab-4533-8fc6-2d546c25514e)
 
 ![Game_Submit.gif](attachment:86a2b5fc-0e5f-4b06-b9ed-7bad00ada886:Game_Submit.gif)
 
-[Game_Play_3.mp4](attachment:0f58973e-b6d5-4730-b019-bbc88edf305d:Game_Play_3.mp4)
+https://github.com/user-attachments/assets/95bb8d8e-b82d-4cac-8107-04d4569a9d65
 
 ![Game_Guide.gif](attachment:e32d64f0-ff0a-4d25-a218-1a63f2a38bef:Game_Guide.gif)
 
@@ -131,11 +147,15 @@
 
 ---
 
-[Result.mp4](attachment:bdd26d04-eac2-4c4e-9031-58e92a3455b9:Result.mp4)
+### 🎮 3인 모드 결과 화면
+https://github.com/user-attachments/assets/cc7a7ca4-7706-48bd-b65e-1fc1003726bc
 
-[Result_3.mp4](attachment:b504ae0f-67eb-43cf-aab2-99edff5780ac:Result_3.mp4)
+### 🎮 4인 모드 결과 화면
+https://github.com/user-attachments/assets/979fd660-c1b1-42ed-84c8-3f49e15bb61f
 
-[Result_2.mp4](attachment:427ceb02-52ae-454b-bb51-d13624b034ab:Result_2.mp4)
+### 🎮 5인 모드 결과 화면
+https://github.com/user-attachments/assets/d4bd8d13-1a4d-4b75-9053-237eb6baf950
+
 
 ### 실시간 결과 확인과 코인 시스템
 
