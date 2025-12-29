@@ -128,11 +128,11 @@
 
 ![Game_Sort](https://github.com/user-attachments/assets/63261239-62ab-4533-8fc6-2d546c25514e)
 
-![Game_Submit.gif](attachment:86a2b5fc-0e5f-4b06-b9ed-7bad00ada886:Game_Submit.gif)
+![Game_Submit](https://github.com/user-attachments/assets/b6781418-7265-4eb0-bbec-d632b460ad04)
 
 https://github.com/user-attachments/assets/95bb8d8e-b82d-4cac-8107-04d4569a9d65
 
-![Game_Guide.gif](attachment:e32d64f0-ff0a-4d25-a218-1a63f2a38bef:Game_Guide.gif)
+![Game_Guide](https://github.com/user-attachments/assets/f5e59fd4-b09d-4a91-a9a4-529ea688dc6f)
 
 **✅ 패 정렬, 족보 보기, 모드 변경**
 
