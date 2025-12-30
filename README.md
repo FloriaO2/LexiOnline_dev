@@ -10,7 +10,7 @@
 **렉시오 온라인, 실시간 전략 카드 게임**
 
 ---
-<img width="512" height="250" alt="logo" src="https://github.com/user-attachments/assets/140963e9-f2dd-4032-bc69-e6710c649748" />
+<img width="512" height="250" alt="LexiOnline_Logo" src="https://github.com/user-attachments/assets/140963e9-f2dd-4032-bc69-e6710c649748" />
 
 ## 🤷 What is LexiOnline?
 
@@ -61,8 +61,6 @@
 
 ## [Fun 1] 게임 로비와 방 생성
 
----
-
 ![Lobby1](https://github.com/user-attachments/assets/5245a554-126a-493c-b514-fe87ecb62764)
 
 <table align="center">
@@ -84,8 +82,6 @@
 
 ## [Fun 2] 대기실에서의 방 관리 및 게임 시작
 
----
-
 ![Waiting1](https://github.com/user-attachments/assets/49116010-80a7-49e1-b691-9ab128e1e0bc)
 
 ### 게임 대기실에서 실시간으로 준비 상태 관리
@@ -100,15 +96,13 @@
 
 ## [Fun 3] 게임 모드 선택
 
----
-
 <table align="center">
   <tr>
     <td valign="middle" align="center">
-      <img width="1400" height="750" alt="스크린샷 2025-07-31 182612" src="https://github.com/user-attachments/assets/faf0a262-d1f4-427b-a3ab-42c2795f8b35" />
+      <img width="1400" height="750" alt="일반모드" src="https://github.com/user-attachments/assets/faf0a262-d1f4-427b-a3ab-42c2795f8b35" />
     </td>
     <td valign="middle" align="center">
-      <img width="1400" height="750" alt="스크린샷 2025-07-31 182551" src="https://github.com/user-attachments/assets/89b11cc1-2dff-409b-8737-08cb6ed991d7" />
+      <img width="1400" height="750" alt="초보모드" src="https://github.com/user-attachments/assets/89b11cc1-2dff-409b-8737-08cb6ed991d7" />
     </td>
   </tr>
 </table>
@@ -123,8 +117,6 @@
 ---
 
 ## [Fun 4] 게임 화면에서 자신만의 전략을 펼치세요!
-
----
 
 ![Game_Sort](https://github.com/user-attachments/assets/63261239-62ab-4533-8fc6-2d546c25514e)
 
@@ -144,8 +136,6 @@ https://github.com/user-attachments/assets/95bb8d8e-b82d-4cac-8107-04d4569a9d65
 ---
 
 ## [Fun 5] 결과 화면과 랭킹 시스템
-
----
 
 ### 🎮 3인 모드 결과 화면
 https://github.com/user-attachments/assets/cc7a7ca4-7706-48bd-b65e-1fc1003726bc
