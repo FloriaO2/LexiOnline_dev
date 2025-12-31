@@ -49,11 +49,12 @@
 > Backend
 > 
 > - `Colyseus` - 백엔드 게임 진행
-> - `Google Console Storage` - 구글 로그인을 위한 길고 험난한 여정
+> - `Prisma` - 데이터 관리
+> - `Google Console Storage` - 구글 로그인 관리
 
 > DB
 > 
-> - `Prisma` - 데이터베이스
+> - `Postgres` - 데이터베이스
 
 ---
 
