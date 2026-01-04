@@ -46,6 +46,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
   const [showGameGuide, setShowGameGuide] = useState(false);
   const [submitCount, setSubmitCount] = useState(0);
   const [pendingFlushSubmission, setPendingFlushSubmission] = useState(false);
+  const [showRankGuide, setShowRankGuide] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false); // 카드 이동 애니메이션 상태
   const [imagesLoaded, setImagesLoaded] = useState(false); // 이미지 로딩 상태
   const mainBoardRef = useRef<HTMLDivElement>(null);
@@ -132,7 +133,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우 ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우 ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
   }, [maxNumber]);
 
   // 카드 선택/해제
@@ -156,6 +157,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     // 선택된 카드 조합이 변경되면 제출 횟수 리셋
     setSubmitCount(0);
     setPendingFlushSubmission(false);
+    setShowRankGuide(false);
   }, [allCards]);
 
   // 카드 조합 검증 및 상세 설명
@@ -177,7 +179,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           rankOrder.push(i);
         }
         const normalOrder = rankOrder.join(',');
-        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>` };
+        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
       }
       
       // 여러 카드인 경우 조합 검증
@@ -188,7 +190,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           rankOrder.push(i);
         }
         const normalOrder = rankOrder.join(',');
-        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>` };
+        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
       } else {
         return validation;
       }
@@ -959,6 +961,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>`);
           setSubmitCount(0);
           setPendingFlushSubmission(false);
+          setShowRankGuide(false);
           return;
         } else {
           // 플러쉬가 아닌 경우: 기존 로직
@@ -976,7 +979,25 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           setSubmitCount(prev => prev + 1);
         }
       } else {
-        setNotificationMessage(validation.message);
+        // "가장 순위가 높은 패" 메시지인지 확인
+        const isRankGuideMessage = validation.message.includes('가장 순위가 높은 패');
+        
+        if (isRankGuideMessage) {
+          if (showRankGuide) {
+            // 두 번째 제출: 순위 가이드 메시지 표시
+            setNotificationMessage('아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>');
+            setShowRankGuide(false);
+            setSubmitCount(0);
+          } else {
+            // 첫 번째 제출: 기본 메시지 표시
+            setNotificationMessage(validation.message);
+            setShowRankGuide(true);
+            setSubmitCount(prev => prev + 1);
+          }
+        } else {
+          setNotificationMessage(validation.message);
+          setShowRankGuide(false);
+        }
       }
       return;
     }
@@ -1036,6 +1057,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>`);
     setSubmitCount(0);
     setPendingFlushSubmission(false);
+    setShowRankGuide(false);
   };
 
   // 리셋 기능
@@ -1063,6 +1085,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>`);
     setSubmitCount(0);
     setPendingFlushSubmission(false);
+    setShowRankGuide(false);
   };
 
   // 카드 렌더링

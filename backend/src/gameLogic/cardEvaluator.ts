@@ -25,21 +25,14 @@ export function parseCard(card: number, maxNumber: number) {
   return { type, value };
 }
 
-// value 기준 순위: 실제 숫자 3456...12, 2가 가장 높음
-// value: 실제 n → 데이터 n-1, 즉 value 0=실제1, value 1=실제2, ..., value 11=실제12, value 12=실제13
-// 실제 순위는 3<4<5<6<7<8<9<10<11<12<1<2 순서
+// value 기준 순위: 실제 숫자 3,4,5,...,maxNumber, 1, 2 순서 (maxNumber가 1보다 높음)
+// value: 실제 n → 데이터 n-1, 즉 value 0=실제1, value 1=실제2, ..., value (maxNumber-1)=실제 maxNumber
+// 실제 순위는 3<4<5<...<maxNumber<1<2 순서
+// 공식: (actualNumber + maxNumber - 3) % maxNumber
+// 예시 (maxNumber=13): 3->0, 4->1, ..., 12->9, 13->10, 1->11, 2->12
 export function getValueRank(value: number, maxNumber: number): number {
   const actualNumber = value + 1; // value를 실제 숫자로 변환
-  
-  // 실제 숫자 기준 순위 매기기
-  if (actualNumber >= 3 && actualNumber <= 12) {
-    return actualNumber - 3; // 3->0, 4->1, ..., 12->9
-  } else if (actualNumber === 1) {
-    return maxNumber - 2; // 1 (두 번째로 높음)
-  } else if (actualNumber === 2) {
-    return maxNumber - 1; // 2 (가장 높음)
-  }
-  return actualNumber - 3; // 기본값
+  return (actualNumber + maxNumber - 3) % maxNumber;
 }
 
 // 카드의 최종 비교값 계산: type * maxNumber + value (사용자 요구사항)
