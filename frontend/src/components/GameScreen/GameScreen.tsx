@@ -1425,7 +1425,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     // 각 카드를 순차적으로 뒤집기 (0.2초 간격)
     for (let index = 0; index < myHand.length; index++) {
       setTimeout(() => {
-        console.log(`[DEBUG] 카드 ${index} 애니메이션 시작`);
+        // console.log(`[DEBUG] 카드 ${index} 애니메이션 시작`);
         
         setMyHand(prevHand => {
           const updated = [...prevHand];

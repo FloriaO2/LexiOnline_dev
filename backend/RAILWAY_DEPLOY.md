@@ -471,9 +471,10 @@ PRISMA_DATABASE_URL="your_railway_db_url" npx prisma studio
 **증상**: 방 만들기/참여는 되는데 게임 진행이 안 됨, WebSocket 연결 실패
 
 **원인**:
-- WebSocket URL이 올바르게 설정되지 않음
-- `https://`를 `ws://`로 변환하는 버그 (올바른 변환: `https://` → `wss://`)
+- **Railway와 Fly.io의 차이점**: Fly.io는 자동으로 WebSocket 업그레이드를 처리하지만, Railway는 리버스 프록시를 사용하므로 추가 설정이 필요할 수 있습니다
+- WebSocket URL이 올바르게 설정되지 않음 (`https://`를 `ws://`로 변환하는 버그)
 - CORS 설정에 프론트엔드 도메인이 없음
+- Railway의 HTTP 서비스 설정에서 WebSocket 지원 확인 필요
 
 **해결 방법**:
 

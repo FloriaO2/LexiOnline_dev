@@ -16,12 +16,18 @@ let cleanupScheduler: CleanupScheduler | null = null;
 
 export default config({
   initializeGameServer: (gameServer) => {
+    // Railway에서 WebSocket 연결을 위한 설정
+    // Fly.io와 달리 Railway는 리버스 프록시를 사용하므로 명시적 설정 필요
     gameServer.define('my_room', MyRoom);
     gameServer.define('lobby_room', LobbyRoom);
     globalGameServer = gameServer; // 전역 변수에 저장
     
     // 빈 방 정리 스케줄러 초기화
     cleanupScheduler = new CleanupScheduler(gameServer);
+    
+    // Railway 환경에서 WebSocket 연결을 위한 로깅
+    console.log('[Colyseus] Game server initialized');
+    console.log('[Colyseus] Transport:', gameServer.transport);
   },
 
   initializeExpress: (app) => {

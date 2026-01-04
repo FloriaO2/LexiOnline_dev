@@ -11,10 +11,30 @@ class ColyseusService {
   constructor() {
     // 배포 환경 감지 및 URL 설정
     const isProduction = process.env.NODE_ENV === 'production';
-    const apiUrl = process.env.REACT_APP_API_URL || 
-      //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
-      (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
-    const serverUrl = apiUrl.replace(/^http/, 'ws');
+    
+    // Colyseus WebSocket URL 우선순위:
+    // 1. REACT_APP_COLYSEUS_URL (명시적 설정, wss:// 프로토콜 사용)
+    // 2. REACT_APP_API_URL (API URL 기반, 자동 변환)
+    // 3. 기본값
+    let serverUrl: string;
+    
+    if (process.env.REACT_APP_COLYSEUS_URL) {
+      // 명시적으로 Colyseus URL이 설정된 경우 (권장)
+      serverUrl = process.env.REACT_APP_COLYSEUS_URL;
+      console.log('[ColyseusService] Using REACT_APP_COLYSEUS_URL:', serverUrl);
+    } else {
+      const apiUrl = process.env.REACT_APP_API_URL || 
+        (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
+      
+      // HTTP/HTTPS를 WebSocket 프로토콜로 변환
+      // https:// -> wss://, http:// -> ws://
+      serverUrl = apiUrl.replace(/^https?:\/\//, (match) => {
+        return match === 'https://' ? 'wss://' : 'ws://';
+      });
+      console.log('[ColyseusService] Converted API URL to WebSocket:', apiUrl, '->', serverUrl);
+    }
+    
+    console.log('[ColyseusService] Final WebSocket URL:', serverUrl);
     this.client = new Client(serverUrl);
   }
 
