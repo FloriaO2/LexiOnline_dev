@@ -88,6 +88,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
   const [isHandCardFlipping, setIsHandCardFlipping] = useState(false); // 손패 카드 순차 뒤집기 애니메이션
   const [shouldStartHandAnimation, setShouldStartHandAnimation] = useState(false); // 손패 애니메이션 시작 대기
   const animationStartedRef = useRef(false); // 애니메이션 중복 실행 방지
+  const currentRoundRef = useRef<number | null>(null); // 현재 처리 중인 라운드 번호 추적
+  const isAnimationProcessingRef = useRef(false); // 애니메이션 처리 중인지 추적
+  const waitingForNextRoundRef = useRef(false); // 대기 화면 상태 추적 (메시지 핸들러에서 사용)
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [boardCards, setBoardCards] = useState<Array<{
     id: number;
@@ -339,6 +342,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     // 게임 화면에 진입했을 때 다음 라운드 대기 상태인지 확인 (round가 2 이상일 때만)
     if (room.state.round > 1 && !room.state.players.get(room.sessionId)?.readyForNextRound) {
       setWaitingForNextRound(true);
+      waitingForNextRoundRef.current = true; // ref도 업데이트
       // 현재 준비 상태 요청
       room.send('requestReadyStatus');
     }
@@ -441,6 +445,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     room.onMessage('playerInfoResponse', (message) => {
       console.log('플레이어 정보 응답:', message);
       
+      const roundNumber = message.round;
+      
       // 플레이어 정보 설정
       const playerList: Player[] = message.players.map((p: any) => ({
         id: p.sessionId,
@@ -466,8 +472,24 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       
       // 게임이 시작되었고 손패가 있다면 손패 업데이트
       if (message.isGameStarted && message.myHand && message.myHand.length > 0) {
+        // playerInfoResponse 메시지: requestPlayerInfo 요청에 대한 응답
+        // 대기 화면이 떠있는 동안에는 패 분배와 애니메이션을 시작하지 않음
+        if (waitingForNextRoundRef.current) {
+          console.log('[DEBUG] 대기 화면이 떠있어서 playerInfoResponse 메시지 무시');
+          return;
+        }
+        
+        // 이미 처리 중인 라운드이거나 애니메이션이 진행 중이면 무시
+        if (roundNumber && currentRoundRef.current === roundNumber && (isAnimationProcessingRef.current || isHandCardFlipping)) {
+          console.log(`[DEBUG] 라운드 ${roundNumber}는 이미 처리 중이므로 무시합니다.`);
+          return;
+        }
+        
         setIsGameStarted(true); // 게임 시작 상태 설정
         animationStartedRef.current = false; // 애니메이션 시작 전이므로 false로 초기화
+        if (roundNumber) {
+          currentRoundRef.current = roundNumber; // 현재 라운드 번호 저장
+        }
         const maxNumber = message.maxNumber || 13;
         const handCards = message.myHand.map((cardNumber: number, index: number) => {
           const color = getCardColorFromNumber(cardNumber, maxNumber);
@@ -488,7 +510,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         setTimeout(() => {
           // 모든 라운드에서 순차적 카드 뒤집기 애니메이션 시작 (로딩 완료 후)
           console.log(`[DEBUG] ${message.round}라운드 - playerInfoResponse에서 애니메이션 시작`);
-          setShouldStartHandAnimation(true);
+          // 애니메이션이 진행 중이 아닐 때만 플래그 설정
+          if (!isHandCardFlipping && !isAnimationProcessingRef.current) {
+            setShouldStartHandAnimation(true);
+          }
         }, 50);
       }
     });
@@ -497,6 +522,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       console.log('게임 종료:', message);
       // 게임 종료 시 불필요한 상태 업데이트 방지를 위해 플래그 설정
       setIsGameLoaded(false);
+      setIsHandCardFlipping(false);
+      setShouldStartHandAnimation(false);
+      animationStartedRef.current = false;
+      isAnimationProcessingRef.current = false;
+      currentRoundRef.current = null;
       onScreenChange('finalResult', message.finalScores);
     });
 
@@ -528,6 +558,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       // console.log('⏰ [TIMER] 라운드 종료 - 타이머 상태 초기화');
       setRemainingTime(0);
       setTurnStartTime(0);
+      // 라운드 종료 시 애니메이션 상태 초기화
+      setIsGameLoaded(false);
+      setIsHandCardFlipping(false);
+      setShouldStartHandAnimation(false);
+      animationStartedRef.current = false;
+      isAnimationProcessingRef.current = false;
+      currentRoundRef.current = null;
       onScreenChange('result', message);
     });
 
@@ -543,6 +580,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     room.onMessage('allPlayersReadyForNextRound', () => {
       console.log('모든 플레이어가 다음 라운드 준비 완료');
       setWaitingForNextRound(false);
+      waitingForNextRoundRef.current = false; // ref도 업데이트
       setReadyPlayers(new Set());
     });
 
@@ -561,6 +599,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     room.onMessage('waitingForNextRound', () => {
       console.log('다음 라운드 대기 상태 시작');
       setWaitingForNextRound(true);
+      waitingForNextRoundRef.current = true; // ref도 업데이트
       setReadyPlayers(new Set());
       room.send('requestReadyStatus');
     });
@@ -608,10 +647,24 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
     });
 
     room.onMessage('roundStart', (message) => {
+      const roundNumber = message.round || room.state.round;
       console.log('라운드 시작:', message);
-      console.log('현재 라운드:', room.state.round);
+      console.log('현재 라운드:', roundNumber);
       console.log('message.hand 존재 여부:', !!message.hand);
       console.log('message.hand 길이:', message.hand?.length);
+      
+      // roundStart 메시지: 백엔드에서 라운드 시작 시 브로드캐스트
+      // 대기 화면이 떠있는 동안에는 패 분배와 애니메이션을 시작하지 않음
+      if (waitingForNextRoundRef.current) {
+        console.log('[DEBUG] 대기 화면이 떠있어서 roundStart 메시지 무시');
+        return;
+      }
+      
+      // 이미 처리 중인 라운드이거나 애니메이션이 진행 중이면 무시
+      if (currentRoundRef.current === roundNumber && (isAnimationProcessingRef.current || isHandCardFlipping)) {
+        console.log(`[DEBUG] 라운드 ${roundNumber}는 이미 처리 중이므로 무시합니다.`);
+        return;
+      }
       
       // 새 라운드 시작 시 보드 상태 초기화 (15X4로 리셋)
       setBoardCards([]);
@@ -623,6 +676,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       setIsGameLoaded(false);
       setIsGameStarted(true); // 게임 시작 상태 설정
       animationStartedRef.current = false; // 애니메이션 시작 전이므로 false로 초기화
+      isAnimationProcessingRef.current = false; // 애니메이션 처리 상태 초기화
+      currentRoundRef.current = roundNumber; // 현재 라운드 번호 저장
       // console.log('⏰ [TIMER] 새 라운드 시작 - 타이머 상태 초기화');
       setRemainingTime(0); // 타이머 잔여 시간 초기화
       setTurnStartTime(0); // 턴 시작 시간 초기화
@@ -647,11 +702,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         setAndSortHand(handCards);
         
         // setAndSortHand 후에 상태 강제 설정
+        // waitingForNextRound가 false일 때만 애니메이션 시작
         setTimeout(() => {
           // 모든 라운드에서 순차적 카드 뒤집기 애니메이션 시작 (로딩 완료 후)
           console.log('[DEBUG] roundStart - 애니메이션 대기 중 (로딩 완료 후 시작)');
-          // 로딩 완료 후 애니메이션 시작하도록 플래그 설정
-          setShouldStartHandAnimation(true);
+          // 대기 화면이 떠있지 않고, 애니메이션이 진행 중이 아닐 때만 플래그 설정
+          // waitingForNextRound 체크는 useEffect에서 수행
+          if (!isHandCardFlipping && !isAnimationProcessingRef.current) {
+            setShouldStartHandAnimation(true);
+          }
         }, 50);
       }
 
@@ -1454,6 +1513,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
         setIsHandCardFlipping(false);
         setIsGameLoaded(true); // 애니메이션 완료 후 게임 로딩 완료 상태 설정
         animationStartedRef.current = true; // 애니메이션 완료 후 true로 설정하여 이후 setAndSortHand에서 카드가 앞면으로 유지되도록 함
+        isAnimationProcessingRef.current = false; // 애니메이션 처리 완료
         
         // 타임어택 모드에서 애니메이션 완료 시점에 turnStartTime을 현재 시간으로 재설정
         if (timeAttackMode && turnStartTime > 0) {
@@ -1483,6 +1543,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
           isMyTurn, 
           isGameLoaded: true, // 실제로는 true로 설정됨
           isHandCardFlipping: false,
+          isAnimationProcessing: false,
           myHandLength: myHand.length,
           cardStates: myHand.map(card => ({ id: card.id, isFlipped: card.isFlipped, isAnimating: card.isAnimating }))
         });
@@ -1497,8 +1558,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
 
   // 로딩 완료 후 손패 애니메이션 시작
   useEffect(() => {
-    // 애니메이션이 이미 시작되었다면 더 이상 조건 체크하지 않음
-    if (animationStartedRef.current) {
+    // 애니메이션이 이미 시작되었거나 처리 중이면 더 이상 조건 체크하지 않음
+    if (animationStartedRef.current || isAnimationProcessingRef.current) {
+      return;
+    }
+    
+    // 대기 화면이 떠있는 동안에는 애니메이션을 시작하지 않음
+    if (waitingForNextRound) {
+      console.log('[DEBUG] 대기 화면이 떠있어서 애니메이션 시작하지 않음');
       return;
     }
     
@@ -1506,19 +1573,22 @@ const GameScreen: React.FC<GameScreenProps> = ({ onScreenChange, playerCount }) 
       shouldStartHandAnimation,
       imagesLoaded,
       animationStarted: animationStartedRef.current,
-      isHandCardFlipping
+      isHandCardFlipping,
+      isAnimationProcessing: isAnimationProcessingRef.current,
+      waitingForNextRound
     });
     
-    if (shouldStartHandAnimation && imagesLoaded && !animationStartedRef.current && !isHandCardFlipping) {
+    if (shouldStartHandAnimation && imagesLoaded && !animationStartedRef.current && !isHandCardFlipping && !isAnimationProcessingRef.current && !waitingForNextRound) {
       console.log('[DEBUG] 애니메이션 시작 조건 만족 - 손패 애니메이션 시작');
       setShouldStartHandAnimation(false);
+      isAnimationProcessingRef.current = true; // 애니메이션 처리 시작
       // animationStartedRef.current는 애니메이션 완료 후에만 true로 설정
       
       setTimeout(() => {
         startSequentialCardFlip();
       }, 300); // 0.3초 후 애니메이션 시작
     }
-  }, [shouldStartHandAnimation, imagesLoaded, isHandCardFlipping]);
+  }, [shouldStartHandAnimation, imagesLoaded, isHandCardFlipping, waitingForNextRound]);
 
 
 
