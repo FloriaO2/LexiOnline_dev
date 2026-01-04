@@ -436,34 +436,34 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
         // 순위 기반 메시지 생성
         let rankMessage = '';
         if (giverRank === 1 && receiverRank === 2) {
-          rankMessage = '1등과 2등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '1등과 2등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 1 && receiverRank === 3) {
-          rankMessage = '1등과 3등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '1등과 3등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 1 && receiverRank === 4) {
-          rankMessage = '1등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '1등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 1 && receiverRank === 5) {
-          rankMessage = '1등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '1등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 2 && receiverRank === 3) {
-          rankMessage = '2등과 3등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '2등과 3등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 2 && receiverRank === 4) {
-          rankMessage = '2등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '2등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 2 && receiverRank === 5) {
-          rankMessage = '2등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '2등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 3 && receiverRank === 4) {
-          rankMessage = '3등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '3등과 4등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 3 && receiverRank === 5) {
-          rankMessage = '3등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '3등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else if (giverRank === 4 && receiverRank === 5) {
-          rankMessage = '4등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다';
+          rankMessage = '4등과 5등의 남은 패 개수 차이만큼 코인을 전달 중입니다.';
         } else {
           // 기본 메시지 (예상치 못한 경우)
-          rankMessage = `${receiverRank}등과 ${giverRank}등의 남은 패 개수 차이만큼 코인을 전달 중입니다`;
+          rankMessage = `${receiverRank}등과 ${giverRank}등의 남은 패 개수 차이만큼 코인을 전달 중입니다.`;
         }
         
           // 등수만 배경색 적용하는 함수
          const formatRankMessage = (message: string) => {
            // 등수 패턴 찾기 (1등, 2등, 3등, 4등, 5등) - 앞뒤 공백 제거
-           return message.replace(/(\d+등)/g, '<span class="guide-tag">$1</span>');
+           return message.replace(/(\d+등)/g, '<span class="result-rank-tag">$1</span>');
          };
          
          setTransferMessage(formatRankMessage(rankMessage));
@@ -527,6 +527,44 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
   const handleBackToLobby = () => {
     ColyseusService.disconnect();
     onScreenChange('lobby');
+  };
+
+  const handleReplayAnimation = () => {
+    // 애니메이션 상태 초기화
+    if (initialScores) {
+      const scores: { [playerId: string]: number } = {};
+      initialScores.forEach(p => {
+        scores[p.playerId] = p.score;
+      });
+      setDisplayScores(scores);
+    }
+    
+    setCurrentTransferStep(-1);
+    setShowArrow(false);
+    setShowButtons(false);
+    setTransferMessage('결과 집계 중...');
+    setScoreAnimations({});
+    
+    // 2카드 토스트 다시 표시
+    if (comprehensiveResult && finalHands && maxNumber && rankedPlayers) {
+      let hasTwos = false;
+      rankedPlayers.forEach(p => {
+        const hand = finalHands[p.playerId];
+        if (hand) {
+          const twosCount = getTwosCount(hand, maxNumber);
+          if (twosCount > 0) {
+            hasTwos = true;
+          }
+        }
+      });
+      setShowTwosToast(hasTwos);
+    }
+    
+    // 애니메이션 재시작을 위해 isReadyForAnimation을 리셋
+    setIsReadyForAnimation(false);
+    setTimeout(() => {
+      setIsReadyForAnimation(true);
+    }, 100);
   };
   // #endregion
 
@@ -605,6 +643,9 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ onScreenChange, playerCount
 
         {showButtons && (
           <div className="controls">
+            <button className="btn btn-secondary" onClick={handleReplayAnimation}>
+              라운드 결과 다시 보기
+            </button>
             {comprehensiveResult?.isGameEnd ? (
               <button className="btn btn-primary" onClick={handleShowFinalResult}>
                 최종 결과 보기
