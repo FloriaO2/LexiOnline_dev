@@ -188,7 +188,7 @@ router.get('/userinfo', async (req: Request, res: Response) => {
 // GET /api/ranking - 유저 랭킹 조회 (게임 경험자 우선, rating_mu 기준)
 router.get('/ranking', async (req: Request, res: Response) => {
   try {
-    // 1) 게임 경험이 있는 유저들을 rating_mu 기준으로 조회
+    // 1) 게임 경험이 있는 유저들만 rating_mu 기준으로 조회 (순위가 없는 유저는 제외)
     const experiencedUsers = await prisma.user.findMany({
       where: {
         totalGames: {
@@ -201,20 +201,8 @@ router.get('/ranking', async (req: Request, res: Response) => {
       take: 10
     });
 
-    // 2) 게임 경험이 없는 유저들을 추가로 조회 (남은 슬롯만큼)
-    const remainingSlots = Math.max(0, 10 - experiencedUsers.length);
-    const newUsers = remainingSlots > 0 ? await prisma.user.findMany({
-      where: {
-        totalGames: 0
-      },
-      orderBy: {
-        createdAt: 'asc' // 가입 순서대로
-      },
-      take: remainingSlots
-    }) : [];
-
-    // 3) 게임 경험자들의 랭킹 계산
-    const experiencedRanking = experiencedUsers.map((user, index) => {
+    // 2) 게임 경험자들의 랭킹 계산
+    const ranking = experiencedUsers.map((user, index) => {
       const totalGames = (user as any).totalGames || 0;
       
       let rank = index + 1;
@@ -243,23 +231,6 @@ router.get('/ranking', async (req: Request, res: Response) => {
         result_losses: (user as any).result_losses || 0
       };
     });
-
-    // 4) 게임 경험이 없는 유저들은 순위 "-"로 설정
-    const newUserRanking = newUsers.map((user) => ({
-      rank: "-",
-      id: user.id,
-      nickname: user.nickname,
-      profileImageUrl: user.profileImageUrl,
-      rating_mu: user.rating_mu,
-      rating_sigma: user.rating_sigma,
-      totalGames: 0,
-      result_wins: 0,
-      result_draws: 0,
-      result_losses: 0
-    }));
-
-    // 5) 게임 경험자 + 신규 유저 순서로 결합
-    const ranking = [...experiencedRanking, ...newUserRanking];
 
     res.json({ ranking });
   } catch (err) {

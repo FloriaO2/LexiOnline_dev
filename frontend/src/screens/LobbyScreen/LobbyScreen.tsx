@@ -357,14 +357,16 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       
       // 본인의 순위 찾기
       if (user && data.ranking) {
-        const myRankIndex = data.ranking.findIndex((player: any) => player.id === user.id);
+        // 순위가 있는 유저들 중에서만 찾기
+        const rankedPlayers = data.ranking.filter((player: any) => player.rank !== "-");
+        const myRankIndex = rankedPlayers.findIndex((player: any) => player.id === user.id);
         if (myRankIndex !== -1) {
           setMyRanking({
-            rank: myRankIndex + 1,
-            player: data.ranking[myRankIndex]
+            rank: rankedPlayers[myRankIndex].rank,
+            player: rankedPlayers[myRankIndex]
           });
         } else {
-          // 10등 밖에 있는 경우, 개별 순위 조회
+          // 10등 밖에 있거나 순위가 없는 경우, 개별 순위 조회
           loadMyRanking();
         }
       }
@@ -1117,7 +1119,9 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                       </div>
                     ) : (
                       <div className="ranking-grid">
-                        {ranking.map((player, index) => {
+                        {ranking
+                          .filter((player) => player.rank !== "-") // 순위가 없는 유저는 필터링
+                          .map((player, index) => {
                           // 순위별 클래스 결정
                           let rankClass = '';
                           if (index === 0) rankClass = 'rank-1';      // 1등 - 금색
@@ -1136,20 +1140,14 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                               onClick={() => setSelectedUserForHistory(player.id)}
                               title="클릭하여 전적 보기"
                             >
-                              <div className={`rank-badge ${player.rank === "-" ? "no-rank" : ""}`}>
-                                {player.rank === "-" ? (
-                                  "-"
-                                ) : (
-                                  <>
-                                    {index === 0 && '🥇'}
-                                    {index === 1 && '🥈'}
-                                    {index === 2 && '🥉'}
-                                    {index > 2 && (
-                                      <div className="rank-circle">
-                                        {player.rank}
-                                      </div>
-                                    )}
-                                  </>
+                              <div className="rank-badge">
+                                {index === 0 && '🥇'}
+                                {index === 1 && '🥈'}
+                                {index === 2 && '🥉'}
+                                {index > 2 && (
+                                  <div className="rank-circle">
+                                    {player.rank}
+                                  </div>
                                 )}
                               </div>
                             <div className="player-info">
@@ -1192,18 +1190,20 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                       </div>
                     )}
                     
-                    {/* 10등 밖의 본인 순위 표시 */}
+                    {/* 본인 순위가 없거나 10등 밖인 경우 맨 밑에 본인 순위 표시 */}
                     {myRanking && (myRanking.rank === "-" || (typeof myRanking.rank === "number" && myRanking.rank > 10)) && (
                       <div className="my-ranking-outside">
                         <div className="outside-ranking-header">
                           <h4>나의 순위</h4>
                           <span className="outside-rank-badge">
-                            {myRanking.rank === "-" ? "-" : `# ${myRanking.rank}`}
+                            {myRanking.rank === "-" ? "순위 없음" : `# ${myRanking.rank}`}
                           </span>
                         </div>
                         <div className="ranking-card outside-rank clickable" onClick={() => setSelectedUserForHistory(myRanking.player.id)}>
                           <div className={`rank-badge ${myRanking.rank === "-" ? "no-rank" : ""}`}>
-                            {myRanking.rank === "-" ? "-" : (
+                            {myRanking.rank === "-" ? (
+                              <span className="no-rank-text">순위 없음</span>
+                            ) : (
                               <div className="rank-circle">
                                 {myRanking.rank}
                               </div>
