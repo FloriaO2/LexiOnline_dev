@@ -229,14 +229,65 @@ app.use(cors({
 
 Railway는 Dockerfile의 `docker-entrypoint` 스크립트를 통해 자동으로 Prisma 마이그레이션을 실행합니다.
 
-수동으로 마이그레이션을 실행하려면:
+**⚠️ 중요**: 데이터베이스 테이블이 없다는 오류가 발생하면 마이그레이션이 실행되지 않은 것입니다.
+
+### 자동 마이그레이션 (docker-entrypoint)
+
+`docker-entrypoint` 스크립트가 자동으로 마이그레이션을 실행합니다:
+1. `prisma migrate deploy` 시도
+2. 실패 시 `prisma db push`로 스키마에서 직접 생성
+
+### 수동 마이그레이션 실행
+
+마이그레이션이 자동으로 실행되지 않으면 수동으로 실행하세요:
+
+**방법 1: Railway CLI 사용**
 
 ```bash
-# Railway CLI 사용
+# Railway CLI 설치 (아직 안 했다면)
+npm i -g @railway/cli
+
+# Railway에 로그인
+railway login
+
+# 프로젝트 선택
+railway link
+
+# 마이그레이션 실행
 railway run npx prisma migrate deploy
 
-# 또는 Railway 대시보드의 "Deployments" → "View Logs"에서 확인
+# 또는 스키마에서 직접 생성 (마이그레이션 파일이 없는 경우)
+railway run npx prisma db push
 ```
+
+**방법 2: Railway 대시보드에서 실행**
+
+1. Railway 대시보드 → 백엔드 서비스 선택
+2. "Deployments" 탭 → 최신 배포 선택
+3. "View Logs"에서 마이그레이션 로그 확인
+4. 마이그레이션이 실패했다면 "Redeploy" 클릭하여 재배포
+
+**방법 3: 로컬에서 Railway 데이터베이스에 직접 연결**
+
+```bash
+# Railway의 DATABASE_PUBLIC_URL을 환경 변수로 설정
+set PRISMA_DATABASE_URL=postgresql://postgres:...@switchyard.proxy.rlwy.net:30326/railway
+
+# 마이그레이션 실행
+npx prisma migrate deploy
+
+# 또는 스키마에서 직접 생성
+npx prisma db push
+```
+
+### 마이그레이션 오류 해결
+
+**오류**: `The table public.User does not exist`
+
+**해결 방법**:
+1. Railway CLI로 마이그레이션 실행: `railway run npx prisma db push`
+2. 또는 Railway 대시보드에서 재배포하여 `docker-entrypoint`가 마이그레이션을 실행하도록 함
+3. 재배포 후 로그에서 `마이그레이션 완료` 메시지 확인
 
 ## 5. 배포 확인
 
