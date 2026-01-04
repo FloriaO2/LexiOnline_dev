@@ -271,7 +271,22 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       suits.forEach(s => suitCount.set(s, (suitCount.get(s) || 0) + 1));
       
       const isFlush = suitCount.size === 1;
-      const isStraightCheck = isStraight(values);
+      
+      // getValueRank를 사용한 스트레이트 검증
+      // getValueRank는 이미 순환 구조를 반영하므로, 단순히 연속된 값인지만 확인하면 됨
+      const ranks = values.map(v => getValueRank(v, maxNumber)).sort((a, b) => a - b);
+      let isStraightByRank = true;
+      
+      // rank가 연속되어 있는지 확인 (0,1,2,3,4 또는 4,5,6,7,8 등)
+      for (let i = 1; i < ranks.length; i++) {
+        if (ranks[i] - ranks[i-1] !== 1) {
+          isStraightByRank = false;
+          break;
+        }
+      }
+      
+      // getValueRank가 이미 순환 구조를 반영하므로 isStraightByRank만 사용
+      const isStraightCheck = isStraightByRank;
       
       // 잘못된 마운틴 패턴이 있는 경우 특별한 메시지 반환
       if (invalidMountain.isInvalid) {
@@ -326,15 +341,22 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     }
   };
 
-  // 숫자 순위 계산 (maxNumber에 따라 동적 조정)
-  const getValueRank = (value: number): number => {
-    // 3부터 maxNumber까지의 순서, 그 다음 1, 2
+  // 숫자 순위 계산 (백엔드와 동일한 로직)
+  // 공식: (actualNumber + maxNumber - 3) % maxNumber
+  // 예시 (maxNumber=13): 3->0, 4->1, ..., 12->9, 13->10, 1->11, 2->12
+  const getValueRank = (value: number, maxNum: number): number => {
+    const actualNumber = value + 1; // value를 실제 숫자로 변환
+    return (actualNumber + maxNum - 3) % maxNum;
+  };
+
+  // rankOrder를 동적으로 생성 (getValueRank의 역함수 역할)
+  const getRankOrder = (): number[] => {
     const rankOrder = [];
     for (let i = 3; i <= maxNumber; i++) {
       rankOrder.push(i);
     }
     rankOrder.push(1, 2);
-    return rankOrder.indexOf(value);
+    return rankOrder;
   };
 
   // 잘못된 마운틴 패턴 감지
@@ -429,7 +451,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
   const analyzeCardCombination = (cards: PlayedCard[]): { type: string; value: number; isValid: boolean; message: string } => {
     if (cards.length === 1) {
       const card = cards[0];
-      const valueRank = getValueRank(card.value);
+      const valueRank = getValueRank(card.value, maxNumber);
       const colorRank = getColorRank(card.suit);
       const compareValue = valueRank * 4 + colorRank; // 백엔드와 동일한 비교값 계산
       return { type: 'single', value: compareValue, isValid: true, message: '' };
@@ -440,7 +462,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       if (values[0] === values[1]) {
         const cardValue = values[0];
         const maxColorRank = Math.max(...cards.map(card => getColorRank(card.suit)));
-        const valueRank = getValueRank(cardValue);
+        const valueRank = getValueRank(cardValue, maxNumber);
         const compareValue = valueRank * 4 + maxColorRank; // 백엔드와 동일한 비교값 계산
         return { type: 'pair', value: compareValue, isValid: true, message: '' };
       }
@@ -452,7 +474,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       if (values[0] === values[1] && values[1] === values[2]) {
         const cardValue = values[0];
         const maxColorRank = Math.max(...cards.map(card => getColorRank(card.suit)));
-        const valueRank = getValueRank(cardValue);
+        const valueRank = getValueRank(cardValue, maxNumber);
         const compareValue = valueRank * 4 + maxColorRank; // 백엔드와 동일한 비교값 계산
         return { type: 'triple', value: compareValue, isValid: true, message: '' };
       }
@@ -480,7 +502,21 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       suits.forEach(s => suitCount.set(s, (suitCount.get(s) || 0) + 1));
       
       const isFlush = suitCount.size === 1;
-      const isStraightCheck = isStraight(values);
+      
+      // getValueRank를 사용한 스트레이트 검증
+      const ranks = values.map(v => getValueRank(v, maxNumber)).sort((a, b) => a - b);
+      let isStraightByRank = true;
+      
+      // rank가 연속되어 있는지 확인 (0,1,2,3,4 또는 4,5,6,7,8 등)
+      for (let i = 1; i < ranks.length; i++) {
+        if (ranks[i] - ranks[i-1] !== 1) {
+          isStraightByRank = false;
+          break;
+        }
+      }
+      
+      // getValueRank가 이미 순환 구조를 반영하므로 isStraightByRank만 사용
+      const isStraightCheck = isStraightByRank;
       
       // 잘못된 마운틴 패턴이 있는 경우 특별한 메시지 반환
       if (invalidMountain.isInvalid) {
@@ -512,7 +548,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         let bestRank = -1;
         
         for (let i = 0; i < cards.length; i++) {
-          const rank = getValueRank(cards[i].value);
+          const rank = getValueRank(cards[i].value, maxNumber);
           if (rank > bestRank || (rank === bestRank && getColorRank(cards[i].suit) > bestType)) {
             bestRank = rank;
             bestValue = cards[i].value;
@@ -535,7 +571,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           }
         }
         
-        const fourRank = getValueRank(fourValue);
+        const fourRank = getValueRank(fourValue, maxNumber);
         const compareValue = fourRank * 4 + maxType;
         return { type: 'fourcards', value: compareValue, isValid: true, message: '' };
       }
@@ -551,7 +587,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           }
         }
         
-        const threeRank = getValueRank(threeValue);
+        const threeRank = getValueRank(threeValue, maxNumber);
         const compareValue = threeRank * 4 + maxType;
         return { type: 'fullhouse', value: compareValue, isValid: true, message: '' };
       }
@@ -562,7 +598,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         let bestRank = -1;
         
         for (let i = 0; i < cards.length; i++) {
-          const rank = getValueRank(cards[i].value);
+          const rank = getValueRank(cards[i].value, maxNumber);
           if (rank > bestRank || (rank === bestRank && getColorRank(cards[i].suit) > bestType)) {
             bestRank = rank;
             bestValue = cards[i].value;
@@ -580,7 +616,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         let bestRank = -1;
         
         for (let i = 0; i < cards.length; i++) {
-          const rank = getValueRank(cards[i].value);
+          const rank = getValueRank(cards[i].value, maxNumber);
           if (rank > bestRank || (rank === bestRank && getColorRank(cards[i].suit) > bestType)) {
             bestRank = rank;
             bestValue = cards[i].value;
@@ -637,25 +673,22 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       const newRank = Math.floor(newComb.value / 4);
       const newColor = newComb.value % 4;
       
-      // rankOrder를 동적으로 생성하여 실제 카드 값으로 변환
-      const rankOrder = [];
-      for (let i = 3; i <= maxNumber; i++) {
-        rankOrder.push(i);
-      }
-      rankOrder.push(1, 2);
+      // getValueRank의 역함수: (rank + 3) % maxNumber
+      // 단, 나머지가 0이면 maxNumber를 사용
+      const getValueFromRank = (rank: number): number => {
+        const result = (rank + 3) % maxNumber;
+        return result === 0 ? maxNumber : result;
+      };
       
-      const currentValue = rankOrder[currentRank];
-      const newValue = rankOrder[newRank];
+      const currentValueName = getValueFromRank(currentRank).toString();
+      const newValueName = getValueFromRank(newRank).toString();
       
-      const valueNames = rankOrder.map(v => v.toString());
       const colorNames = gameMode === 'easyMode' 
         ? ['검정색', '동색', '은색', '금색']  // 초보모드
         : ['구름', '별', '달', '태양']; // 일반모드
       
-      const currentValueName = valueNames[currentRank];
-      const currentColorName = colorNames[currentColor];
-      const newValueName = valueNames[newRank];
-      const newColorName = colorNames[newColor];
+      const currentColorName = colorNames[currentColor] || '알 수 없음';
+      const newColorName = colorNames[newColor] || '알 수 없음';
       
       // 풀하우스와 포카드는 특별한 메시지 처리
       if (current.type === 'fullhouse') {
@@ -753,6 +786,19 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
   const handleModeChange = () => {
     const newMode = gameMode === 'easyMode' ? 'normal' : 'easyMode';
     setGameMode(newMode);
+    
+    // currentColorName이 포함된 가이드 알림만 동기화
+    // 현재 알림 메시지에 색상 이름이 포함되어 있는지 확인
+    const colorNamesInMessage = ['구름', '별', '달', '태양', '검정색', '동색', '은색', '금색'];
+    const hasColorName = colorNamesInMessage.some(color => notificationMessage.includes(color));
+    
+    if (hasColorName && gameBoards[0].cards.length > 0 && selectedCards.length > 0) {
+      // currentColorName이 사용되는 메시지인 경우에만 업데이트
+      const validation = validateCardCombination(selectedCards);
+      if (!validation.isValid && validation.message) {
+        setNotificationMessage(validation.message);
+      }
+    }
   };
 
 
