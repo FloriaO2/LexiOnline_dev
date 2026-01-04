@@ -494,14 +494,17 @@
   cursor: not-allowed;
   opacity: 0.6;
   pointer-events: none;
-  /* 모바일 브라우저에서도 공간을 차지하도록 명시적 크기 유지 */
-  min-width: inherit;
-  min-height: inherit;
-  width: inherit;
-  height: inherit;
   flex-shrink: 0;
   /* 레이아웃에서 제외되지 않도록 보장 */
   visibility: visible;
+}
+
+/* 손패 영역의 제출된 카드는 기본 카드 크기 유지 */
+.practice-card.hand-card.played-card {
+  width: 5.625vh;
+  height: 7.5vh;
+  min-width: 5.625vh;
+  min-height: 7.5vh;
 }
 
 .practice-card.played-card .card-suit-image {
