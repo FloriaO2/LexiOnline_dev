@@ -1,7 +1,6 @@
 .practice-screen {
   width: 100vw;
   height: 100vh;
-  height: 100dvh;
   background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 25%, #0f0f0f 50%, #1a1a1a 75%, #2a2a2a 100%);
   display: flex;
   justify-content: center;
@@ -29,8 +28,7 @@
 
 .practice-container {
   width: 95vw;
-  height: 95vh;
-  height: 95dvh;
+  min-height: 95vh;
   display: flex;
   flex-direction: column;
   gap: 1vh;
