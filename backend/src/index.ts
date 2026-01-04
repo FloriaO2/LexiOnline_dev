@@ -18,8 +18,20 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
+    // 데이터베이스 연결 확인
+    console.log("[Prisma] 데이터베이스 연결 시도 중...");
+    console.log("[Prisma] DATABASE_URL 존재 여부:", !!process.env.PRISMA_DATABASE_URL);
+    
     await prisma.$connect();
     console.log("✅ Prisma connected successfully.");
+    
+    // 연결 테스트 쿼리
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      console.log("✅ 데이터베이스 연결 테스트 성공");
+    } catch (testError) {
+      console.error("❌ 데이터베이스 연결 테스트 실패:", testError);
+    }
     
     // Express + Colyseus with explicit host binding
     const port = Number(process.env.PORT) || 2567;

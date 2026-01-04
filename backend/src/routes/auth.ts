@@ -9,6 +9,14 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const JWT_SECRET = process.env.JWT_SECRET; // 실제 환경변수로 설정하세요
 
+// 환경 변수 검증
+if (!process.env.GOOGLE_CLIENT_ID) {
+  console.error("❌ GOOGLE_CLIENT_ID 환경 변수가 설정되지 않았습니다!");
+}
+if (!JWT_SECRET) {
+  console.error("❌ JWT_SECRET 환경 변수가 설정되지 않았습니다!");
+}
+
 // GET /api/auth/config - OAuth 설정 정보 제공
 router.get("/auth/config", (req: Request, res: Response) => {
   res.json({
@@ -43,26 +51,48 @@ router.post("/auth/google", async (req: Request, res: Response) => {
     const now = new Date();
 
     // 2) DB 내 기존 사용자 조회
-    let user = await prisma.user.findUnique({ where: { googleId } });
+    console.log(`[Auth] 데이터베이스 조회 시도: googleId=${googleId}`);
+    let user;
+    try {
+      user = await prisma.user.findUnique({ where: { googleId } });
+      console.log(`[Auth] 데이터베이스 조회 성공: user=${user ? 'found' : 'not found'}`);
+    } catch (dbError) {
+      console.error("❌ 데이터베이스 조회 오류:", dbError);
+      throw new Error(`Database query failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
+    }
 
     if (!user) {
       // 신규 가입
-      user = await prisma.user.create({
-        data: {
-          googleId,
-          nickname: payload.name || "Anonymous",
-          profileImageUrl: payload.picture,
-          createdAt: now,
-          updatedAt: now,
-          lastLoginAt: now,
-        },
-      });
+      console.log(`[Auth] 신규 사용자 생성 시도: googleId=${googleId}, nickname=${payload.name}`);
+      try {
+        user = await prisma.user.create({
+          data: {
+            googleId,
+            nickname: payload.name || "Anonymous",
+            profileImageUrl: payload.picture,
+            createdAt: now,
+            updatedAt: now,
+            lastLoginAt: now,
+          },
+        });
+        console.log(`[Auth] 신규 사용자 생성 성공: userId=${user.id}`);
+      } catch (createError) {
+        console.error("❌ 사용자 생성 오류:", createError);
+        throw new Error(`User creation failed: ${createError instanceof Error ? createError.message : String(createError)}`);
+      }
     } else {
       // 기존 로그인 -> 마지막 로그인 시간 업데이트
-      user = await prisma.user.update({
-        where: { googleId },
-        data: { lastLoginAt: now, updatedAt: now },
-      });
+      console.log(`[Auth] 기존 사용자 업데이트 시도: userId=${user.id}`);
+      try {
+        user = await prisma.user.update({
+          where: { googleId },
+          data: { lastLoginAt: now, updatedAt: now },
+        });
+        console.log(`[Auth] 사용자 업데이트 성공: userId=${user.id}`);
+      } catch (updateError) {
+        console.error("❌ 사용자 업데이트 오류:", updateError);
+        throw new Error(`User update failed: ${updateError instanceof Error ? updateError.message : String(updateError)}`);
+      }
     }
 
     // 3) 자체 JWT 토큰 생성 (payload에 googleId 필드를 넣음)
@@ -88,8 +118,22 @@ router.post("/auth/google", async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    console.error("Google auth error:", err);
-    res.status(500).json({ error: "Authentication failed" });
+    console.error("❌ Google auth error:", err);
+    console.error("Error details:", {
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      name: err instanceof Error ? err.name : undefined,
+    });
+    
+    // JWT_SECRET 확인
+    if (!JWT_SECRET) {
+      console.error("❌ JWT_SECRET이 설정되지 않았습니다!");
+    }
+    
+    res.status(500).json({ 
+      error: "Authentication failed",
+      details: process.env.NODE_ENV === 'development' ? (err instanceof Error ? err.message : String(err)) : undefined
+    });
   }
 });
 
