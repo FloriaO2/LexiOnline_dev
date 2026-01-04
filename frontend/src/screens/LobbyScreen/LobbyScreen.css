@@ -1131,6 +1131,26 @@
 .lobby-screen .ranking-card.my-ranking {
   border: 0.3vh solid #006064 !important;
   box-shadow: 0 0 0.15vh rgba(0, 96, 100, 0.4) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.lobby-screen .ranking-card.my-ranking::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 150, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 .lobby-screen .ranking-card.my-ranking:hover {
@@ -1142,92 +1162,30 @@
 /* 10등 밖의 본인 순위 섹션 */
 .lobby-screen .my-ranking-outside {
   margin-top: 3vh;
-  padding-top: 3vh;
+  padding-top: 4vh;
   border-top: 0.225vh solid rgba(255, 255, 255, 0.1);
 }
 
-.lobby-screen .outside-ranking-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5vh;
-  padding: 0 1.5vh;
-}
-
-.lobby-screen .outside-ranking-header h4 {
-  color: #ffffff;
-  font-size: 1.8vh;
-  font-weight: 600;
-  margin: 0;
-}
-
-.lobby-screen .outside-rank-badge {
-  background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
-  color: #ffffff;
-  padding: 0.75vh 1.5vh;
-  border-radius: 1.5vh;
-  font-size: 1.5vh;
-  font-weight: 700;
-  box-shadow: 0 0.45vh 1.5vh rgba(255, 107, 107, 0.3);
-}
-
-/* 10등 밖 순위 카드 스타일 */
-.lobby-screen .ranking-card.outside-rank {
-  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(255, 142, 142, 0.1)) !important;
-  border: 0.3vh solid #FF6B6B !important;
-  box-shadow: 0 0 1.5vh rgba(255, 107, 107, 0.4) !important;
-  position: relative;
-  overflow: hidden;
-}
-
-.lobby-screen .ranking-card.outside-rank::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-.lobby-screen .ranking-card.outside-rank:hover {
-  border-color: #FF5252 !important;
-  box-shadow: 0 0 2.25vh rgba(255, 107, 107, 0.6) !important;
-  background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 142, 142, 0.15)) !important;
-}
-
-.lobby-screen .ranking-card.outside-rank .player-nickname {
-  color: #FF6B6B !important;
-  font-weight: 700 !important;
-}
-
-.lobby-screen .ranking-card.outside-rank .player-rating {
-  color: #FF8E8E !important;
-  font-weight: 600 !important;
-}
-
-.lobby-screen .ranking-card.outside-rank .rank-badge {
-  color: #FF6B6B !important;
-  font-weight: 800 !important;
-}
 
 /* 게임 기록이 없는 사용자 스타일 */
 .lobby-screen .ranking-card .rank-badge.no-rank {
   color: #888888 !important;
   font-style: italic !important;
-  font-size: 1.8vw !important;
 }
 
-.lobby-screen .ranking-card.outside-rank .rank-badge.no-rank {
-  color: #CCCCCC !important;
-  font-style: italic !important;
-  font-size: 1.8vw !important;
+.lobby-screen .rank-badge.no-rank .no-rank-circle {
+  width: 2.8vh;
+  height: 2.8vh;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4a5568, #2d3748);
+  border: 0.15vh solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5vh;
+  font-weight: 700;
+  color: #888888;
+  box-shadow: 0 0.3vh 0.9vh rgba(0, 0, 0, 0.3);
 }
 
 .lobby-screen .rank-badge {
@@ -1238,6 +1196,8 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  position: relative;
+  z-index: 2;
 }
 
 /* 동그란 원 랭킹 스타일 (4등 이하) */
@@ -1259,6 +1219,8 @@
 
 .lobby-screen .player-info {
   flex: 1 !important;
+  position: relative;
+  z-index: 2;
 }
 
 .lobby-screen .player-profile {
@@ -1692,7 +1654,7 @@
 
 .practice-setting-item label {
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.8vh;
   font-weight: 600;
   min-width: 100px;
 }
@@ -1788,6 +1750,7 @@
   
   .practice-setting-item label {
     min-width: auto;
+    font-size: 1.2vw;
   }
   
   .custom-dropdown {

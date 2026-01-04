@@ -1174,11 +1174,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                                     <span className="game-count-label">게임 판수: </span>
                                     <span className="game-stats">{player.totalGames}회</span>
                                     <span className="game-count-label"> (</span>
-                                    <span className="win-count">승: {player.result_wins}</span>
+                                    <span className="win-count">승: {player.totalGames === 0 ? 0 : (player.result_wins || 0)}</span>
                                     <span className="game-count-label">, </span>
-                                    <span className="draw-count">무: {player.result_draws}</span>
+                                    <span className="draw-count">무: {player.totalGames === 0 ? 0 : (player.result_draws || 0)}</span>
                                     <span className="game-count-label">, </span>
-                                    <span className="loss-count">패: {player.result_losses}</span>
+                                    <span className="loss-count">패: {player.totalGames === 0 ? 0 : (player.result_losses || 0)}</span>
                                     <span className="game-count-label">)</span>
                                   </p>
                                 </div>
@@ -1193,16 +1193,10 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                     {/* 본인 순위가 없거나 10등 밖인 경우 맨 밑에 본인 순위 표시 */}
                     {myRanking && (myRanking.rank === "-" || (typeof myRanking.rank === "number" && myRanking.rank > 10)) && (
                       <div className="my-ranking-outside">
-                        <div className="outside-ranking-header">
-                          <h4>나의 순위</h4>
-                          <span className="outside-rank-badge">
-                            {myRanking.rank === "-" ? "순위 없음" : `# ${myRanking.rank}`}
-                          </span>
-                        </div>
-                        <div className="ranking-card outside-rank clickable" onClick={() => setSelectedUserForHistory(myRanking.player.id)}>
+                        <div className="ranking-card my-ranking clickable" onClick={() => setSelectedUserForHistory(myRanking.player.id)}>
                           <div className={`rank-badge ${myRanking.rank === "-" ? "no-rank" : ""}`}>
                             {myRanking.rank === "-" ? (
-                              <span className="no-rank-text">순위 없음</span>
+                              "-"
                             ) : (
                               <div className="rank-circle">
                                 {myRanking.rank}
@@ -1233,11 +1227,11 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
                                   <span className="game-count-label">게임 판수: </span>
                                   <span className="game-stats">{myRanking.player.totalGames}회</span>
                                   <span className="game-count-label"> (</span>
-                                  <span className="win-count">승: {myRanking.player.result_wins}</span>
+                                  <span className="win-count">승: {myRanking.player.totalGames === 0 ? 0 : (myRanking.player.result_wins || 0)}</span>
                                   <span className="game-count-label">, </span>
-                                  <span className="draw-count">무: {myRanking.player.result_draws}</span>
+                                  <span className="draw-count">무: {myRanking.player.totalGames === 0 ? 0 : (myRanking.player.result_draws || 0)}</span>
                                   <span className="game-count-label">, </span>
-                                  <span className="loss-count">패: {myRanking.player.result_losses}</span>
+                                  <span className="loss-count">패: {myRanking.player.totalGames === 0 ? 0 : (myRanking.player.result_losses || 0)}</span>
                                   <span className="game-count-label">)</span>
                                 </p>
                               </div>
