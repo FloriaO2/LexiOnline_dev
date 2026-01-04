@@ -177,7 +177,8 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
 
     const isProduction = process.env.NODE_ENV === 'production';
     const apiUrl = process.env.REACT_APP_API_URL || 
-      (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
     fetch(`${apiUrl}/api/userinfo`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -342,7 +343,8 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     try {
       const isProduction = process.env.NODE_ENV === 'production';
       const apiUrl = process.env.REACT_APP_API_URL || 
-        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
       
       const response = await fetch(`${apiUrl}/api/ranking`);
       if (!response.ok) {
@@ -380,7 +382,8 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     try {
       const isProduction = process.env.NODE_ENV === 'production';
       const apiUrl = process.env.REACT_APP_API_URL || 
-        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
       
       const response = await fetch(`${apiUrl}/api/user/ranking`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -675,7 +678,8 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
       // 백엔드에서 OAuth 설정 정보 가져오기
       const isProduction = process.env.NODE_ENV === 'production';
       const apiUrl = process.env.REACT_APP_API_URL || 
-        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
       
       const configResponse = await fetch(`${apiUrl}/api/auth/config`);
       const config = await configResponse.json();
@@ -716,7 +720,8 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onScreenChange }) => {
     try {
       const isProduction = process.env.NODE_ENV === 'production';
       const apiUrl = process.env.REACT_APP_API_URL || 
-        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
       
       const response = await fetch(`${apiUrl}/api/user/privacy-settings`, {
         method: 'PUT',

@@ -24,6 +24,11 @@ npm start
 - `tsconfig.json`: TypeScript configuration file
 
 
+## 배포 가이드
+
+- [Railway 배포 가이드](./RAILWAY_DEPLOY.md) - Railway를 사용한 백엔드 및 PostgreSQL 배포
+- Fly.io 배포는 `fly.toml` 및 `Dockerfile` 참조
+
 ## License
 
 MIT

@@ -7,7 +7,8 @@ module.exports = function(app) {
     '/api',
     createProxyMiddleware({
       target: process.env.REACT_APP_API_URL || 
-        (process.env.NODE_ENV === 'production' ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567'),
+        //(process.env.NODE_ENV === 'production' ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567'),
+        (process.env.NODE_ENV === 'production' ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567'),
       changeOrigin: true,
       pathRewrite: {
         '^/api': '',

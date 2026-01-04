@@ -69,7 +69,8 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ isOpen, onClose, to
     try {
       const isProduction = process.env.NODE_ENV === 'production';
       const apiUrl = process.env.REACT_APP_API_URL || 
-        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
       
       // targetUserId가 있으면 특정 유저의 전적을 조회, 없으면 내 전적을 조회
       let endpoint = targetUserId ? `/api/user/games/${targetUserId}` : '/api/user/games';

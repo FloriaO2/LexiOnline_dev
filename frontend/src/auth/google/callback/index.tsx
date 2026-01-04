@@ -76,7 +76,8 @@ export default function GoogleOAuthCallback(): JSX.Element {
     if (idToken) {
       const isProduction = process.env.NODE_ENV === 'production';
       const apiUrl = process.env.REACT_APP_API_URL || 
-        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
       fetch(`${apiUrl}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

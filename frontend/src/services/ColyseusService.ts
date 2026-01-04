@@ -12,7 +12,8 @@ class ColyseusService {
     // 배포 환경 감지 및 URL 설정
     const isProduction = process.env.NODE_ENV === 'production';
     const apiUrl = process.env.REACT_APP_API_URL || 
-      (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+      (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
     const serverUrl = apiUrl.replace(/^http/, 'ws');
     this.client = new Client(serverUrl);
   }
@@ -188,7 +189,8 @@ class ColyseusService {
     try {
       const isProduction = process.env.NODE_ENV === 'production';
       const apiUrl = process.env.REACT_APP_API_URL || 
-        (isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        //(isProduction ? 'https://lexionline-backend.fly.dev' : 'http://localhost:2567');
+        (isProduction ? 'https://lexionlinedev-production.up.railway.app' : 'http://localhost:2567');
       
       const response = await fetch(`${apiUrl}/api/rooms`);
       if (!response.ok) {
