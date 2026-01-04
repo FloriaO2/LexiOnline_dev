@@ -28,7 +28,7 @@
 
 .practice-container {
   width: 95vw;
-  min-height: 95vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 1vh;

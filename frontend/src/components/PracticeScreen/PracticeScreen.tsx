@@ -454,7 +454,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       const card = cards[0];
       const valueRank = getValueRank(card.value, maxNumber);
       const colorRank = getColorRank(card.suit);
-      const compareValue = valueRank * 4 + colorRank; // 백엔드와 동일한 비교값 계산
+      const compareValue = valueRank * maxNumber * 4 + colorRank; // 백엔드와 동일한 비교값 계산
       return { type: 'single', value: compareValue, isValid: true, message: '' };
     }
     
@@ -464,7 +464,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         const cardValue = values[0];
         const maxColorRank = Math.max(...cards.map(card => getColorRank(card.suit)));
         const valueRank = getValueRank(cardValue, maxNumber);
-        const compareValue = valueRank * 4 + maxColorRank; // 백엔드와 동일한 비교값 계산
+        const compareValue = valueRank * maxNumber * 4 + maxColorRank; // 백엔드와 동일한 비교값 계산
         return { type: 'pair', value: compareValue, isValid: true, message: '' };
       }
       return { type: 'invalid', value: 0, isValid: false, message: '2장의 카드는 같은 숫자여야 합니다.' };
@@ -476,7 +476,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         const cardValue = values[0];
         const maxColorRank = Math.max(...cards.map(card => getColorRank(card.suit)));
         const valueRank = getValueRank(cardValue, maxNumber);
-        const compareValue = valueRank * 4 + maxColorRank; // 백엔드와 동일한 비교값 계산
+        const compareValue = valueRank * maxNumber * 4 + maxColorRank; // 백엔드와 동일한 비교값 계산
         return { type: 'triple', value: compareValue, isValid: true, message: '' };
       }
       return { type: 'invalid', value: 0, isValid: false, message: '3장의 카드는 모두 같은 숫자여야 합니다.' };
@@ -557,7 +557,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           }
         }
         
-        const compareValue = bestRank * 4 + bestType;
+        const compareValue = bestRank * maxNumber * 4 + bestType; // 백엔드와 동일한 비교값 계산
         return { type: 'straightflush', value: compareValue, isValid: true, message: '' };
       }
       
@@ -573,7 +573,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         }
         
         const fourRank = getValueRank(fourValue, maxNumber);
-        const compareValue = fourRank * 4 + maxType;
+        const compareValue = fourRank * maxNumber * 4 + maxType; // 백엔드와 동일한 비교값 계산
         return { type: 'fourcards', value: compareValue, isValid: true, message: '' };
       }
       
@@ -589,7 +589,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         }
         
         const threeRank = getValueRank(threeValue, maxNumber);
-        const compareValue = threeRank * 4 + maxType;
+        const compareValue = threeRank * maxNumber * 4 + maxType; // 백엔드와 동일한 비교값 계산
         return { type: 'fullhouse', value: compareValue, isValid: true, message: '' };
       }
       
@@ -607,7 +607,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           }
         }
         
-        const compareValue = bestRank * 4 + bestType;
+        const compareValue = bestRank * maxNumber * 4 + bestType; // 백엔드와 동일한 비교값 계산
         return { type: 'flush', value: compareValue, isValid: true, message: '' };
       }
       
@@ -625,7 +625,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           }
         }
         
-        const compareValue = bestRank * 4 + bestType;
+        const compareValue = bestRank * maxNumber * 4 + bestType; // 백엔드와 동일한 비교값 계산
         return { type: 'straight', value: compareValue, isValid: true, message: '' };
       }
       
@@ -669,9 +669,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       return { isValid: true, message: '' };
     } else {
       // 더 구체적인 오류 메시지 제공
-      const currentRank = Math.floor(current.value / 4);
+      // 비교값 공식: bestRank * maxNumber * 4 + bestType
+      const currentRank = Math.floor(current.value / (maxNumber * 4));
       const currentColor = current.value % 4;
-      const newRank = Math.floor(newComb.value / 4);
+      const newRank = Math.floor(newComb.value / (maxNumber * 4));
       const newColor = newComb.value % 4;
       
       // getValueRank의 역함수: (rank + 3) % maxNumber
