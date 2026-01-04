@@ -133,7 +133,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우 ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span></span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
   }, [maxNumber]);
 
   // 카드 선택/해제
@@ -179,7 +179,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           rankOrder.push(i);
         }
         const normalOrder = rankOrder.join(',');
-        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span></span>` };
+        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
       }
       
       // 여러 카드인 경우 조합 검증
@@ -190,7 +190,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           rankOrder.push(i);
         }
         const normalOrder = rankOrder.join(',');
-        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span></span>` };
+        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
       } else {
         return validation;
       }
@@ -221,7 +221,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span></span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
+    return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
   };
 
   // 카드 타입 검증
@@ -1046,7 +1046,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
             rankOrder.push(i);
           }
           const normalOrder = rankOrder.join(',');
-          setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span></span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span></span>`);
+          setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
           setSubmitCount(0);
           setPendingFlushSubmission(false);
           setShowRankGuide(false);
@@ -1142,7 +1142,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span></span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
     setSubmitCount(0);
     setPendingFlushSubmission(false);
     setShowRankGuide(false);
@@ -1170,7 +1170,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span></span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
     setSubmitCount(0);
     setPendingFlushSubmission(false);
     setShowRankGuide(false);
