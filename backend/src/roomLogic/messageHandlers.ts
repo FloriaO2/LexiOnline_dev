@@ -9,6 +9,7 @@ import {
   MadeEvalResult,
   MADE_NONE,
   MADE_STRAIGHT,
+  MADE_STRAIGHTFLUSH,
   parseCard,
 } from "../gameLogic/cardEvaluator";
 
@@ -172,9 +173,11 @@ export function handleSubmit(room: IMyRoom, client: Client, data: any) {
       client.send("submitRejected", { reason: "Wrong cards: not made cards." });
       return;
     }
-    // 스트레이트 타입이고 이전 조합이 있는 경우, 12345/23456 특수 케이스 처리
+    // 스트레이트 또는 스트레이트플러쉬 타입이고 이전 조합이 있는 경우, 12345/23456 특수 케이스 처리
     let canSubmit = false;
-    if (result.type === MADE_STRAIGHT && room.state.lastMadeType === MADE_STRAIGHT && room.state.lastCards.length === 5) {
+    const isStraightType = (type: number) => type === MADE_STRAIGHT || type === MADE_STRAIGHTFLUSH;
+    
+    if (isStraightType(result.type) && isStraightType(room.state.lastMadeType) && room.state.lastCards.length === 5) {
       const currentSpecial = isSpecialStraight(submitCards, room.state.maxNumber);
       const previousSpecial = isSpecialStraight(Array.from(room.state.lastCards), room.state.maxNumber);
       

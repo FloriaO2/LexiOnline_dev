@@ -664,8 +664,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     }
 
     // 같은 타입인 경우
-    // 스트레이트 타입이고 카드 정보가 있는 경우, 12345/23456 특수 케이스 처리
-    if (current.type === 'straight' && newComb.type === 'straight' && currentCards && newCards) {
+    // 스트레이트 또는 스트레이트플러쉬 타입이고 카드 정보가 있는 경우, 12345/23456 특수 케이스 처리
+    const isStraightType = (type: string) => type === 'straight' || type === 'straightflush';
+    
+    if (isStraightType(current.type) && isStraightType(newComb.type) && currentCards && newCards) {
       const currentSpecial = isSpecialStraight(currentCards);
       const newSpecial = isSpecialStraight(newCards);
       
@@ -676,9 +678,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       
       // 12345 다음에 23456을 내려고 하는 경우 → 등록 불가
       if (currentSpecial.is12345 && newSpecial.is23456) {
+        const combinationName = current.type === 'straightflush' ? '스트레이트플러쉬' : '스트레이트';
         return {
           isValid: false,
-          message: `현재 조합인 <span class="highlight-count">스트레이트</span>보다 <span class="highlight-count">같거나 높은 순위</span>의 조합이 필요합니다.\n스트레이트에서는 23456보다 <span class="highlight-count">12345가 높은 순위</span>이기 때문에 12345 다음에 23456은 <span style="color: red; font-weight: bold;">제출할 수 없습니다</span>.`
+          message: `현재 조합인 <span class="highlight-count">${combinationName}</span>보다 <span class="highlight-count">같거나 높은 순위</span>의 조합이 필요합니다.\n${combinationName}에서는 23456보다 <span class="highlight-count">12345가 높은 순위</span>이기 때문에 12345 다음에 23456은 <span style="color: red; font-weight: bold;">제출할 수 없습니다</span>.`
         };
       }
       
