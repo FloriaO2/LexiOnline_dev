@@ -8,6 +8,7 @@ import {
   removeCardsFromHand,
   MadeEvalResult,
   MADE_NONE,
+  MADE_STRAIGHT,
   parseCard,
 } from "../gameLogic/cardEvaluator";
 
@@ -45,6 +46,27 @@ export function handleSortOrder(room: IMyRoom, client: Client, data: any) {
   console.log(`[DEBUG] 정렬 순서 저장: player=${client.sessionId}, sortOrder=${sortOrder.join(', ')}`);
   console.log(`[DEBUG] 저장된 sortedHand: ${Array.from(player.sortedHand).join(', ')}`);
   client.send("sortOrderSaved", { success: true });
+}
+
+// 12345/23456 스트레이트 판별 함수
+function isSpecialStraight(cards: number[], maxNumber: number): { is12345: boolean; is23456: boolean } {
+  // 카드 개수 자체가 안 맞으면 무조건 false 리턴
+  if (cards.length !== 5) {
+    return { is12345: false, is23456: false };
+  }
+  const parsed = cards.map(card => parseCard(card, maxNumber));
+  const values = parsed.map(p => p.value);
+  const sortedValues = [...values].sort((a, b) => a - b); // 오름차순 정렬
+  const actualNumbers = sortedValues.map(v => v + 1); // value를 실제 숫자로 변환
+  
+  const is12345 = actualNumbers.length === 5 && 
+    actualNumbers[0] === 1 && actualNumbers[1] === 2 && actualNumbers[2] === 3 && 
+    actualNumbers[3] === 4 && actualNumbers[4] === 5;
+  const is23456 = actualNumbers.length === 5 && 
+    actualNumbers[0] === 2 && actualNumbers[1] === 3 && actualNumbers[2] === 4 && 
+    actualNumbers[3] === 5 && actualNumbers[4] === 6;
+  
+  return { is12345, is23456 };
 }
 
 // submit 메시지 처리
@@ -150,10 +172,38 @@ export function handleSubmit(room: IMyRoom, client: Client, data: any) {
       client.send("submitRejected", { reason: "Wrong cards: not made cards." });
       return;
     }
-    if (
-      result.type < room.state.lastMadeType ||
-      (result.type === room.state.lastMadeType && result.value <= room.state.lastHighestValue)
-    ) {
+    // 스트레이트 타입이고 이전 조합이 있는 경우, 12345/23456 특수 케이스 처리
+    let canSubmit = false;
+    if (result.type === MADE_STRAIGHT && room.state.lastMadeType === MADE_STRAIGHT && room.state.lastCards.length === 5) {
+      const currentSpecial = isSpecialStraight(submitCards, room.state.maxNumber);
+      const previousSpecial = isSpecialStraight(Array.from(room.state.lastCards), room.state.maxNumber);
+      
+      // 23456 다음에 12345를 내려고 하는 경우 → 등록 가능
+      if (previousSpecial.is23456 && currentSpecial.is12345) {
+        canSubmit = true;
+        console.log(`[DEBUG] ✅ 특수 케이스: 23456 다음에 12345 제출 승인`);
+      }
+      // 12345 다음에 23456을 내려고 하는 경우 → 등록 불가
+      else if (previousSpecial.is12345 && currentSpecial.is23456) {
+        canSubmit = false;
+        console.log(`[DEBUG] ❌ 특수 케이스: 12345 다음에 23456 제출 거부`);
+      }
+      // 같은 특수 스트레이트끼리 비교 (12345끼리, 23456끼리) → 기존 로직대로 compareValue 비교
+      else if ((previousSpecial.is12345 && currentSpecial.is12345) || (previousSpecial.is23456 && currentSpecial.is23456)) {
+        canSubmit = result.value > room.state.lastHighestValue;
+        console.log(`[DEBUG] 같은 특수 스트레이트 비교: ${canSubmit ? '승인' : '거부'}`);
+      }
+      // 하나만 특수 스트레이트인 경우 → 일반 compareValue 비교
+      else {
+        canSubmit = result.value > room.state.lastHighestValue;
+      }
+    } else {
+      // 일반 비교 로직
+      canSubmit = result.type > room.state.lastMadeType ||
+        (result.type === room.state.lastMadeType && result.value > room.state.lastHighestValue);
+    }
+    
+    if (!canSubmit) {
       console.log(`[DEBUG] ❌ 5장 조합 제출 거부`);
       console.log(`[DEBUG] 거부된 카드 상세 정보:`);
       submitCards.forEach(card => {

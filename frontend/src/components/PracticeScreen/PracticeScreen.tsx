@@ -133,7 +133,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n또한 아래에서 <span class="highlight-count">윗줄</span>에 있을수록 패의 순위가 높습니다.`);
   }, [maxNumber]);
 
   // 카드 선택/해제
@@ -179,7 +179,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           rankOrder.push(i);
         }
         const normalOrder = rankOrder.join(',');
-        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
+        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n또한 아래에서 <span class="highlight-count">윗줄</span>에 있을수록 패의 순위가 높습니다.` };
       }
       
       // 여러 카드인 경우 조합 검증
@@ -190,7 +190,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
           rankOrder.push(i);
         }
         const normalOrder = rankOrder.join(',');
-        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
+        return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n또한 아래에서 <span class="highlight-count">윗줄</span>에 있을수록 패의 순위가 높습니다.` };
       } else {
         return validation;
       }
@@ -210,8 +210,8 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       return newCombination;
     }
 
-    // 조합 순위 비교
-    const comparison = compareCombinations(currentCombination, newCombination);
+    // 조합 순위 비교 (카드 정보도 전달하여 12345/23456 특수 케이스 처리)
+    const comparison = compareCombinations(currentCombination, newCombination, currentCards, cards);
     if (!comparison.isValid) {
       return comparison;
     }
@@ -221,7 +221,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>` };
+    return { isValid: true, message: `1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n또한 아래에서 <span class="highlight-count">윗줄</span>에 있을수록 패의 순위가 높습니다.` };
   };
 
   // 카드 타입 검증
@@ -272,21 +272,25 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       
       const isFlush = suitCount.size === 1;
       
-      // getValueRank를 사용한 스트레이트 검증
-      // getValueRank는 이미 순환 구조를 반영하므로, 단순히 연속된 값인지만 확인하면 됨
-      const ranks = values.map(v => getValueRank(v, maxNumber)).sort((a, b) => a - b);
-      let isStraightByRank = true;
+      // 백엔드와 동일한 스트레이트 검증 로직
+      // 실제 숫자가 연속되어 있는지 확인 (백엔드: isStraightWithException)
+      const sortedValues = [...values].sort((a, b) => a - b);
       
-      // rank가 연속되어 있는지 확인 (0,1,2,3,4 또는 4,5,6,7,8 등)
-      for (let i = 1; i < ranks.length; i++) {
-        if (ranks[i] - ranks[i-1] !== 1) {
-          isStraightByRank = false;
+      // 일반 연속 스트레이트 검사
+      let isConsecutive = true;
+      for (let i = 0; i < sortedValues.length - 1; i++) {
+        if (sortedValues[i+1] - sortedValues[i] !== 1) {
+          isConsecutive = false;
           break;
         }
       }
       
-      // getValueRank가 이미 순환 구조를 반영하므로 isStraightByRank만 사용
-      const isStraightCheck = isStraightByRank;
+      // 마운틴 스트레이트 검사 (maxNumber-2, maxNumber-1, maxNumber, 1, 2)
+      const isMountain = values.length === 5 && 
+        sortedValues.includes(1) && sortedValues.includes(2) && // 1, 2
+        sortedValues.includes(maxNumber - 2) && sortedValues.includes(maxNumber - 1) && sortedValues.includes(maxNumber); // maxNumber-2, maxNumber-1, maxNumber
+      
+      const isStraightCheck = isConsecutive || isMountain;
       
       // 잘못된 마운틴 패턴이 있는 경우 특별한 메시지 반환
       if (invalidMountain.isInvalid) {
@@ -401,49 +405,23 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     
     // 일반 연속 스트레이트 검사
     let isConsecutive = true;
-    for (let i = 1; i < sortedValues.length; i++) {
-      if (sortedValues[i] - sortedValues[i-1] !== 1) {
+    for (let i = 0; i < sortedValues.length - 1; i++) {
+      if (sortedValues[i+1] - sortedValues[i] !== 1) {
         isConsecutive = false;
         break;
       }
     }
     if (isConsecutive) return true;
     
-    // 마운틴 스트레이트 검사 (maxNumber별 특정 패턴)
-    if (values.length === 5) {
-      // maxNumber별 마운틴 스트레이트 패턴
-      if (maxNumber === 7) {
-        // 7인 경우: 5,6,7,1,2 패턴
-        const pattern = [5, 6, 7, 1, 2];
-        if (pattern.every(num => sortedValues.includes(num))) {
-          return true;
-        }
-      } else if (maxNumber === 9) {
-        // 9인 경우: 7,8,9,1,2 또는 6,7,8,9,1 패턴
-        const pattern1 = [7, 8, 9, 1, 2];
-        const pattern2 = [6, 7, 8, 9, 1];
-        if (pattern1.every(num => sortedValues.includes(num)) || 
-            pattern2.every(num => sortedValues.includes(num))) {
-          return true;
-        }
-      } else if (maxNumber === 13) {
-        // 13인 경우: 11,12,13,1,2 또는 10,11,12,13,1 패턴
-        const pattern1 = [11, 12, 13, 1, 2];
-        const pattern2 = [10, 11, 12, 13, 1];
-        if (pattern1.every(num => sortedValues.includes(num)) || 
-            pattern2.every(num => sortedValues.includes(num))) {
-          return true;
-        }
-      } else if (maxNumber === 15) {
-        // 15인 경우: 13,14,15,1,2 또는 12,13,14,15,1 패턴
-        const pattern1 = [13, 14, 15, 1, 2];
-        const pattern2 = [12, 13, 14, 15, 1];
-        if (pattern1.every(num => sortedValues.includes(num)) || 
-            pattern2.every(num => sortedValues.includes(num))) {
-          return true;
-        }
-      }
-    }
+    // 마운틴 스트레이트 검사 (백엔드와 동일한 일반화된 로직)
+    // 프론트엔드는 실제 숫자(1~maxNumber)를 사용하므로:
+    // 백엔드의 value 0,1 → 프론트엔드의 실제 숫자 1,2
+    // 백엔드의 value maxNumber-3,maxNumber-2,maxNumber-1 → 프론트엔드의 실제 숫자 maxNumber-2,maxNumber-1,maxNumber
+    const isMountain = values.length === 5 && 
+      sortedValues.includes(1) && sortedValues.includes(2) && // 1, 2
+      sortedValues.includes(maxNumber - 2) && sortedValues.includes(maxNumber - 1) && sortedValues.includes(maxNumber); // maxNumber-2, maxNumber-1, maxNumber
+    
+    if (isMountain) return true;
     
     return false;
   };
@@ -504,20 +482,25 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       
       const isFlush = suitCount.size === 1;
       
-      // getValueRank를 사용한 스트레이트 검증
-      const ranks = values.map(v => getValueRank(v, maxNumber)).sort((a, b) => a - b);
-      let isStraightByRank = true;
+      // 백엔드와 동일한 스트레이트 검증 로직
+      // 실제 숫자가 연속되어 있는지 확인 (백엔드: isStraightWithException)
+      const sortedValues = [...values].sort((a, b) => a - b);
       
-      // rank가 연속되어 있는지 확인 (0,1,2,3,4 또는 4,5,6,7,8 등)
-      for (let i = 1; i < ranks.length; i++) {
-        if (ranks[i] - ranks[i-1] !== 1) {
-          isStraightByRank = false;
+      // 일반 연속 스트레이트 검사
+      let isConsecutive = true;
+      for (let i = 0; i < sortedValues.length - 1; i++) {
+        if (sortedValues[i+1] - sortedValues[i] !== 1) {
+          isConsecutive = false;
           break;
         }
       }
       
-      // getValueRank가 이미 순환 구조를 반영하므로 isStraightByRank만 사용
-      const isStraightCheck = isStraightByRank;
+      // 마운틴 스트레이트 검사 (maxNumber-2, maxNumber-1, maxNumber, 1, 2)
+      const isMountain = values.length === 5 && 
+        sortedValues.includes(1) && sortedValues.includes(2) && // 1, 2
+        sortedValues.includes(maxNumber - 2) && sortedValues.includes(maxNumber - 1) && sortedValues.includes(maxNumber); // maxNumber-2, maxNumber-1, maxNumber
+      
+      const isStraightCheck = isConsecutive || isMountain;
       
       // 잘못된 마운틴 패턴이 있는 경우 특별한 메시지 반환
       if (invalidMountain.isInvalid) {
@@ -635,8 +618,24 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
     return { type: 'invalid', value: 0, isValid: false, message: '유효하지 않은 카드 조합입니다.' };
   };
 
+  // 12345/23456 스트레이트 판별 함수
+  const isSpecialStraight = (cards: PlayedCard[] | Card[]): { is12345: boolean; is23456: boolean } => {
+    if (cards.length !== 5) {
+      return { is12345: false, is23456: false };
+    }
+    const values = cards.map(card => card.value).sort((a, b) => a - b);
+    const is12345 = values[0] === 1 && values[1] === 2 && values[2] === 3 && values[3] === 4 && values[4] === 5;
+    const is23456 = values[0] === 2 && values[1] === 3 && values[2] === 4 && values[3] === 5 && values[4] === 6;
+    return { is12345, is23456 };
+  };
+
   // 조합 비교 (색상 순위 고려)
-  const compareCombinations = (current: { type: string; value: number; isValid: boolean; message: string }, newComb: { type: string; value: number; isValid: boolean; message: string }): { isValid: boolean; message: string } => {
+  const compareCombinations = (
+    current: { type: string; value: number; isValid: boolean; message: string }, 
+    newComb: { type: string; value: number; isValid: boolean; message: string },
+    currentCards?: PlayedCard[] | Card[], // 12345 & 23456 특수 케이스 처리를 위한 카드 정보
+    newCards?: PlayedCard[] | Card[] // 12345 & 23456 특수 케이스 처리를 위한 카드 정보
+  ): { isValid: boolean; message: string } => {
     if (!current.isValid) {
       return { isValid: true, message: '' };
     }
@@ -664,6 +663,38 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       };
     }
 
+    // 같은 타입인 경우
+    // 스트레이트 타입이고 카드 정보가 있는 경우, 12345/23456 특수 케이스 처리
+    if (current.type === 'straight' && newComb.type === 'straight' && currentCards && newCards) {
+      const currentSpecial = isSpecialStraight(currentCards);
+      const newSpecial = isSpecialStraight(newCards);
+      
+      // 23456 다음에 12345를 내려고 하는 경우 → 등록 가능
+      if (currentSpecial.is23456 && newSpecial.is12345) {
+        return { isValid: true, message: '' };
+      }
+      
+      // 12345 다음에 23456을 내려고 하는 경우 → 등록 불가
+      if (currentSpecial.is12345 && newSpecial.is23456) {
+        return {
+          isValid: false,
+          message: `현재 조합인 <span class="highlight-count">스트레이트</span>보다 <span class="highlight-count">같거나 높은 순위</span>의 조합이 필요합니다.\n스트레이트에서는 23456보다 <span class="highlight-count">12345가 높은 순위</span>이기 때문에 12345 다음에 23456은 <span style="color: red; font-weight: bold;">제출할 수 없습니다</span>.`
+        };
+      }
+      
+      // 같은 특수 스트레이트끼리 비교 (12345끼리, 23456끼리) → 기존 로직대로 compareValue 비교
+      if ((currentSpecial.is12345 && newSpecial.is12345) || (currentSpecial.is23456 && newSpecial.is23456)) {
+        if (newComb.value > current.value) {
+          return { isValid: true, message: '' };
+        } else {
+          // 기존 에러 메시지 로직 사용
+        }
+      }
+      
+      // 하나만 특수 스트레이트인 경우 → 일반 compareValue 비교
+      // (12345는 이미 높은 compareValue를 가지므로 자동으로 처리됨)
+    }
+    
     // 같은 타입인 경우 색상 순위를 고려한 비교값으로 비교
     if (newComb.value > current.value) {
       return { isValid: true, message: '' };
@@ -1046,7 +1077,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
             rankOrder.push(i);
           }
           const normalOrder = rankOrder.join(',');
-          setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
+          setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n또한 아래에서 <span class="highlight-count">윗줄</span>에 있을수록 패의 순위가 높습니다.`);
           setSubmitCount(0);
           setPendingFlushSubmission(false);
           setShowRankGuide(false);
@@ -1073,7 +1104,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
         if (isRankGuideMessage) {
           if (showRankGuide) {
             // 두 번째 제출: 순위 가이드 메시지 표시
-            setNotificationMessage('아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>');
+            setNotificationMessage('또한 아래에서 <span class="highlight-count">윗줄</span>에 있을수록 패의 순위가 높습니다.');
             setShowRankGuide(false);
             setSubmitCount(0);
           } else {
@@ -1142,7 +1173,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n또한 아래에서 <span class="highlight-count">윗줄</span>에 있을수록 패의 순위가 높습니다.`);
     setSubmitCount(0);
     setPendingFlushSubmission(false);
     setShowRankGuide(false);
@@ -1170,7 +1201,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({ onScreenChange, maxNumb
       rankOrder.push(i);
     }
     const normalOrder = rankOrder.join(',');
-    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n아래에서 <span class="highlight-count">윗줄</span>에 있을수록 <span class="highlight-count">패의 순위가 더 높습니다.</span>`);
+    setNotificationMessage(`1~${maxNumber}를 사용할 경우, ${normalOrder},<span class="highlight-count">1,2</span> 순서대로 순위가 높습니다. <span class="highlight-count">2는 항상 순위가 가장 높습니다.</span>\n또한 아래에서 <span class="highlight-count">윗줄</span>에 있을수록 패의 순위가 높습니다.`);
     setSubmitCount(0);
     setPendingFlushSubmission(false);
     setShowRankGuide(false);

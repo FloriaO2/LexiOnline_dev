@@ -226,9 +226,7 @@ export function evaluateMade(cards: number[], maxNumber: number): MadeEvalResult
       }
     }
     
-    // 스트레이트는 가장 높은 카드의 순위로 비교
     const compareValue = bestRank * maxNumber * 4 + bestType; // 순위 기반 비교값
-    
     console.log(`[DEBUG] 스트레이트 평가: bestValue=${bestValue}, bestRank=${bestRank}, bestType=${bestType}, compareValue=${compareValue}`);
     
     return { type: MADE_STRAIGHT, value: compareValue, valid: true };
