@@ -129,7 +129,7 @@
 <table align="center">
   <tr>
     <td valign="middle" align="center">
-      <img width="800" alt="LexiOnline_게임보드" src="https://github.com/user-attachments/assets/3d87c1da-1317-4f5a-a9a2-22e4b5012476" />
+      <img width="480" alt="LexiOnline_게임로딩" src="https://github.com/user-attachments/assets/537294e5-00ac-483b-af87-e590654e44d5" />
     </td>
     <td valign="middle" align="center">
       <img alt="Game_Guide" src="https://github.com/user-attachments/assets/f5e59fd4-b09d-4a91-a9a4-529ea688dc6f" />
